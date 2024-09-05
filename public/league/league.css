@@ -1,0 +1,58 @@
+.hidden {
+    display: none;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+#content {
+    display: flex;
+    width: 90%;
+    justify-content: space-between;
+}
+
+#leagues-list {
+    width: 75%;
+    list-style-type: none;
+    padding: 0;
+}
+
+#teams-container {
+    width: 150%; /* Increased width */
+    height: 600px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-right: 100%; /* Reduced margin-right to move it left */
+    margin-left: -100%; /* Add negative margin to shift container left */
+}
+
+.team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.team-name {
+    font-weight: bold;
+}
+
+#back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}

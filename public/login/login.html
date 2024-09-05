@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+    
+    <div id="message"></div>
+
+    <div id="buttons">
+        <button id="show-login">Login</button>
+        <button id="show-create-account">Create Account</button>
+    </div>
+
+    <form id="login-form" class="hidden">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <form id="create-account-form" class="hidden">
+        <h2>Create Account</h2>
+        <input type="text" id="new-username" placeholder="Username" required>
+        <input type="password" id="new-password" placeholder="Password" required>
+        <button type="submit">Create Account</button>
+    </form>
+
+    <script src="/login/login.js"></script>
+</body>
+</html>

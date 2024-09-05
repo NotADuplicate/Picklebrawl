@@ -1,0 +1,18 @@
+{
+  "BigBoys": {
+    "password": "asdf",
+    "players": [
+      "painapple"
+    ],
+    "founder": "painapple",
+    "started": true
+  },
+  "newOne": {
+    "password": "a",
+    "players": [
+      "painapple"
+    ],
+    "founder": "painapple",
+    "started": true
+  }
+}

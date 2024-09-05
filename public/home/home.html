@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+        .not-started {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>League Management</h1>
+    
+    <div id="message"></div>
+
+    <button id="logout-button">Logout</button>
+
+    <div id="buttons">
+        <button id="show-create-league">Create League</button>
+        <button id="show-join-league">Join League</button>
+    </div>
+
+    <form id="create-league-form" class="hidden">
+        <h2>Create League</h2>
+        <input type="text" id="new-league-name" placeholder="League Name" required>
+        <input type="password" id="new-league-password" placeholder="League Password" required>
+        <input type="text" id="new-team-name" placeholder="Team Name" required>
+        <button type="submit" id="create-league">Create League</button>
+    </form>
+
+    <form id="join-league-form" class="hidden">
+        <h2>Join League</h2>
+        <input type="text" id="join-league-name" placeholder="League Name" required>
+        <input type="password" id="join-league-password" placeholder="League Password" required>
+        <input type="text" id="join-team-name" placeholder="Team Name" required>
+        <button type="submit" id="join-league">Join League</button>
+    </form>
+
+    <h2>Leagues</h2>
+    <ul id="leagues-list"></ul>
+
+    <script src="home.js"></script>
+</body>
+</html>

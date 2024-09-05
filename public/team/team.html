@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Details</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        #team-details {
+            margin-top: 20px;
+        }
+        #players-table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #players-table th, #players-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        #players-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="team-name">Team Details</h1>
+    <div id="team-details"></div>
+    <h2>Players</h2>
+    <table id="players-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Bulk</th>
+                <th>Scoring</th>
+                <th>Assist</th>
+                <th>Strength</th>
+                <th>Medical Knowledge</th>
+            </tr>
+        </thead>
+        <tbody id="players-list"></tbody>
+    </table>
+    <button id="back-button">Back to League</button>
+    <script src="team.js"></script>
+</body>
+</html>
