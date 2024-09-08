@@ -28,7 +28,8 @@ db.serialize(() => {
         name TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         founder TEXT NOT NULL,
-        started BOOLEAN NOT NULL
+        started BOOLEAN NOT NULL,
+        FOREIGN KEY (founder) REFERENCES users(username)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS teams (
@@ -52,10 +53,10 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         bulk INTEGER NOT NULL,
-        scoring INTEGER NOT NULL,
-        assist INTEGER NOT NULL,
-        offense INTEGER NOT NULL,
-        medicine INTEGER NOT NULL,
+        agility INTEGER NOT NULL,
+        height INTEGER NOT NULL,
+        strength INTEGER NOT NULL,
+        medicine INTEGER NULL,
         team_id INTEGER NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);

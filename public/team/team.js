@@ -26,10 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.innerHTML = `
                         <td>${player.name}</td>
                         <td>${player.bulk}</td>
-                        <td>${player.scoring}</td>
-                        <td>${player.assist}</td>
-                        <td>${player.offense}</td>
-                        <td>${player.medicine}</td>
+                        <td>${player.agility}</td>
+                        <td>${player.height}</td>
+                        <td>${player.strength}</td>
                     `;
                     playersListElement.appendChild(row);
                 });

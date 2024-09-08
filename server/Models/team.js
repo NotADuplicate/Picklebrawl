@@ -3,12 +3,20 @@ import {db} from '../database.js';
 
 class Team {
     players;
-    constructor(teamName, owner, leagueId) {
+    score;
+    teamName;
+    owner;
+    leagueId;
+    scoreRange = 30;
+
+    constructor(teamName, owner, leagueId, generatePlayers = true) {
         this.teamName = teamName;
         this.owner = owner;
         this.leagueId = leagueId;
         this.players = [];
-        this.generatePlayers();
+        console.log("NEW TEAM: " + teamName);
+        if (generatePlayers) 
+            this.generatePlayers();
     }
 
     save(callback) {
@@ -44,6 +52,7 @@ class Team {
 
     addPlayer(player) {
         this.players.push(player);
+        console.log(player.bulk + " " + player.agility + " " + player.height + " " + player.strength);
     }
 
     getPlayers() {

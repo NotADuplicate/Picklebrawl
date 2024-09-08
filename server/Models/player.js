@@ -3,14 +3,44 @@ import {db} from '../database.js';
 class Player {
     name;
     id;
+
     bulk = 1;
-    scoring = 1;
-    assist = 1;
-    offense = 1;
-    medicine = 1;
+    agility = 1;
+    height = 1;
+    strength = 1;
+
+    baseBulk = 1;
+    baseAgility = 1;
+    baseHeight = 1;
+    baseStrength = 1;
+
+    offensePriority = "";
+    defensePriority = "";
+    offensePriorityTarget = null;
+    defensePriorityTarget = null;
+
+    tempBulk = 0;
+    tempAgility = 0;
+    tempHeight = 0;
+    tempStrength = 0;
+    protectBulk = 0;
+
+    tempInjury = 0;
+    injury = false;
 
     constructor() {
         this.name = this.generateName();
+    }
+
+    setStats(bulk, agility, height, strength) {
+        this.bulk = bulk;
+        this.agility = agility;
+        this.height = height;
+        this.strength = strength;
+        this.baseBulk = bulk;
+        this.baseAgility = agility;
+        this.baseHeight = height;
+        this.baseStrength = strength
     }
 
     get name() {
@@ -21,31 +51,51 @@ class Player {
         this.id = id;
     }
 
+    setPriorities(offense, defense, offenseTarget = null, defenseTarget = null)  {
+        console.log(offense + " " + offenseTarget); 
+        if (["Attack", "Advance", "Protect", "Assist", "Score"].includes(offense)) {
+            this.offensePriority = offense;
+        }
+        else {
+            console.log(offense);
+            throw new Error("Invalid offense priority");
+        }
+        if (["Attack", "Defend Advance", "Protect", "Assist", "Defend Score"].includes(defense)) {
+            this.defensePriority = defense;
+        }
+        else {
+            console.log(defense);
+            throw new Error("Invalid defense priority");
+        }
+        this.offensePriorityTarget = offenseTarget;
+        this.defensePriorityTarget = defenseTarget;
+    }
+
     save(callback, teamId) {
         const self = this;
-        db.run(`INSERT INTO players (team_id, name, bulk, scoring, assist, offense, medicine) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
-            [teamId, this.name, this.bulk, this.scoring, this.assist, this.offense, this.medicine], function(err) {
+        db.run(`INSERT INTO players (team_id, name, bulk, agility, height, strength) VALUES (?, ?, ?, ?, ?, ?)`, 
+            [teamId, this.name, this.bulk, this.agility, this.height, this.strength], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return cb(err);
             }
-            self.id = this.lastID;
             callback(null);
         });
     }
 
     randomize_stats(power) {
+        //return; // Disable randomization for now
         const totalPoints = power;
         const minPoints = 1;
         const maxPoints = Math.floor(totalPoints / 5);
 
-        const stats = [this.bulk, this.scoring, this.assist, this.offense, this.medicine];
+        const stats = [this.bulk, this.agility, this.height, this.strength];
 
         for (let i = 0; i < power; i++) {
             stats[Math.floor(Math.random()*stats.length)] += 1;
         }
-        [this.bulk, this.scoring, this.assist, this.offense, this.medicine] = stats;
-        console.log(this.bulk, this.scoring, this.assist, this.offense, this.medicine);
+        [this.bulk, this.agility, this.height, this.strength] = stats;
+        //console.log(this.bulk, this.scoring, this.height, this.offense);
     }
 
     generateName() {
@@ -105,10 +155,38 @@ class Player {
             'Wohl', 'Baker', 'Lane', 'Henderson', 'Cole', 'Funte', 'Paul-Healy', 'Greene',
             'Philips', name, 'King', 'Jr', 'III', 'IV', 'VI', 'VII', 'Pickle', 'Jordan', 'Diaz',
             'Swift', 'Rodrigo', 'Parker', 'Sprow', 'Cox', '', 'Kennedy', 'Charlie', 'Zac', 'Pup',
-            'Lebron', 'James', 'Usmanov', 'Nipp', 'Polio', 'Nixon', 'Obama', 'Biden'
+            'Lebron', 'James', 'Usmanov', 'Nipp', 'Polio', 'Nixon', 'Obama', 'Biden', 'Usmanov'
         ]);
         return name;
         //return "John Doe";
+    }
+
+    attack(target) {
+        console.log(this.name + " is attacking " + target.name); 
+        const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
+        const defense = Math.floor(Math.random() * (target.bulk + target.protectBulk));
+        const finalDamage = damage - defense;
+        if (finalDamage < 0) {
+            console.log(target.name + " defended the attack");
+            return;
+        }
+        console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
+        target.tempInjury += finalDamage;
+        /*if(Math.random() < finalDamage*0.1) {
+            console.log(target.name + " is injured");
+            target.injury = true;
+        }*/
+    }
+
+    assist(target) {
+        target.tempBulk += (this.bulk + this.agility) / 2;
+        target.tempAgility += this.agility;
+        target.tempHeight += (this.height + this.agility) / 2;
+        target.tempStrength += (this.strength + this.agility) / 2;
+    }
+
+    protect(target) {
+        target.protectBulk += this.height*0.8;
     }
 }
 
