@@ -1,6 +1,7 @@
 import e from 'express';
 import {Player} from './player.js';
 import {Team} from './team.js';
+import * as Weather from './Weather/weather.js';
 
 class Match {
     homeTeam;
@@ -10,15 +11,18 @@ class Match {
     position = 50;
     possessionTicks = 0;
     gameTicks = 0;
+    weather;
 
-    constructor(homeTeam, awayTeam) {
+    constructor(homeTeam, awayTeam, weather) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.homeTeam.score = 0;
         this.awayTeam.score = 0;
         this.offenseTeam = this.homeTeam;
         this.defenseTeam = this.awayTeam;
+        this.weather = weather;
         console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
+        this.weather.startGameEffect(this.offenseTeam, this.defenseTeam);
     }
 
     tick() { //every game tick
@@ -26,6 +30,7 @@ class Match {
         console.log(this.offenseTeam.teamName + " " + this.position + " " + this.defenseTeam.teamName);
         this.possessionTicks++;
         this.gameTicks++;
+        this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.resetTempStats();
         this.doPriority("Assist", this.assist, true) //calculate assists and add temp stats to player
         this.doPriority("Protect", this.protect, true) //calculate protection and add ProtectBulk to player 
@@ -162,48 +167,60 @@ class Match {
     }
 
     doAdvancement() {
-        // Loop through offense team, calculate amount advanced
-        let numAdvancers = 0;
-        let advanceAmount = 0;
-        for (const player of this.offenseTeam.players) {
-            if(player.offensePriority === "Advance") {
-                numAdvancers++;
-                advanceAmount += Math.random() * (player.strength + player.tempStrength) + 0.1;
-                //console.log(player.name + " strength " + player.strength + " + " + player.tempStrength);
+        let advancing = this.weather.advanceEffect(this.offenseTeam, this.defenseTeam, this.position);
+        if(advancing == null) {
+            // Loop through offense team, calculate amount advanced
+            let numAdvancers = 0;
+            let advanceAmount = 0;
+            for (const player of this.offenseTeam.players) {
+                if(player.offensePriority === "Advance") {
+                    numAdvancers++;
+                    advanceAmount += Math.random() * (player.strength + player.tempStrength) + 0.1;
+                    //console.log(player.name + " strength " + player.strength + " + " + player.tempStrength);
+                }
+            }
+            if(numAdvancers > 1) {advanceAmount *= 0.8;} //if more than one player is advancing, reduce the amount advanced by 20%
+            if(numAdvancers == 0) {advanceAmount = Math.random() * 2;} //if no players are advancing, a little advancement occurs
+
+            // Loop through defense team, calculate amount defended
+            let numDefenders = 0;
+            let defendAmount = 0;
+            for (const player of this.defenseTeam.players) {
+                if(player.defensePriority === "Defend Advance") {
+                    numDefenders++;
+                    defendAmount += Math.random() * (player.bulk + player.tempBulk)
+                    //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
+                }
+            }
+            if(numDefenders > 1) {defendAmount *= 0.8;} //if more than one player is defending, reduce the amount defended by 20%
+
+            // Calculate net advancement
+            let netAdvance = 0;
+            console.log("Advance: " + advanceAmount + " Defend: " + defendAmount);
+            if(advanceAmount > defendAmount) {
+                netAdvance = Math.random() * (advanceAmount - defendAmount) * 2 + (advanceAmount - defendAmount);
+            } else {
+                netAdvance = 0;
+            }
+            this.position += netAdvance;
+            console.log(this.offenseTeam.teamName + " advanced " + netAdvance + " yards!");
+
+            // Calculate turnover chance
+            let turnoverChance = this.possessionTicks * 0.05 * (defendAmount / (advanceAmount + defendAmount));
+            if (turnoverChance > 0.2) {turnoverChance = 0.2;} //max turnover chance of 15%
+            
+            if(Math.random() < turnoverChance) {
+                this.turnover();
             }
         }
-        if(numAdvancers > 1) {advanceAmount *= 0.8;} //if more than one player is advancing, reduce the amount advanced by 20%
-        if(numAdvancers == 0) {advanceAmount = Math.random() * 2;} //if no players are advancing, a little advancement occurs
-
-        // Loop through defense team, calculate amount defended
-        let numDefenders = 0;
-        let defendAmount = 0;
-        for (const player of this.defenseTeam.players) {
-            if(player.defensePriority === "Defend Advance") {
-                numDefenders++;
-                defendAmount += Math.random() * (player.bulk + player.tempBulk)
-                //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
+        else {
+            if(advancing == -1) { //give -1 advancement if turnover is calculated
+                this.turnover();
             }
-        }
-        if(numDefenders > 1) {defendAmount *= 0.8;} //if more than one player is defending, reduce the amount defended by 20%
-
-        // Calculate net advancement
-        let netAdvance = 0;
-        console.log("Advance: " + advanceAmount + " Defend: " + defendAmount);
-        if(advanceAmount > defendAmount) {
-            netAdvance = Math.random() * (advanceAmount - defendAmount) * 2 + (advanceAmount - defendAmount);
-        } else {
-            netAdvance = 0;
-        }
-        this.position += netAdvance;
-        console.log(this.offenseTeam.teamName + " advanced " + netAdvance + " yards!");
-
-        // Calculate turnover chance
-        let turnoverChance = this.possessionTicks * 0.05 * (defendAmount / (advanceAmount + defendAmount));
-        if (turnoverChance > 0.2) {turnoverChance = 0.2;} //max turnover chance of 15%
-        
-        if(Math.random() < turnoverChance) {
-            this.turnover();
+            else {
+                this.position += advancing;
+                console.log(this.offenseTeam.teamName + " advanced " + advancing + " yards!");
+            }
         }
     }
 
@@ -235,15 +252,19 @@ class Match {
     shoot(player) {
         console.log(this.offenseTeam.teamName + " is shooting!");
         console.log(player.agility + " + " + player.tempAgility);
-        let shooting = Math.random() * (player.agility + player.tempAgility)
-        console.log("Shooting: " + shooting);
-        for (const player of this.defenseTeam.players) {
-            if(player.defensePriority === "Defend Score") {
-                shooting -= Math.random() * (player.bulk + player.tempBulk);
+        let score = this.weather.scoreEffect(player, this.offenseTeam, this.defenseTeam, this.position);
+        if(score == null) { //no weather effect, handle scoring as usual
+            let shooting = Math.random() * (player.agility + player.tempAgility)
+            console.log("Shooting: " + shooting);
+            for (const player of this.defenseTeam.players) {
+                if(player.defensePriority === "Defend Score") {
+                    shooting -= Math.random() * (player.bulk + player.tempBulk);
+                }
             }
+            shooting -= (100-this.position) * 0.1;
+            score = shooting > -1; //wanted to make it easier to score bc its influenced by distance and defenders
         }
-        shooting -= (100-this.position) * 0.1;
-        if(shooting > 0) {
+        if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
             this.offenseTeam.score += 1;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
