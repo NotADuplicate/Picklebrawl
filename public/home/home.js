@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 messageDiv.innerText = data.message;
                 if (data.message === 'League created successfully!') {
+                    sleep(100);
                     loadLeagues();
                 }
             })
@@ -102,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`http://localhost:3000/leagues?user=${loggedInUser}`)
         .then(response => response.json())
         .then(leagues => {
+            console.log("Leagues: ", leagues);
             leaguesList.innerHTML = '';
             leagues.forEach(league => {
                 const listItem = document.createElement('li');

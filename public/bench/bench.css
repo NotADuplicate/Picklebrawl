@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.team {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.your-team {
+    width: 65%;
+}
+
+.other-team {
+    width: 30%;
+}
+
+h2, h3 {
+    text-align: center;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.player {
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.player:hover {
+    background-color: #e0e0e0;
+}
+
+.toggle-button {
+    display: block;
+    margin: 0 auto 10px auto;
+    cursor: pointer;
+}
+
+.collapsed {
+    display: none;
+}
+
+.stats {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.priority {
+    margin-top: 5px;
+    display: none;
+}
+
+.priority-menu {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.target-menu {
+    display: inline-block;
+    margin-top: 5px;
+}
+
+#lock-button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}

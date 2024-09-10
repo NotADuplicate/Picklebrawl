@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bench</title>
+    <link rel="stylesheet" href="bench.css">
+</head>
+<body>
+    <div class="container">
+        <div class="team your-team" id="your-team">
+            <h2>Your Team</h2>
+            <button class="toggle-button" data-target="your-team-list">▼</button>
+            <ul id="your-team-list">
+            </ul>
+            <h3>Bench</h3>
+            <button class="toggle-button" data-target="your-team-bench">▼</button>
+            <ul id="your-team-bench">
+                <!-- Players moved here will be displayed -->
+            </ul>
+        </div>
+        <div class="team other-team" id="other-team">
+            <h2>Other Team</h2>
+            <button class="toggle-button" data-target="other-team-list">▼</button>
+            <ul id="other-team-list">
+            </ul>
+            <h3>Bench</h3>
+            <button class="toggle-button" data-target="other-team-bench">▼</button>
+            <ul id="other-team-bench">
+                <!-- Players moved here will be displayed -->
+            </ul>
+        </div>
+    </div>
+    <button id="lock-button">Lock In All Players</button>
+    <script src="bench.js"></script>
+
+    <template id="player-template">
+        <li class="player" data-locked="false" data-location="team">
+            <div class="player-name"></div>
+            <div class="stats"></div>
+        </li>
+    </template>
+
+    <template id="priority-template">
+        <div class="priority" style="display: none;">
+            <div class="priority-menu offense-priority">
+                <label>Offense Action: </label>
+                <select class="offense-priority-select"></select>
+            </div>
+            <div class="target-menu offense-target-menu" style="display: none;">
+                <label>Target: </label>
+                <select class="offense-target-select"></select>
+            </div>
+            <div class="priority-menu defense-priority">
+                <label>Defense Action: </label>
+                <select class="defense-priority-select"></select>
+            </div>
+            <div class="target-menu defense-target-menu" style="display: none;">
+                <label>Target: </label>
+                <select class="defense-target-select"></select>
+            </div>
+        </div>
+    </template>
+</body>
+</html>

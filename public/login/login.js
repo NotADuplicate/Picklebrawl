@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const showCreateAccountButton = document.getElementById('show-create-account');
 
     const loggedInUser = localStorage.getItem('loggedInUser');
-    if (loggedInUser) {
-        window.location.href = '../home/home.html';
+    const loggedInPassword = localStorage.getItem('loggedInPassword');
+    if (loggedInUser && loggedInPassword) {
+        login(loggedInUser, loggedInPassword);
     }
 
     showLoginButton.addEventListener('click', () => {
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.message === 'Account created successfully!') {
                 localStorage.setItem('loggedInUser', username);
+                localStorage.setItem('loggedInPassword', password);
                 window.location.href = '../home/home.html';
             } else {
                 alert(data.message);
@@ -70,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.message === 'Login successful!') {
                 localStorage.setItem('loggedInUser', username);
+                localStorage.setItem('loggedInPassword', password);
                 window.location.href = '../home/home.html';
             } else {
                 alert(data.message);

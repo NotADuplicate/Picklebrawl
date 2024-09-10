@@ -120,6 +120,7 @@ app.post('/join-league', (req, res) => {
 
 app.get('/leagues', (req, res) => {
     const { user, leagueName } = req.query;
+    console.log("Getting leagues with user:", user);
     let query = `
         SELECT leagues.id, leagues.name AS leagueName, leagues.founder, leagues.started, 
                GROUP_CONCAT(league_users.username) AS players
