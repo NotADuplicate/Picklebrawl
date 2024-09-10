@@ -57,6 +57,7 @@ db.serialize(() => {
         height INTEGER NOT NULL,
         strength INTEGER NOT NULL,
         medicine INTEGER NULL,
+        quirk TEXT NOT NULL,
         team_id INTEGER NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);

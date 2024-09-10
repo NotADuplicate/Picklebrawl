@@ -9,6 +9,7 @@ class Match {
     offenseTeam;
     defenseTeam;
     position = 50;
+    fieldLength = 100;
     possessionTicks = 0;
     gameTicks = 0;
     weather;
@@ -22,7 +23,7 @@ class Match {
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
         console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
-        this.weather.startGameEffect(this.offenseTeam, this.defenseTeam);
+        this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
     }
 
     tick() { //every game tick
@@ -155,7 +156,11 @@ class Match {
     }
 
     attack(player, target) {
-        player.attack(target);
+        let attackDone = this.weather.attackEffect(this.player, this.target)
+        if(attackDone == null) {
+            player.attack(target);
+        }
+        // Don't need an else block because the attack will be applied in the weather effect otherwise
     }
     
     assist(player, target) {
@@ -207,14 +212,14 @@ class Match {
 
             // Calculate turnover chance
             let turnoverChance = this.possessionTicks * 0.05 * (defendAmount / (advanceAmount + defendAmount));
-            if (turnoverChance > 0.2) {turnoverChance = 0.2;} //max turnover chance of 15%
+            if (turnoverChance > 0.2) {turnoverChance = 0.2;} //max turnover chance of 20%
             
             if(Math.random() < turnoverChance) {
                 this.turnover();
             }
         }
         else {
-            if(advancing == -1) { //give -1 advancement if turnover is calculated
+            if(advancing == -1) { //if -1 advancement, automatic turnover
                 this.turnover();
             }
             else {
@@ -225,12 +230,12 @@ class Match {
     }
 
     doScoring() {
-        if(this.position >= 100) { //touchdown 
+        if(this.position >= this.fieldLength) { //touchdown 
             this.offenseTeam.score += 1;
-            this.position = 50;
+            this.position = (this.fieldLength / 2);
             this.turnover();
         } else { //check for trying to score
-            if(this.position >= 100-this.offenseTeam.scoreRange) {
+            if(this.position >= this.fieldLength-this.offenseTeam.scoreRange) {
                 for (const player of this.offenseTeam.players) {
                     if(player.offensePriority === "Score" && Math.random() > 0.8 - player.agility * 0.2) { //scorers have 30% chance of attempting a shot
                         this.shoot(player); //shoot
@@ -243,7 +248,7 @@ class Match {
     turnover() { 
         console.log("Turnover!");
         this.possessionTicks = 0;
-        this.position = 100 - this.position;
+        this.position = this.fieldLength - this.position;
         const tempTeam = this.offenseTeam;
         this.offenseTeam = this.defenseTeam;
         this.defenseTeam = tempTeam;
@@ -261,14 +266,14 @@ class Match {
                     shooting -= Math.random() * (player.bulk + player.tempBulk);
                 }
             }
-            shooting -= (100-this.position) * 0.1;
+            shooting -= (this.fieldLength-this.position) * 0.1;
             score = shooting > -1; //wanted to make it easier to score bc its influenced by distance and defenders
         }
         if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
             this.offenseTeam.score += 1;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-            this.position = 50;
+            this.position = this.fieldLength / 2;
         }
         this.turnover();
     }

@@ -3,7 +3,7 @@ import {Team} from '../team.js';
 export class Weather {
     description = "No weather effect";
 
-    startGameEffect(offenseTeam, defenseTeam) {
+    startGameEffect(match, offenseTeam, defenseTeam) {
         console.log("No weather effect\n\n\n");
         return;
     }
@@ -17,6 +17,10 @@ export class Weather {
     }
 
     scoreEffect(shooter, offenseTeam, defenseTeam, position) {
+        return null;
+    }
+
+    attackEffect(player, target) {
         return null;
     }
 
