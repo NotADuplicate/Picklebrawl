@@ -161,7 +161,7 @@ class Player {
         //return "John Doe";
     }
 
-    attack(target) {
+    attack(target, INJURY_PERMANENCE_MODIFIER) {
         console.log(this.name + " is attacking " + target.name); 
         const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
         const defense = Math.floor(Math.random() * (target.bulk + target.protectBulk));
@@ -172,6 +172,7 @@ class Player {
         }
         console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
         target.tempInjury += finalDamage;
+        // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER
         /*if(Math.random() < finalDamage*0.1) {
             console.log(target.name + " is injured");
             target.injury = true;

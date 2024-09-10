@@ -1,0 +1,50 @@
+WEATHER
+Space warp: extend field
+Brainstorm: ??
+Blood rain: more violence (more likely for injuries to become permanent)
+Time fall: ages extra point
+Windy: harder to score
+Snowy: harder to advance
+Karma clouds: attackers have a chance to be hurt
+Helpful winds: makes it easier to score
+Unique action bonus: if any player is taking an action that no other is playing, that player gets a bonus
+Speed limit: max on advancing
+Haze: quirks don't impact this game
+As soon as a player scores, they could get injured for the match
+
+
+
+WEATHER CONSTANTS
+
+
+
+QUIRKS
+Streaky
+Sun worship
+Star worship
+Moon worship
+Benjamin button
+Loose cannon: takes random action
+Allergies
+Huge: takes up two slots
+Alphabet completionists: avg number of letters missing is 3.8 (stats base 2/3 higher than average bc stats decreased by # of letters missing)
+Old head: likes old players
+Young blood: likes young players
+Satanist: if someone has 3 6s in their stats, you assist them double
+Chick-fil-a employee: doesn't play on Sundays
+Leech: steal player stats
+Vampire: is unaging
+Fear of long words: minus stats depending on how long the other players names are
+Checkpoint: go back to where you had advanced to
+Offender: better on offense
+Defender: better on defense
+Alpha: comes first alphabetically, bonus if their name comes first alphabetically
+Curb stomper: if they attack someone who's shorter, deal double damage
+Sly: If trickiness is higher than focus, increase chance to juke
+
+
+
+RANDOM EVENTS
+Home game audience interferes
+Out of game fight
+Mosh pit
