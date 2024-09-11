@@ -24,6 +24,8 @@ class Match {
     TURNOVER_CHANCE_MAX = 0.2;
     SHOOTING_DISTANCE_MODIFIER = 0.1;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
+    TRICK_CHANCE = 0.67;
+    ASSIST_MODIFIER = 1;
 
     constructor(homeTeam, awayTeam, weather) {
         this.homeTeam = homeTeam;
@@ -49,8 +51,8 @@ class Match {
         this.resetInjuries();
         this.doPriority("Attack", this.attack, true) //calculate injuries and tick stat decreases
         this.applyInjuries();
-        this.doAdvancement() 
-        this.doScoring()
+        this.doAdvancement();
+        this.doScoring();
     }
 
     resetTempStats() {
@@ -59,6 +61,8 @@ class Match {
             player.tempFinesse = 0;
             player.tempHeight = 0;
             player.tempStrength = 0;
+            player.tempTrickiness = player.trickiness;
+            player.tempFocus = player.focus;
 
         }
         for(const player of this.defenseTeam.players) {
@@ -66,6 +70,8 @@ class Match {
             player.tempFinesse = 0;
             player.tempHeight = 0;
             player.tempStrength = 0;
+            player.tempTrickiness = player.trickiness;
+            player.tempFocus = player.focus;
         }
     }
 
@@ -171,7 +177,7 @@ class Match {
     }
     
     assist(player, target) {
-        player.assist(target);
+        player.assist(target, this.ASSIST_MODIFIER);
     }
 
     protect(player, target) {
@@ -184,8 +190,10 @@ class Match {
             // Loop through offense team, calculate amount advanced
             let numAdvancers = 0;
             let advanceAmount = 0;
+            let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance") {
+                    if(player.tempTrickiness < minTrickiness) {minTrickiness = player.trickiness;}
                     numAdvancers++;
                     advanceAmount += Math.random() * (player.strength + player.tempStrength) + 0.1;
                     //console.log(player.name + " strength " + player.strength + " + " + player.tempStrength);
@@ -199,6 +207,9 @@ class Match {
             let defendAmount = 0;
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Advance") {
+                    if(minTrickiness > player.tempFocus && Math.random() > this.TRICK_CHANCE) { //trickiness check
+                        console.log(player.name + " was tricked!");
+                    }
                     numDefenders++;
                     defendAmount += Math.random() * (player.bulk + player.tempBulk)
                     //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
@@ -244,10 +255,14 @@ class Match {
     }
 
     doScoring() {
-        if(this.position >= this.FIELD_LENGTH) { //touchdown 
-            this.offenseTeam.score += 1;
-            this.position = (this.FIELD_LENGTH / 2);
-            this.turnover();
+        if(this.position >= this.FIELD_LENGTH) { //removed automatic touchdowns
+            this.position = this.FIELD_LENGTH;
+            for (const player of this.offenseTeam.players) {
+                if(player.offensePriority === "Advance") { //on touchdown, the player who is advancing will try to score
+                    console.log(player.name + " is attempting a touchdown!");
+                    this.shoot(player); //shoot
+                }
+            }
         } else { //check for trying to score
             if(this.position >= this.FIELD_LENGTH-this.offenseTeam.scoreRange) {
                 for (const player of this.offenseTeam.players) {
@@ -268,16 +283,27 @@ class Match {
         this.defenseTeam = tempTeam;
     }
 
-    shoot(player) {
+    shoot(shooter) {
+        let numShooters = 0;
+        for (const player of this.offenseTeam.players) { //count number of shooters
+            if(player.offensePriority === "Score") {
+                numShooters++;
+            }
+        }
         console.log(this.offenseTeam.teamName + " is shooting!");
-        console.log(player.finesse + " + " + player.tempFinesse);
-        let score = this.weather.scoreEffect(player, this.offenseTeam, this.defenseTeam, this.position);
+        console.log(shooter.finesse + " + " + shooter.tempFinesse);
+        let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
         if(score == null) { //no weather effect, handle scoring as usual
-            let shooting = Math.random() * (player.finesse + player.tempFinesse)
+            let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse)
             console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Score") {
-                    shooting -= Math.random() * (player.bulk + player.tempBulk);
+                    if(shooter.tempTrickiness > player.tempFocus && Math.random() > this.TRICK_CHANCE) { //trickiness check
+                        console.log(player.name + " was tricked!");
+                    }
+                    else {
+                        shooting -= (Math.random() * (player.bulk + player.tempBulk)) / numShooters; //defenders split defense among all the shooters
+                    }
                 }
             }
             shooting -= (this.FIELD_LENGTH-this.position) * this.SHOOTING_DISTANCE_MODIFIER;

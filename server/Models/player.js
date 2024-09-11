@@ -34,6 +34,8 @@ class Player {
     tempInjury = 0;
     injury = false;
 
+    PLAYER_ASSIST_MODIFIER = 0.8;
+
     constructor() {
         this.name = this.generateName();
     }
@@ -190,11 +192,15 @@ class Player {
         }*/
     }
 
-    assist(target) {
-        target.tempBulk += (this.bulk + this.finesse) / 2;
-        target.tempFinesse += this.finesse;
-        target.tempHeight += (this.height + this.finesse) / 2;
-        target.tempStrength += (this.strength + this.finesse) / 2;
+    assist(target, modifier) {
+        target.tempBulk += modifier * this.PLAYER_ASSIST_MODIFIER * (this.bulk + this.finesse) / 2;
+        target.tempFinesse += modifier * this.PLAYER_ASSIST_MODIFIER * this.finesse;
+        target.tempHeight += modifier * this.PLAYER_ASSIST_MODIFIER * (this.height + this.finesse) / 2;
+        target.tempStrength += modifier * this.PLAYER_ASSIST_MODIFIER * (this.strength + this.finesse) / 2;
+
+        //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
+        target.tempTrickiness += min(this.trickiness, target.trickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
+        target.tempFocus += max(this.focus, target.focus); 
     }
 
     protect(target) {
