@@ -1,7 +1,9 @@
 import { Team } from '../server/Models/team.js'; // Adjust the path as necessary
 import { Player } from '../server/Models/player.js'; // Adjust the path as necessary
 import { Match } from '../server/Models/match.js'; // Adjust the path as necessary
-import { Windy } from '../server/Models/Weather/windy.js'; // Adjust the path as necessary
+//import { Windy } from '../server/Models/Weather/windy.js'; // Adjust the path as necessary
+//import { Snowy } from '../server/Models/Weather/snowy.js'; // Adjust the path as necessary
+import * as weather from '../server/Models/Weather/index.js'
 
 /*let team1 = new Team('Team A', 1, 'charlie', false);
 let team2 = new Team('Team B', 1, 'rachel', false);
@@ -51,7 +53,7 @@ rachelPlayers[2].setPriorities("Advance", "Defend Advance", rachelPlayers[1]);
 rachelPlayers[3].setPriorities("Protect", "Protect", rachelPlayers[0], rachelPlayers[0]);
 team1.scoreRange = 10;
 
-let wind = new Windy();
+let wind = new weather.Snowy();
 //wind.startGameEffect(team1, team2);
 let match = new Match(team1, team2, wind);
 for(let i = 0; i < 40; i++) {

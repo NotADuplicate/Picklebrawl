@@ -13,6 +13,18 @@ class Match {
     gameTicks = 0;
     weather;
 
+    // CONSTANTS
+    FIELD_LENGTH = 100;
+    MULTIPLE_ADVANCERS_REDUCTION = 0.8;
+    NO_ADVANCERS_MAX_ADVANCEMENT = 2;
+    MULTIPLE_ADVANCE_DEFENDERS_REDUCTION = 0.8;
+    MAX_ADVANCEMENT_PER_TICK = null;
+    NET_ADVANCEMENT_MODIFIER = 1.0;
+    TURNOVER_CHANCE_INCREASE_PER_TICK = 0.05;
+    TURNOVER_CHANCE_MAX = 0.2;
+    SHOOTING_DISTANCE_MODIFIER = 0.1;
+    INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
+
     constructor(homeTeam, awayTeam, weather) {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
@@ -22,7 +34,7 @@ class Match {
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
         console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
-        this.weather.startGameEffect(this.offenseTeam, this.defenseTeam);
+        this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
     }
 
     tick() { //every game tick
@@ -155,7 +167,7 @@ class Match {
     }
 
     attack(player, target) {
-        player.attack(target);
+        player.attack(target, this.weather.INJURY_PERMANENCE_MODIFIER);
     }
     
     assist(player, target) {
@@ -179,8 +191,8 @@ class Match {
                     //console.log(player.name + " strength " + player.strength + " + " + player.tempStrength);
                 }
             }
-            if(numAdvancers > 1) {advanceAmount *= 0.8;} //if more than one player is advancing, reduce the amount advanced by 20%
-            if(numAdvancers == 0) {advanceAmount = Math.random() * 2;} //if no players are advancing, a little advancement occurs
+            if(numAdvancers > 1) {advanceAmount *= this.MULTIPLE_ADVANCERS_REDUCTION;} //if more than one player is advancing, reduce the amount advanced by 20%
+            if(numAdvancers == 0) {advanceAmount = Math.random() * this.NO_ADVANCERS_MAX_ADVANCEMENT;} //if no players are advancing, a little advancement occurs
 
             // Loop through defense team, calculate amount defended
             let numDefenders = 0;
@@ -192,7 +204,7 @@ class Match {
                     //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
                 }
             }
-            if(numDefenders > 1) {defendAmount *= 0.8;} //if more than one player is defending, reduce the amount defended by 20%
+            if(numDefenders > 1) {defendAmount *= this.MULTIPLE_ADVANCE_DEFENDERS_REDUCTION;} //if more than one player is defending, reduce the amount defended by 20%
 
             // Calculate net advancement
             let netAdvance = 0;
@@ -202,19 +214,26 @@ class Match {
             } else {
                 netAdvance = 0;
             }
+
+            // Cap net advancement if necessary
+            if(this.MAX_ADVANCEMENT_PER_TICK != null) {
+                if(netAdvance > this.MAX_ADVANCEMENT_PER_TICK) {netAdvance = this.MAX_ADVANCEMENT_PER_TICK}
+            }
+            
             this.position += netAdvance;
             console.log(this.offenseTeam.teamName + " advanced " + netAdvance + " yards!");
 
             // Calculate turnover chance
-            let turnoverChance = this.possessionTicks * 0.05 * (defendAmount / (advanceAmount + defendAmount));
-            if (turnoverChance > 0.2) {turnoverChance = 0.2;} //max turnover chance of 15%
+            let turnoverChance = (this.possessionTicks * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
+                (defendAmount / (advanceAmount + defendAmount)));
+            if (turnoverChance > this.TURNOVER_CHANCE_MAX) {turnoverChance = this.TURNOVER_CHANCE_MAX;}
             
             if(Math.random() < turnoverChance) {
                 this.turnover();
             }
         }
         else {
-            if(advancing == -1) { //give -1 advancement if turnover is calculated
+            if(advancing == -1) { //if -1 advancement, automatic turnover
                 this.turnover();
             }
             else {
@@ -225,12 +244,12 @@ class Match {
     }
 
     doScoring() {
-        if(this.position >= 100) { //touchdown 
+        if(this.position >= this.FIELD_LENGTH) { //touchdown 
             this.offenseTeam.score += 1;
-            this.position = 50;
+            this.position = (this.FIELD_LENGTH / 2);
             this.turnover();
         } else { //check for trying to score
-            if(this.position >= 100-this.offenseTeam.scoreRange) {
+            if(this.position >= this.FIELD_LENGTH-this.offenseTeam.scoreRange) {
                 for (const player of this.offenseTeam.players) {
                     if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.2) { //scorers have 30% chance of attempting a shot
                         this.shoot(player); //shoot
@@ -243,7 +262,7 @@ class Match {
     turnover() { 
         console.log("Turnover!");
         this.possessionTicks = 0;
-        this.position = 100 - this.position;
+        this.position = this.FIELD_LENGTH - this.position;
         const tempTeam = this.offenseTeam;
         this.offenseTeam = this.defenseTeam;
         this.defenseTeam = tempTeam;
@@ -261,14 +280,14 @@ class Match {
                     shooting -= Math.random() * (player.bulk + player.tempBulk);
                 }
             }
-            shooting -= (100-this.position) * 0.1;
+            shooting -= (this.FIELD_LENGTH-this.position) * this.SHOOTING_DISTANCE_MODIFIER;
             score = shooting > -1; //wanted to make it easier to score bc its influenced by distance and defenders
         }
         if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
             this.offenseTeam.score += 1;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-            this.position = 50;
+            this.position = this.FIELD_LENGTH / 2;
         }
         this.turnover();
     }
