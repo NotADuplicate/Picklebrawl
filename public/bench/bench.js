@@ -68,7 +68,7 @@ function addPlayerToTeam(teamId, playerName, stats) {
 
     player.dataset.team = teamId;
     player.querySelector('.player-name').textContent = playerName;
-    player.querySelector('.stats').textContent = `A: ${stats.A}, B: ${stats.B}, C: ${stats.C}, D: ${stats.D}`;
+    player.querySelector('.stats').textContent = `Blk: ${stats.Blk}, Fin: ${stats.Fin}, Ht: ${stats.Ht}, Str: ${stats.Str}, Trk: ${stats.Trk}, Fcs: ${stats.Fcs}`;
     player.className = 'player';
     player.dataset.team = teamId;
     player.dataset.locked = 'false';
@@ -127,8 +127,10 @@ function addPlayerToTeam(teamId, playerName, stats) {
         });
 
         const updateTargetMenu = (priority, targetType, targetMenu, targetSelect) => {
+            console.log(targetType);
             targetSelect.innerHTML = '';
-            if (targetType === 'Target neither') {
+            if (targetType === 'neither') {
+                console.log("Target neither");
                 targetMenu.style.display = 'none';
             } else {
                 targetMenu.style.display = 'block';
@@ -144,6 +146,7 @@ function addPlayerToTeam(teamId, playerName, stats) {
         };
 
         offensePrioritySelect.addEventListener('change', (event) => {
+            console.log(event.target.value + ": " + offensePriorities[event.target.value]);
             const selectedPriority = event.target.value;
             updateTargetMenu(selectedPriority, offensePriorities[selectedPriority].split(' ')[1], offenseTargetMenu, offenseTargetSelect);
         });
@@ -155,19 +158,6 @@ function addPlayerToTeam(teamId, playerName, stats) {
     }
 }
 
-// Example usage:
-/*addPlayerToTeam('your-team', 'Player 7', { A: 10, B: 20, C: 30, D: 40 });
-addPlayerToTeam('other-team', 'Player 8', { A: 15, B: 25, C: 35, D: 45 });
-addPlayerToTeam('your-team', 'Player 1', { A: 10, B: 20, C: 30, D: 40 });
-addPlayerToTeam('other-team', 'Player 2', { A: 15, B: 25, C: 35, D: 45 });
-addPlayerToTeam('your-team', 'Player 3', { A: 10, B: 20, C: 30, D: 40 });
-addPlayerToTeam('other-team', 'Player 4', { A: 15, B: 25, C: 35, D: 45 });
-addPlayerToTeam('your-team', 'Player 5', { A: 10, B: 20, C: 30, D: 40 });
-addPlayerToTeam('other-team', 'Player 6', { A: 15, B: 25, C: 35, D: 45 });
-addPlayerToTeam('your-team', 'Player 10', { A: 10, B: 20, C: 30, D: 40 });
-addPlayerToTeam('other-team', 'Player 11', { A: 15, B: 25, C: 35, D: 45 });
-addPlayerToTeam('your-team', 'Player 9', { A: 10, B: 20, C: 30, D: 40 });*/
-
 const urlParams = new URLSearchParams(window.location.search);
 const teamId = urlParams.get('teamId');
 const otherTeamId = urlParams.get('otherTeamId');
@@ -178,10 +168,12 @@ fetch(`http://localhost:3000/teams/${teamId}/players`)
         if (Array.isArray(players)) {
             players.forEach(player => {
                 addPlayerToTeam('your-team', player.name, {
-                    A: player.bulk,
-                    B: player.agility,
-                    C: player.height,
-                    D: player.strength
+                    Blk: player.bulk,
+                    Fin: player.finesse,
+                    Ht: player.height,
+                    Str: player.strength,
+                    Trk: player.trickiness,
+                    Fcs: player.focus
                 });
             });
         } else {
@@ -195,10 +187,12 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
         if (Array.isArray(players)) {
             players.forEach(player => {
                 addPlayerToTeam('other-team', player.name, {
-                    A: player.bulk,
-                    B: player.agility,
-                    C: player.height,
-                    D: player.strength
+                    Blk: player.bulk,
+                    Fin: player.finesse,
+                    Ht: player.height,
+                    Str: player.strength,
+                    Trk: player.trickiness,
+                    Fcs: player.focus
                 });
             });
         } else {
@@ -207,4 +201,3 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
     })
 
 });
-

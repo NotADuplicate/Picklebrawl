@@ -44,14 +44,14 @@ class Match {
     resetTempStats() {
         for(const player of this.offenseTeam.players) {
             player.tempBulk = 0;
-            player.tempAgility = 0;
+            player.tempFinesse = 0;
             player.tempHeight = 0;
             player.tempStrength = 0;
 
         }
         for(const player of this.defenseTeam.players) {
             player.tempBulk = 0;
-            player.tempAgility = 0;
+            player.tempFinesse = 0;
             player.tempHeight = 0;
             player.tempStrength = 0;
         }
@@ -61,11 +61,11 @@ class Match {
         for(const player of this.offenseTeam.players) {
             if(!player.injury) {
                 player.bulk = player.baseBulk;
-                player.agility = player.baseAgility;
+                player.finesse = player.baseFinesse;
                 player.height = player.baseHeight;
                 player.strength = player.baseStrength;
                 if(player.tempInjury > 0) {
-                    console.log(player.name + " temp injury: " + player.tempInjury + " agility: " + player.agility);
+                    console.log(player.name + " temp injury: " + player.tempInjury + " finesse: " + player.finesse);
                 }
             }
             else {
@@ -75,7 +75,7 @@ class Match {
         for(const player of this.defenseTeam.players) {
             if(!player.injury) {
                 player.bulk += player.tempInjury;
-                player.agility += player.tempInjury;
+                player.finesse += player.tempInjury;
                 player.height += player.tempInjury;
                 player.strength += player.tempInjury;
             }
@@ -86,17 +86,17 @@ class Match {
     applyInjuries() { 
         for(const player of this.offenseTeam.players) {
             player.bulk -= player.tempInjury;
-            player.agility -= player.tempInjury;
+            player.finesse -= player.tempInjury;
             player.height -= player.tempInjury;
             player.strength -= player.tempInjury;
             if(player.tempInjury > 0) {
-                console.log(player.name + " temp injury: " + player.tempInjury + " agility: " + player.agility);
+                console.log(player.name + " temp injury: " + player.tempInjury + " finesse: " + player.finesse);
             }
             player.tempInjury = 0;
         }
         for(const player of this.defenseTeam.players) {
             player.bulk -= player.tempInjury;
-            player.agility -= player.tempInjury;
+            player.finesse -= player.tempInjury;
             player.height -= player.tempInjury;
             player.strength -= player.tempInjury;
             player.tempInjury = 0;
@@ -232,7 +232,7 @@ class Match {
         } else { //check for trying to score
             if(this.position >= 100-this.offenseTeam.scoreRange) {
                 for (const player of this.offenseTeam.players) {
-                    if(player.offensePriority === "Score" && Math.random() > 0.8 - player.agility * 0.2) { //scorers have 30% chance of attempting a shot
+                    if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.2) { //scorers have 30% chance of attempting a shot
                         this.shoot(player); //shoot
                     }
                 }
@@ -251,10 +251,10 @@ class Match {
 
     shoot(player) {
         console.log(this.offenseTeam.teamName + " is shooting!");
-        console.log(player.agility + " + " + player.tempAgility);
+        console.log(player.finesse + " + " + player.tempFinesse);
         let score = this.weather.scoreEffect(player, this.offenseTeam, this.defenseTeam, this.position);
         if(score == null) { //no weather effect, handle scoring as usual
-            let shooting = Math.random() * (player.agility + player.tempAgility)
+            let shooting = Math.random() * (player.finesse + player.tempFinesse)
             console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Score") {

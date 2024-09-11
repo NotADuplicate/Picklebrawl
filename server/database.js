@@ -53,10 +53,11 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         bulk INTEGER NOT NULL,
-        agility INTEGER NOT NULL,
+        finesse INTEGER NOT NULL,
         height INTEGER NOT NULL,
         strength INTEGER NOT NULL,
-        medicine INTEGER NULL,
+        trickiness INTEGER NOT NULL,
+        focus INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);

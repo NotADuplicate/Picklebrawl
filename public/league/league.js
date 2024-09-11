@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         challengeButton.setAttribute('data-team-id', team.id);
                         challengeButton.innerText = 'Challenge';
                         teamDiv.appendChild(challengeButton);
-                        challengeButton.addEventListener('click', () => challenge(team.id));
+                        challengeButton.addEventListener('click', () => challenge(team.id, myTeamId, challengeButton));
                         challengeButtons[team.id] = challengeButton;
                     }
                     teamDiv.querySelector('button').addEventListener('click', () => {
@@ -111,26 +111,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Add event listeners to challenge buttons
-    function challenge(teamId) {
-        console.log('Challenging team:', teamId);
-        // Send challenge request
-        fetch(`http://localhost:3000/challenges`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ teamId, myTeamId })
-        })/*else if (event.target.textContent === 'Accept Challenge') {
+    function challenge(teamId, myTeamId, button) {
+        if(button.innerText === 'Challenge') {
+            console.log('Challenging team:', teamId);
+            // Send challenge request
+            fetch(`http://localhost:3000/challenges`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ teamId, myTeamId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                button.innerText = 'Pending';
+                button.disabled = true;
+            });
+        } else if (button.innerText === 'Accept Challenge') {
             // Accept challenge
             fetch(`http://localhost:3000/challenges/${teamId}/accept`, {
                 method: 'POST'
             })
             .then(response => response.json())
             .then(data => {
-                alert('Challenge accepted!');
+                window.location.href = `../bench/bench.html?teamId=${myTeamId}&otherTeamId=${teamId}`;
             });
-        }*/
         }
+    }
 
     function startLeague(leagueName) {
         fetch('http://localhost:3000/start-league', {

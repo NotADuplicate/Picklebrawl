@@ -3,7 +3,7 @@ import { Player } from '../server/Models/player.js'; // Adjust the path as neces
 import { Match } from '../server/Models/match.js'; // Adjust the path as necessary
 import { Windy } from '../server/Models/Weather/windy.js'; // Adjust the path as necessary
 
-let team1 = new Team('Team A', 1, 'charlie', false);
+/*let team1 = new Team('Team A', 1, 'charlie', false);
 let team2 = new Team('Team B', 1, 'rachel', false);
 
 let stats = [
@@ -56,4 +56,35 @@ let wind = new Windy();
 let match = new Match(team1, team2, wind);
 for(let i = 0; i < 40; i++) {
     match.tick();
+}*/
+let counts = [];
+for(let i = 0; i < 1000; i++) {
+    let players = [];
+    for (let i = 0; i < 8; i++) {
+        const player = new Player();
+        players.push(player);
+    }
+    
+    let alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    let lettersNotPresent = alphabet.split('').filter(letter => {
+        return players.every(player => !player.name.toLowerCase().includes(letter));
+    });
+    counts[i] = lettersNotPresent.length;
 }
+
+// Calculate the average
+let sum = 0;
+for (let i = 0; i < counts.length; i++) {
+    sum += counts[i];
+}
+const average = sum / counts.length;
+
+// Calculate the standard deviation
+let deviationSum = 0;
+for (let i = 0; i < counts.length; i++) {
+    deviationSum += Math.pow(counts[i] - average, 2);
+}
+const standardDeviation = Math.sqrt(deviationSum / counts.length);
+
+console.log("Average: " + average);
+console.log("Standard Deviation: " + standardDeviation);

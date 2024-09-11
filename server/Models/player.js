@@ -5,14 +5,18 @@ class Player {
     id;
 
     bulk = 1;
-    agility = 1;
+    finesse = 1;
     height = 1;
     strength = 1;
+    trickiness = 0; //trickiness is defaulted a little lower
+    focus = 1;
 
     baseBulk = 1;
-    baseAgility = 1;
+    baseFinesse = 1;
     baseHeight = 1;
     baseStrength = 1;
+    baseTrickiness = 0;
+    baseFocus = 1;
 
     offensePriority = "";
     defensePriority = "";
@@ -20,9 +24,11 @@ class Player {
     defensePriorityTarget = null;
 
     tempBulk = 0;
-    tempAgility = 0;
+    tempFinesse = 0;
     tempHeight = 0;
     tempStrength = 0;
+    tempTrickiness = 0; //im not sure how tricky/focus interacts with being assisted
+    tempFocus = 0;
     protectBulk = 0;
 
     tempInjury = 0;
@@ -32,15 +38,19 @@ class Player {
         this.name = this.generateName();
     }
 
-    setStats(bulk, agility, height, strength) {
+    setStats(bulk, finesse, height, strength, trickiness, focus) {
         this.bulk = bulk;
-        this.agility = agility;
+        this.finesse = finesse;
         this.height = height;
         this.strength = strength;
+        this.trickiness = trickiness;
+        this.focus = focus;
         this.baseBulk = bulk;
-        this.baseAgility = agility;
+        this.baseFinesse = finesse;
         this.baseHeight = height;
         this.baseStrength = strength
+        this.baseTrickiness = trickiness;
+        this.baseFocus = focus;
     }
 
     get name() {
@@ -73,8 +83,9 @@ class Player {
 
     save(callback, teamId) {
         const self = this;
-        db.run(`INSERT INTO players (team_id, name, bulk, agility, height, strength) VALUES (?, ?, ?, ?, ?, ?)`, 
-            [teamId, this.name, this.bulk, this.agility, this.height, this.strength], function(err) {
+        console.log("Saving player : " + this.name);
+        db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
+            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return cb(err);
@@ -89,12 +100,12 @@ class Player {
         const minPoints = 1;
         const maxPoints = Math.floor(totalPoints / 5);
 
-        const stats = [this.bulk, this.agility, this.height, this.strength];
+        const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
 
         for (let i = 0; i < power; i++) {
             stats[Math.floor(Math.random()*stats.length)] += 1;
         }
-        [this.bulk, this.agility, this.height, this.strength] = stats;
+        [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
         //console.log(this.bulk, this.scoring, this.height, this.offense);
     }
 
@@ -104,9 +115,9 @@ class Player {
         if (Math.floor(Math.random() * 3) !== 1) {
             if (name.length === 0) {
                 if (Math.floor(Math.random() * 2) === 1) {
-                    name.push(sample('WWRRRTTYPPPPSSSDDDDDFFGGHJJJJJKLLZZXCVBBBBNNMMM'));
+                    name.push(sample('WWRRRTTYPPPPSSSDDDDDFFGGHJJJJJKLLZZXCVBBBBNNMMMQ'));
                 } else {
-                    name.push(sample('WTPPPPSDFFGGKZZCCCVBBBB'));
+                    name.push(sample('QWTPPPPSDFFGGKZZCCCVBBBB'));
                     if (name[0] === 'W') {
                         name.push(sample('rh'));
                     } else if (['T', 'P', 'C', 'B'].includes(name[0])) {
@@ -179,10 +190,10 @@ class Player {
     }
 
     assist(target) {
-        target.tempBulk += (this.bulk + this.agility) / 2;
-        target.tempAgility += this.agility;
-        target.tempHeight += (this.height + this.agility) / 2;
-        target.tempStrength += (this.strength + this.agility) / 2;
+        target.tempBulk += (this.bulk + this.finesse) / 2;
+        target.tempFinesse += this.finesse;
+        target.tempHeight += (this.height + this.finesse) / 2;
+        target.tempStrength += (this.strength + this.finesse) / 2;
     }
 
     protect(target) {

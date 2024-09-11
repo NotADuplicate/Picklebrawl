@@ -52,7 +52,7 @@ class Team {
 
     addPlayer(player) {
         this.players.push(player);
-        console.log(player.bulk + " " + player.agility + " " + player.height + " " + player.strength);
+        console.log(player.bulk + " " + player.finesse + " " + player.height + " " + player.strength);
     }
 
     getPlayers() {
