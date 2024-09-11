@@ -199,8 +199,8 @@ class Player {
         target.tempStrength += modifier * this.PLAYER_ASSIST_MODIFIER * (this.strength + this.finesse) / 2;
 
         //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
-        target.tempTrickiness += min(this.trickiness, target.trickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
-        target.tempFocus += max(this.focus, target.focus); 
+        target.tempTrickiness = min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
+        target.tempFocus = max(this.focus, target.tempFocus); 
     }
 
     protect(target) {
