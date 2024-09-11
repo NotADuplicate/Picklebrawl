@@ -40,7 +40,7 @@ class Player {
         this.baseBulk = bulk;
         this.baseAgility = agility;
         this.baseHeight = height;
-        this.baseStrength = strength
+        this.baseStrength = strength;
     }
 
     get name() {

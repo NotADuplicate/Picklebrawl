@@ -5,6 +5,8 @@ export class Karmaclouds extends Weather {
     + "target being applied to them instead";
 
     // TODO: reimplement permanent injury if we decide to do that
+    // TODO: maybe change this to be, like the other weather events, merely a stat change --
+    //       otherwise implementing quirks may get very complicated
 
     REBOUND_DAMAGE_CHANCE = 1/3;
 
