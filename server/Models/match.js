@@ -24,7 +24,7 @@ class Match {
     TURNOVER_CHANCE_MAX = 0.2;
     SHOOTING_DISTANCE_MODIFIER = 0.1;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
-    TRICK_CHANCE = 0.67;
+    TRICK_CHANCE = 1/3;
     ASSIST_MODIFIER = 1;
 
     constructor(homeTeam, awayTeam, weather) {
@@ -207,7 +207,7 @@ class Match {
             let defendAmount = 0;
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Advance") {
-                    if(minTrickiness > player.tempFocus && Math.random() > this.TRICK_CHANCE) { //trickiness check
+                    if(minTrickiness > player.tempFocus && Math.random() < this.TRICK_CHANCE) { //trickiness check
                         console.log(player.name + " was tricked!");
                     }
                     numDefenders++;
@@ -298,7 +298,7 @@ class Match {
             console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Score") {
-                    if(shooter.tempTrickiness > player.tempFocus && Math.random() > this.TRICK_CHANCE) { //trickiness check
+                    if(shooter.tempTrickiness > player.tempFocus && Math.random() < this.TRICK_CHANCE) { //trickiness check
                         console.log(player.name + " was tricked!");
                     }
                     else {
