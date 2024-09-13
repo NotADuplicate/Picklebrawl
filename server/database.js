@@ -62,27 +62,45 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);
 
+    db.run(`DROP TABLE IF EXISTS challenge_players`);
+    db.run(`DROP TABLE IF EXISTS challenges`);
+
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         challenger_team_id INT NOT NULL,
         challenged_team_id INT NOT NULL,
         status VARCHAR(20) DEFAULT 'pending',
+        challenger_players_set BOOLEAN DEFAULT FALSE,
+        challenged_players_set BOOLEAN DEFAULT FALSE,
+        challenger_actions_set BOOLEAN DEFAULT FALSE,
+        challenged_actions_set BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (challenger_team_id) REFERENCES teams(id),
         FOREIGN KEY (challenged_team_id) REFERENCES teams(id)
+    );`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS challenge_players (
+        challenge_id INT NOT NULL,
+        player_id INT NOT NULL,
+        team_id INT NOT NULL,
+        offense_priority TEXT,
+        defense_priority TEXT,
+        offense_target_id INT,
+        defense_target_id INT,
+        FOREIGN KEY (challenge_id) REFERENCES challenges(id),
+        FOREIGN KEY (player_id) REFERENCES players(id),
+        FOREIGN KEY (team_id) REFERENCES teams(id)
     );`);
 
     // Make a table where each row contains a single historical match
     db.run(`CREATE TABLE IF NOT EXISTS matchHistory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        challenger_team_id INT NOT NULL,
-        challenged_team_id INT NOT NULL,
+        challenge_id INT NOT NULL,
         home_team_id INT NOT NULL,
         away_team_id INT NOT NULL,
         home_team_score INT NOT NULL,
         away_team_score INT NOT NULL,
         weather TEXT NOT NULL,
-        FOREIGN KEY (challenger_team_id) REFERENCES teams(id),
-        FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
+        FOREIGN KEY (challenge_id) REFERENCES challenges(id),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id)
     );`);
@@ -103,15 +121,14 @@ db.serialize(() => {
     */
     db.run(`CREATE TABLE IF NOT EXISTS matchTicksHistory (
         tick INTEGER PRIMARY KEY AUTOINCREMENT,
-        possession_team_id INT NOT NULL,
-        ball_position INT NOT NULL,
+        home_team_possession BOOLEAN NOT NULL,
+        ball_position FLOAT NOT NULL,
         home_team_roles INT NOT NULL,
         away_team_roles INT NOT NULL,
         attacks INT NOT NULL,
         score_was_attempted BOOLEAN NOT NULL,
         successful_score BOOLEAN NOT NULL,
         attempted_scorer_player_id INT,
-        FOREIGN KEY (possession_team_id) REFERENCES teams(id),
         FOREIGN KEY (home_team_roles) REFERENCES playedTeamHistory(id),
         FOREIGN KEY (away_team_roles) REFERENCES playedTeamHistory(id),
         FOREIGN KEY (attacks) REFERENCES attackHistory(id),

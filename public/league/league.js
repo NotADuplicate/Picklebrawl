@@ -7,9 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const leagueName = urlParams.get('league');
+    localStorage.setItem('leagueName', leagueName);
     const loggedInUser = localStorage.getItem('loggedInUser');
 
     leagueTitle.textContent = leagueName;
+    let challengerIds = {} //associates each challenge button with the challenger and challenged
+    let challengedIds = {}
 
     // Fetch and display league details
     fetch(`http://localhost:3000/leagues?leagueName=${leagueName}`)
@@ -38,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 teams.forEach(team => {
                     if(team.owner == loggedInUser) {
                         myTeamId = team.id
+                        localStorage.setItem('myTeamId', myTeamId);
                     }
                     const teamDiv = document.createElement('div');
                     teamDiv.className = 'team';
@@ -85,17 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('My team ID:', myTeamId);
             console.log('Challenges:', challenges);
             challenges.forEach(challenge => {
-                if(challenge.challenger_team_id == myTeamId) {
-                    const challengeButton = challengeButtons[challenge.challenged_team_id];
-                    if(challengeButton) {
-                        challengeButton.innerText = 'Pending';
-                        challengeButton.disabled = true;
+                console.log('Chalenge:', challenge.id);
+                console.log(challengeButtons)
+                const otherTeamId = challenge.challenger_team_id !== myTeamId ? challenge.challenger_team_id : challenge.challenged_team_id;
+                const challengeButton = challengeButtons[otherTeamId];
+                if(challengeButton) { //set challenge buttons depending on challenge status
+                    console.log("Challenge button: ", challenge.status)
+                    challengeButton.value = challenge.id;
+                    console.log(challengedIds)
+                    challengedIds[challenge.id] = challenge.challenged_team_id;
+                    challengerIds[challenge.id] = challenge.challenger_team_id;
+                    if(challenge.status === 'pending') {
+                        if(challenge.challenger_team_id == myTeamId) {
+                            challengeButton.innerText = 'Pending';
+                            challengeButton.disabled = true;
+                        }
+                        else {
+                            challengeButton.innerText = 'Accept Challenge';
+                        }
                     }
-                }
-                else {
-                    const challengeButton = challengeButtons[challenge.challenger_team_id];
-                    if (challengeButton) {
-                        challengeButton.innerText = 'Accept Challenge';
+                    else if(challenge.status === 'accepted' ) {
+                        challengeButton.innerText = 'View Challenge';
                     }
                 }
             });
@@ -107,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }   
 
     backButton.addEventListener('click', () => {
-        window.history.back();
+        window.location.href = `../home/home.html`;
     });
 
     // Add event listeners to challenge buttons
@@ -129,13 +143,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else if (button.innerText === 'Accept Challenge') {
             // Accept challenge
-            fetch(`http://localhost:3000/challenges/${teamId}/accept`, {
+            fetch(`http://localhost:3000/challenges/${button.value}/accept`, {
                 method: 'POST'
             })
             .then(response => response.json())
             .then(data => {
-                window.location.href = `../bench/bench.html?teamId=${myTeamId}&otherTeamId=${teamId}`;
+                const challengeId = button.value;
+                window.location.href = `../bench/bench.html?challengedId=${challengedIds[challengeId]}&challengerId=${challengerIds[challengeId]}&challengeId=${challengeId}`;
             });
+        }
+        else if(button.innerText === 'View Challenge') {
+            const challengeId = button.value;
+            window.location.href = `../bench/bench.html?challengedId=${challengedIds[challengeId]}&challengerId=${challengerIds[challengeId]}&challengeId=${challengeId}`;
         }
     }
 

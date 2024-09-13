@@ -41,6 +41,11 @@ ul {
     text-align: center;
 }
 
+.player.locked {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+
 .player:hover {
     background-color: #e0e0e0;
 }

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="bench.css">
 </head>
 <body>
+    <button id="backButton" style="position: absolute; top: 10px; left: 10px;">Back</button>
     <div class="container">
         <div class="team your-team" id="your-team">
             <h2>Your Team</h2>
@@ -21,6 +22,7 @@
         </div>
         <div class="team other-team" id="other-team">
             <h2>Other Team</h2>
+            <div id="other-team-ready" style="text-align: center; font-size: larger;"></div>
             <button class="toggle-button" data-target="other-team-list">▼</button>
             <ul id="other-team-list">
             </ul>
@@ -31,7 +33,7 @@
             </ul>
         </div>
     </div>
-    <button id="lock-button">Lock In All Players</button>
+    <button id="lock-button">Lock In Starters</button>
     <script src="bench.js"></script>
 
     <template id="player-template">

@@ -12,12 +12,12 @@ export class AlphabetCompletionist extends Quirk {
     startGameStatModification(match, player) {
         // Make string of all names
         allNames = '';
-        for(otherPlayer in match.offenseTeam.players) {
+        match.offenseTeam.players.forEach(otherPlayer => {
             allNames.append(otherPlayer.name);
-        }
-        for(otherPlayer in match.defenseTeam.players) {
+        });
+        match.defenseTeam.players.forEach(otherPlayer => {
             allNames.append(otherPlayer.name);
-        }
+        });
         allNames = allNames.toLowerCase();
 
         // Use set to count independent letters
