@@ -63,6 +63,7 @@ class Team {
         for (let i = 0; i < 5; i++) {
             const player = new Player();
             player.randomize_stats(10 + Math.floor(Math.random()*5));
+            //player.distribute_stats(10 + Math.floor(Math.random()*5));
             this.addPlayer(player);
         }
     }

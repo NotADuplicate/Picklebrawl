@@ -1,8 +1,10 @@
 import { Team } from '../Models/team.js';
 import express from 'express';
+import { db } from '../database.js';
 
-const express = require('express');
 const router = express.Router();
+
+console.log('Loading leagues routes');
 
 const insertTeam = (teamName, leagueId, owner, callback) => {
     console.log('Inserting team:', teamName, leagueId, owner);
@@ -119,3 +121,5 @@ router.post('/start-league', (req, res) => {
         });
     });
 });
+
+export default router;

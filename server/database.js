@@ -101,8 +101,6 @@ db.serialize(() => {
         home_team_score INT NOT NULL,
         away_team_score INT NOT NULL,
         weather TEXT NOT NULL,
-        FOREIGN KEY (challenger_team_id) REFERENCES teams(id),
-        FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id)
     );`);

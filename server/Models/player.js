@@ -111,6 +111,36 @@ class Player {
         //console.log(this.bulk, this.scoring, this.height, this.offense);
     }
 
+    distribute_stats(power) {
+        let totalPoints = power;
+        const minPoints = 1;
+        const maxPoints = Math.floor(totalPoints / 2);
+
+        const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
+        const usedIndexes = [];
+
+        while (usedIndexes.length < stats.length) {
+            let index = Math.floor(Math.random() * stats.length);
+            while (usedIndexes.includes(index)) {
+                index = Math.floor(Math.random() * stats.length);
+            }
+            usedIndexes.push(index);
+
+            let points = Math.floor(Math.random() * maxPoints) + minPoints;
+            if (points > totalPoints) {
+                points = totalPoints;
+            }
+            stats[index] += points;
+            totalPoints -= points;
+        }
+        while (totalPoints > 0) {
+            stats[Math.floor(Math.random()*stats.length)] += 1;
+            totalPoints -= 1;
+        }
+        [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
+        //console.log(this.bulk, this.scoring, this.height, this.offense);
+    }
+
     generateName() {
         const sample = arr => arr[Math.floor(Math.random() * arr.length)];
         let name = [];
