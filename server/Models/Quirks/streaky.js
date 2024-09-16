@@ -1,6 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Streaky extends Quirk {
+    title = "Streaky";
     description = ("The player may have either higher or lower stats, recalculated at the start "
     + "of each match");
     STAT_CHANGE = 1

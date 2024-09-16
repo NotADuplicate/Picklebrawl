@@ -59,6 +59,7 @@ db.serialize(() => {
         trickiness INTEGER NOT NULL,
         focus INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
+        quirk TEXT NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);
 
@@ -82,8 +83,8 @@ db.serialize(() => {
         challenge_id INT NOT NULL,
         player_id INT NOT NULL,
         team_id INT NOT NULL,
-        offense_priority TEXT,
-        defense_priority TEXT,
+        offense_action TEXT,
+        defense_action TEXT,
         offense_target_id INT,
         defense_target_id INT,
         FOREIGN KEY (challenge_id) REFERENCES challenges(id),

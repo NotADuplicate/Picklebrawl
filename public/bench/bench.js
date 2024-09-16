@@ -1,3 +1,5 @@
+//import { get } from "request";
+
 const myTeamId = localStorage.getItem('myTeamId');
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -12,18 +14,18 @@ let playerDict = {};
 let startersLocked = false;
 
 const offensePriorities = {
+    Advance: "Target neither",
     Attack: "Target enemy",
     Protect: "Target teammate",
-    Advance: "Target neither",
     Assist: "Target teammate",
     Score: "Target neither",
     Rest: "Target neither"
 };
 
 const defensePriorities = {
+    Defend_Advance: "Target neither",
     Attack: "Target enemy",
     Protect: "Target teammate",
-    Defend_Advance: "Target neither",
     Assist: "Target teammate",
     Defend_Score: "Target neither",
     Rest: "Target neither"
@@ -53,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if(lockButton.textContent === 'Undo') {
             unlockStarters();
+        }
+        else if(lockButton.textContent === 'Lock in actions') {
+            lockActions();
         }
     });
 
@@ -132,7 +137,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId) {
                 targetPlayers.forEach(targetPlayer => {
                     const playerName = targetPlayer.querySelector('div').textContent.trim();
                     const option = document.createElement('option');
-                    option.value = playerName;
+                    option.value = player.dataset.playerId;
                     option.textContent = playerName;
                     targetSelect.appendChild(option);
                 });
@@ -204,23 +209,8 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
                 });
             }
             if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
-                console.log("All players are set");
-                for(let i = 0; i < playerIds.length; i++) {
-                    const id = playerIds[i];
-                    selectPlayer(playerDict[id]);
-                    playerDict[id].dataset.locked = true;
-                    playerDict[id].classList.add('locked');
-                    lockButton.textContent = 'Lock in actions';
-                }
-                const yourTeamPlayers = document.querySelectorAll('.your-team .player');
-                yourTeamPlayers.forEach(player => {
-                    if (player.dataset.location === 'bench') {
-                        const priorityDiv = player.querySelector('.priority');
-                        if (priorityDiv) {
-                            priorityDiv.style.display = 'flex';
-                        }
-                    }
-                });
+                bothTeamsReady(playerIds, lockButton);
+                getActions(response);
             }
             else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) {
                 console.log("Setting players");
@@ -326,7 +316,7 @@ function unlockStarters() {
 }
 
 function selectPlayer(player) {
-    console.log("Selecting player: ", player);
+    //console.log("Selecting player: ", player);
     const currentTeam = player.dataset.team;
     console.log("Current team: ", currentTeam);
     if (player.dataset.locked === 'false') {
@@ -348,5 +338,107 @@ function selectPlayer(player) {
             teamList.appendChild(player);
             player.dataset.location = 'team';
         }
+    }
+}
+
+function lockActions() {
+    const yourTeamPlayers = document.querySelectorAll('.your-team .player');
+            let playerIds = [];
+            let offenseActions = [];
+            let defenseActions = [];
+            let offenseTargets = [];
+            let defenseTargets = [];
+            yourTeamPlayers.forEach(player => {
+                if (player.dataset.location === 'bench') {
+                    playerIds.push(player.dataset.playerId);
+                    const priorityDiv = player.querySelector('.priority');
+                    const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+                    const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+                    const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+                    const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+                    offenseActions.push(offensePrioritySelect.value);
+                    defenseActions.push(defensePrioritySelect.value);
+                    offenseTargets.push(offenseTargetSelect.value);
+                    defenseTargets.push(defenseTargetSelect.value);
+                }
+            });
+            const teamId = myTeamId;
+            const players = playerIds;
+            console.log(players);
+            fetch(`http://localhost:3000/challenges/${challengeId}/add-actions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Actions added successfully:', data);
+                    lockButton.textContent = 'Undo';
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error adding players:', error);
+                });
+}
+
+function bothTeamsReady(playerIds, lockButton) {
+    console.log("All players are set");
+    for(let i = 0; i < playerIds.length; i++) {
+        const id = playerIds[i];
+        selectPlayer(playerDict[id]);
+        playerDict[id].dataset.locked = true;
+        playerDict[id].classList.add('locked');
+        lockButton.textContent = 'Lock in actions';
+    }
+    const yourTeamPlayers = document.querySelectorAll('.your-team .player');
+    yourTeamPlayers.forEach(player => {
+        if (player.dataset.location === 'bench') {
+            const priorityDiv = player.querySelector('.priority');
+            if (priorityDiv) {
+                priorityDiv.style.display = 'flex';
+            }
+        }
+    });
+}
+
+function getActions(response) {
+    console.log("Getting actions");
+    console.log(response);
+    if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
+        console.log("All actions set, starting match");
+    }
+    else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) {
+        console.log("Setting actions");
+        const playerActions = response.playersActions;
+        for(let i = 0; i < playerActions.length; i++) {
+            if(playerActions[i].team_id == myTeamId) {
+                const action = playerActions[i];
+                console.log("Action: ", action);
+                const player = playerDict[action.player_id];
+                console.log("Player: ", player);
+                const priorityDiv = player.querySelector('.priority');
+                console.log(priorityDiv);
+                const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+                const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+                const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+                const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+                offensePrioritySelect.value = action.offense_action;
+                defensePrioritySelect.value = action.defense_action;
+                offenseTargetSelect.value = action.offense_target_id;
+                defenseTargetSelect.value = action.defense_target_id;
+
+                offenseTargetSelect.textContent = playerDict[action.offense_target_id].querySelector('.player-name').textContent;
+                defenseTargetSelect.textContent = playerDict[action.defense_target_id].querySelector('.player-name').textContent;
+                offensePrioritySelect.disabled = true;
+                defensePrioritySelect.disabled = true;
+                offenseTargetSelect.disabled = true;
+                defenseTargetSelect.disabled = true;
+            }
+        }
+        const readyDiv = document.getElementById('other-team-ready');
+        readyDiv.textContent = 'READY';
+        readyDiv.style.color = 'darkgreen';
     }
 }
