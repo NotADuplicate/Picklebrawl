@@ -59,6 +59,7 @@ db.serialize(() => {
         trickiness INTEGER NOT NULL,
         focus INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
+        quirk TEXT NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
     )`);
 

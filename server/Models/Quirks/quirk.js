@@ -1,6 +1,7 @@
 import {Player} from '../player.js';
 
 export class Quirk {
+    title = "Quirk";
     description = "No quirk";
     POWER_MODIFIER = 0; //changes how stats generate
 

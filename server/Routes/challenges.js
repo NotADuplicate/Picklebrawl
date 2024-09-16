@@ -315,23 +315,26 @@ function runMatch(id) {
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const { player_id, offense_action, defense_action, offense_target_id, defense_target_id } = row;
+                console.log(row)
+                console.log(offense_target_id, defense_target_id)
                 const player = new Player();
-                player.load(player_id);
-                player.offensePriority = offense_action;
-                player.defensePriority = defense_action;
-                player.offenseTarget = offense_target_id;
-                player.defenseTarget = defense_target_id;
+                await player.load(player_id);
+                console.log(player.id, player.name, player.bulk, player.finesse, player.height, player.strength, player.trickiness, player.focus, player.quirk)
+                player.setPriorities(offense_action, defense_action, offense_target_id, defense_target_id);
+                console.log(player.offensePriority, player.defensePriority, player.offenseTarget, player.defenseTarget)
                 if(row.team_id == challenger_team_id) {
+                    console.log("Adding player to challenger team: ", player.id , '\n')
                     challengerTeam.addPlayer(player);
                 } else {
+                    console.log("Adding player to challenged team: ", player.id, '\n')
                     challengedTeam.addPlayer(player);
                 }
             }
-            await new Promise(r => setTimeout(r, 2000));
             const match = new Match(challengerTeam, challengedTeam, new Weather());
 
             for(let i = 0; i < 40; i++) {
                 match.tick();
+                await new Promise(r => setTimeout(r, 1000));
             }
         })
     })

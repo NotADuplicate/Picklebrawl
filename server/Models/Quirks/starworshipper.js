@@ -1,6 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class StarWorshipper extends Quirk {
+    title = "Star Worshipper";
     description = ("Worships the stars");
     STAT_BOOST = 1
 

@@ -40,14 +40,18 @@ class Match {
 
         // Loop through offense team players and set offenseTarget to player object
         for (const player of this.offenseTeam.players) {
+            console.log(player.id, player.offensePriority, player.offensePriorityTarget)
             if (player.offensePriorityTarget !== null) {
+                console.log("Looking")
                 player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
             }
         }
 
         // Loop through defense team players and set defenseTarget to player object
         for (const player of this.defenseTeam.players) {
+            console.log(player.defensePriorityTarget);
             if (player.defensePriorityTarget !== null) {
+                console.log("Looking")
                 player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
             }
         }
@@ -55,6 +59,7 @@ class Match {
         // Loop through offense team players and set offenseTarget to player object
         for (const player of this.defenseTeam.players) {
             if (player.offensePriorityTarget !== null) {
+                console.log("Looking")
                 player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
             }
         }
@@ -62,6 +67,7 @@ class Match {
         // Loop through defense team players and set defenseTarget to player object
         for (const player of this.offenseTeam.players) {
             if (player.defensePriorityTarget !== null) {
+                console.log("Looking")
                 player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
             }
         }
@@ -69,19 +75,23 @@ class Match {
 
     // Function to get player object by id
     getPlayerById(id) {
+        console.log("Finding player: " + id);
         for (const player of this.offenseTeam.players) {
             if (player.id === id) {
+                console.log("Found player: " + player.name);
                 return player;
             }
         }
         for (const player of this.defenseTeam.players) {
             if (player.id === id) {
+                console.log("Found player: " + player.name);
                 return player;
             }
         }
     }
 
     tick() { //every game tick
+        this.turnedover = false;
         console.log("Tick " + this.gameTicks);
         console.log(this.offenseTeam.teamName + " " + this.position + " " + this.defenseTeam.teamName);
         this.possessionTicks++;
@@ -94,7 +104,9 @@ class Match {
         this.doPriority("Attack", this.attack, true) //calculate injuries and tick stat decreases
         this.applyInjuries();
         this.doAdvancement();
-        this.doScoring();
+        if(!this.turnedover) {
+            this.doScoring();
+        }
     }
 
     resetTempStats() {
@@ -233,8 +245,10 @@ class Match {
             let numAdvancers = 0;
             let advanceAmount = 0;
             let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
+            let advancingPlayer;
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance") {
+                    advancingPlayer = player;
                     if(player.tempTrickiness < minTrickiness) {minTrickiness = player.trickiness;}
                     numAdvancers++;
                     advanceAmount += Math.random() * (player.strength + player.tempStrength) + 0.1;
@@ -274,7 +288,8 @@ class Match {
             }
             
             this.position += netAdvance;
-            console.log(this.offenseTeam.teamName + " advanced " + netAdvance + " yards!");
+            if(numAdvancers > 1 || numAdvancers == 0) {console.log(this.offenseTeam.teamName + " advanced " + netAdvance + " yards!");}
+            else {console.log(advancingPlayer.name + " advanced " + netAdvance + " yards!");}
 
             // Calculate turnover chance
             let turnoverChance = (this.possessionTicks * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
@@ -291,7 +306,6 @@ class Match {
             }
             else {
                 this.position += advancing;
-                console.log(this.offenseTeam.teamName + " advanced " + advancing + " yards!");
             }
         }
     }
@@ -318,6 +332,7 @@ class Match {
 
     turnover() { 
         console.log("Turnover!");
+        this.turnedover = true;
         this.possessionTicks = 0;
         this.position = this.FIELD_LENGTH - this.position;
         const tempTeam = this.offenseTeam;
@@ -333,11 +348,11 @@ class Match {
             }
         }
         console.log(shooter.name + " is shooting!");
-        console.log(shooter.finesse + " + " + shooter.tempFinesse);
+        //console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
         if(score == null) { //no weather effect, handle scoring as usual
             let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse)
-            console.log("Shooting: " + shooting);
+            //console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend Score") {
                     if(shooter.tempTrickiness > player.tempFocus && Math.random() < this.TRICK_CHANCE) { //trickiness check
@@ -356,6 +371,9 @@ class Match {
             this.offenseTeam.score += 1;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
             this.position = this.FIELD_LENGTH / 2;
+        }
+        else {
+            console.log("Shot missed!\n");
         }
         this.turnover();
     }

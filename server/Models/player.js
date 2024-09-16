@@ -1,4 +1,5 @@
 import {db} from '../database.js';
+import * as quirks from './Quirks/index.js';
 
 class Player {
     name;
@@ -33,6 +34,7 @@ class Player {
 
     tempInjury = 0;
     injury = false;
+    quirk = null;
 
     PLAYER_ASSIST_MODIFIER = 0.8;
 
@@ -65,14 +67,14 @@ class Player {
 
     setPriorities(offense, defense, offenseTarget = null, defenseTarget = null)  {
         console.log(offense + " " + offenseTarget); 
-        if (["Attack", "Advance", "Protect", "Assist", "Score"].includes(offense)) {
+        if (["Attack", "Advance", "Protect", "Assist", "Score", "Rest"].includes(offense)) {
             this.offensePriority = offense;
         }
         else {
             console.log(offense);
             throw new Error("Invalid offense priority");
         }
-        if (["Attack", "Defend Advance", "Protect", "Assist", "Defend Score"].includes(defense)) {
+        if (["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"].includes(defense)) {
             this.defensePriority = defense;
         }
         else {
@@ -86,8 +88,8 @@ class Player {
     save(callback, teamId) {
         const self = this;
         console.log("Saving player : " + this.name);
-        db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
-            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus], function(err) {
+        db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirk.title], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return cb(err);
@@ -96,9 +98,17 @@ class Player {
         });
     }
 
+    pickRandomQuirk() {
+        const quirkKeys = Object.keys(quirks);
+        const randomKey = quirkKeys[Math.floor(Math.random() * quirkKeys.length)];
+        const quirkClass = quirks[randomKey];
+        this.quirk = new quirkClass();
+        console.log(`Picked quirk: ${this.quirk.title}`);
+    }
+
     randomize_stats(power) {
         //return; // Disable randomization for now
-        const totalPoints = power;
+        const totalPoints = power + this.quirk.POWER_MODIFIER;
         const minPoints = 1;
         const maxPoints = Math.floor(totalPoints / 5);
 
@@ -108,6 +118,7 @@ class Player {
             stats[Math.floor(Math.random()*stats.length)] += 1;
         }
         [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
+        this.quirk.playerStatGenerationChanges(this, power);
         //console.log(this.bulk, this.scoring, this.height, this.offense);
     }
 
@@ -208,15 +219,16 @@ class Player {
     }
 
     attack(target, INJURY_PERMANENCE_MODIFIER) {
-        console.log(this.name + " is attacking " + target.name); 
         const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
         const defense = Math.floor(Math.random() * (target.bulk + target.protectBulk));
         const finalDamage = damage - defense;
         if (finalDamage < 0) {
-            console.log(target.name + " defended the attack");
+            //console.log(target.name + " defended the attack");
             return;
         }
-        console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
+        if(finalDamage > 0.5) {
+            console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
+        }
         target.tempInjury += finalDamage;
         // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER
         /*if(Math.random() < finalDamage*0.1) {
@@ -226,14 +238,17 @@ class Player {
     }
 
     assist(target, modifier) {
+        if(Math.random() < 0.1) {
+            console.log(this.name, " is assisting ", target.name);
+        }
         target.tempBulk += modifier * this.PLAYER_ASSIST_MODIFIER * (this.bulk + this.finesse) / 2;
         target.tempFinesse += modifier * this.PLAYER_ASSIST_MODIFIER * this.finesse;
         target.tempHeight += modifier * this.PLAYER_ASSIST_MODIFIER * (this.height + this.finesse) / 2;
         target.tempStrength += modifier * this.PLAYER_ASSIST_MODIFIER * (this.strength + this.finesse) / 2;
 
         //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
-        target.tempTrickiness = min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
-        target.tempFocus = max(this.focus, target.tempFocus); 
+        target.tempTrickiness = Math.min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
+        target.tempFocus = Math.max(this.focus, target.tempFocus); 
     }
 
     protect(target) {
@@ -241,6 +256,7 @@ class Player {
     }
 
     load(id) {
+        this.id = id;
         const self = this;
         console.log("Loading player with id: " + id);
         db.get(`SELECT * FROM players WHERE id = ?`, [id], function(err, row) {
@@ -249,13 +265,13 @@ class Player {
                 return cb(err);
             }
             if (row) {
-                console.log("Player row: ", row)
-                self.id = row.id;
+                //console.log("Player row: ", row)
                 self.name = row.name;
                 console.log("Loaded player: " + self.name);
                 self.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus);
             }
         });
+        console.log("My id: ", this.id)
     }
 }
 

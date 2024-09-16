@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${player.strength}</td>
                         <td>${player.trickiness}</td>
                         <td>${player.focus}</td>
+                        <td>${player.quirk}</td>
                     `;
                     playersListElement.appendChild(row);
                 });
