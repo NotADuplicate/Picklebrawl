@@ -9,14 +9,20 @@ class Team {
     leagueId;
     scoreRange = 30;
 
-    constructor(teamName, owner, leagueId, generatePlayers = true) {
-        this.teamName = teamName;
-        this.owner = owner;
-        this.leagueId = leagueId;
+    constructor(teamName, owner, leagueId, loadTeamId, generatePlayers = true) {
+        console.log(loadTeamId);
         this.players = [];
-        console.log("NEW TEAM: " + teamName);
-        if (generatePlayers) 
-            this.generatePlayers();
+        if(loadTeamId != null) {
+            this.load(loadTeamId);
+        }
+        else {
+            this.teamName = teamName;
+            this.owner = owner;
+            this.leagueId = leagueId;
+            console.log("NEW TEAM: " + teamName);
+            if (generatePlayers) 
+                this.generatePlayers();
+        }
     }
 
     save(callback) {
@@ -52,7 +58,7 @@ class Team {
 
     addPlayer(player) {
         this.players.push(player);
-        console.log(player.bulk + " " + player.finesse + " " + player.height + " " + player.strength);
+        console.log("Team added player: " + player.bulk + " " + player.finesse + " " + player.height + " " + player.strength);
     }
 
     getPlayers() {
@@ -66,6 +72,21 @@ class Team {
             //player.distribute_stats(10 + Math.floor(Math.random()*5));
             this.addPlayer(player);
         }
+    }
+
+    load(id) {
+        const self = this;
+        db.get(`SELECT * FROM teams WHERE id = ?`, [id], (err, row) => {
+            if (err) {
+                console.log("Error loading team: " + err);
+                return;
+            }
+
+            self.teamName = row.name;
+            self.owner = row.owner;
+            self.leagueId = row.league_id;
+            console.log("Loaded team: " + self.teamName);
+        });
     }
 }
 export {Team};

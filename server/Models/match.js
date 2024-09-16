@@ -37,6 +37,48 @@ class Match {
         this.weather = weather;
         console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
         this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
+
+        // Loop through offense team players and set offenseTarget to player object
+        for (const player of this.offenseTeam.players) {
+            if (player.offensePriorityTarget !== null) {
+                player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
+            }
+        }
+
+        // Loop through defense team players and set defenseTarget to player object
+        for (const player of this.defenseTeam.players) {
+            if (player.defensePriorityTarget !== null) {
+                player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
+            }
+        }
+
+        // Loop through offense team players and set offenseTarget to player object
+        for (const player of this.defenseTeam.players) {
+            if (player.offensePriorityTarget !== null) {
+                player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
+            }
+        }
+
+        // Loop through defense team players and set defenseTarget to player object
+        for (const player of this.offenseTeam.players) {
+            if (player.defensePriorityTarget !== null) {
+                player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
+            }
+        }
+    }
+
+    // Function to get player object by id
+    getPlayerById(id) {
+        for (const player of this.offenseTeam.players) {
+            if (player.id === id) {
+                return player;
+            }
+        }
+        for (const player of this.defenseTeam.players) {
+            if (player.id === id) {
+                return player;
+            }
+        }
     }
 
     tick() { //every game tick
@@ -290,7 +332,7 @@ class Match {
                 numShooters++;
             }
         }
-        console.log(this.offenseTeam.teamName + " is shooting!");
+        console.log(shooter.name + " is shooting!");
         console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
         if(score == null) { //no weather effect, handle scoring as usual

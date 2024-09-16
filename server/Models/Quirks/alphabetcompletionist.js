@@ -2,7 +2,8 @@ import { Quirk } from './quirk.js';
 
 export class AlphabetCompletionist extends Quirk {
     description = ("Stats decrease for each letter not included in the names of each player in the match");
-    STAT_GENERATION_INCREASE = 3;
+    POWER_MODIFIER = 3;
+    BASE_STAT_INCREASE = 2;
     STAT_DECREASE = 1;
 
     playerStatGenerationChanges(player) {

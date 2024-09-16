@@ -147,10 +147,13 @@ class Player {
         if (Math.floor(Math.random() * 3) !== 1) {
             if (name.length === 0) {
                 if (Math.floor(Math.random() * 2) === 1) {
-                    name.push(sample('WWRRRTTYPPPPSSSDDDDDFFGGHJJJJJKLLZZXCVBBBBNNMMMQ'));
+                    name.push(sample([
+                        'W', 'W', 'R', 'R', 'R', 'T', 'T', 'Y', 'P', 'P', 'P', 'P', 'S', 'S', 'S', 'D',
+                        'D', 'D', 'D', 'D', 'F', 'F', 'G', 'G', 'H', 'J', 'J', 'J', 'J', 'J', 'K', 'L',
+                        'L', 'Z', 'Z', 'X', 'C', 'V', 'B', 'B', 'B', 'B', 'N', 'N', 'M', 'M', 'M', 'M', 'Qu']));
                 } else {
-                    name.push(sample('QWTPPPPSDFFGGKZZCCCVBBBB'));
-                    if (name[0] === 'W') {
+                    name.push(sample('WTPPPPSDFFGGKZZCCCVBBBB'));
+                    if (['W', 'Z'].includes(name[0])) {
                         name.push(sample('rh'));
                     } else if (['T', 'P', 'C', 'B'].includes(name[0])) {
                         name.push(sample('rhl'));
@@ -235,6 +238,24 @@ class Player {
 
     protect(target) {
         target.protectBulk += this.height*0.8;
+    }
+
+    load(id) {
+        const self = this;
+        console.log("Loading player with id: " + id);
+        db.get(`SELECT * FROM players WHERE id = ?`, [id], function(err, row) {
+            if (err) {
+                console.log("Error loading player: " + err);
+                return cb(err);
+            }
+            if (row) {
+                console.log("Player row: ", row)
+                self.id = row.id;
+                self.name = row.name;
+                console.log("Loaded player: " + self.name);
+                self.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus);
+            }
+        });
     }
 }
 
