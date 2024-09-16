@@ -1,6 +1,7 @@
 import { Weather } from './weather.js';
 
 export class Snowy extends Weather {
+    name = "Snowy";
     description = "Advancing is more difficult, chance for turnover slightly higher";
 
     startGameEffect(match, offenseTeam, defenseTeam) {

@@ -1,6 +1,7 @@
 import { Weather } from './weather.js';
 
 export class Spacewarp extends Weather {
+    name = "Space warp";
     description = "The field becomes 150% as long";
 
     startGameEffect(match, offenseTeam, defenseTeam) {

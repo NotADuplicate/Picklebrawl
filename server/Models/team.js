@@ -6,6 +6,7 @@ class Team {
     score;
     teamName;
     owner;
+    teamId;
     leagueId;
     scoreRange = 30;
 
@@ -28,13 +29,13 @@ class Team {
                 return callback(err);
             }
 
-            const teamId = this.lastID;
+            self.teamId = this.lastID;
             console.log("Team ID: " + teamId);
 
             // Save players and associate them with the team
             const savePlayer = (player, cb) => {
                 console.log("Saving player : " + player.name);
-                player.save(cb, teamId);
+                player.save(cb, self.teamID);
             };
 
             for (let i = 0; i < self.players.length; i++) {

@@ -2,6 +2,7 @@ import {Player} from '../player.js';
 import {Team} from '../team.js';
 export class Weather {
     description = "No weather effect";
+    name = "No name";
 
     startGameEffect(match, offenseTeam, defenseTeam) {
         console.log("No weather effect\n\n\n");
