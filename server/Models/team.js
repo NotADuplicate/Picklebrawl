@@ -36,12 +36,12 @@ class Team {
             }
 
             self.teamId = this.lastID;
-            console.log("Team ID: " + teamId);
+            console.log("Team ID: " + self.teamId);
 
             // Save players and associate them with the team
             const savePlayer = (player, cb) => {
                 console.log("Saving player : " + player.name);
-                player.save(cb, self.teamID);
+                player.save(cb, self.teamId);
             };
 
             for (let i = 0; i < self.players.length; i++) {
