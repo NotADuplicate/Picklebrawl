@@ -6,6 +6,7 @@ class Team {
     score;
     teamName;
     owner;
+    teamId;
     leagueId;
     scoreRange = 20;
 
@@ -34,13 +35,13 @@ class Team {
                 return callback(err);
             }
 
-            const teamId = this.lastID;
-            console.log("Team ID: " + teamId);
+            self.teamId = this.lastID;
+            console.log("Team ID: " + self.teamId);
 
             // Save players and associate them with the team
             const savePlayer = (player, cb) => {
                 console.log("Saving player : " + player.name);
-                player.save(cb, teamId);
+                player.save(cb, self.teamId);
             };
 
             for (let i = 0; i < self.players.length; i++) {
@@ -77,6 +78,7 @@ class Team {
 
     load(id) {
         const self = this;
+        console.log("Trying to load")
         db.get(`SELECT * FROM teams WHERE id = ?`, [id], (err, row) => {
             if (err) {
                 console.log("Error loading team: " + err);
@@ -88,6 +90,7 @@ class Team {
             self.leagueId = row.league_id;
             console.log("Loaded team: " + self.teamName);
         });
+        console.log("Finished loading db command")
     }
 }
 export {Team};

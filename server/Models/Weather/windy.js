@@ -1,6 +1,7 @@
 import { Weather } from './weather.js';
 
 export class Windy extends Weather {
+    name = "Windy";
     description = "Scoring is more difficult from range";
 
     startGameEffect(match, offenseTeam, defenseTeam) {

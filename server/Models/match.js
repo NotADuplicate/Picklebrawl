@@ -1,4 +1,5 @@
 import e from 'express';
+import {db} from '../database.js';
 import {Player} from './player.js';
 import {Team} from './team.js';
 import * as Weather from './Weather/weather.js';
@@ -12,8 +13,10 @@ class Match {
     possessionTicks = 0;
     gameTicks = 0;
     weather;
+    match_id;
 
     // CONSTANTS
+    GAME_LENGTH = 40;    // number of ticks to play the game for
     FIELD_LENGTH = 100;
     MULTIPLE_ADVANCERS_REDUCTION = 0.8;
     NO_ADVANCERS_MAX_ADVANCEMENT = 2;
@@ -88,6 +91,18 @@ class Match {
                 return player;
             }
         }
+
+        const self = this;
+        db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, weather) 
+                VALUES (?, ?, ?, ?, ?)`, [homeTeam.leagueID, homeTeam.team_id, awayTeam.team_id,
+                weather.name], function(err) {
+            if (err) {
+                console.error('Error inserting match:', err.message);
+                return;
+            }
+            self.match_id = this.lastID;
+        });
+
     }
 
     tick() { //every game tick
@@ -106,6 +121,25 @@ class Match {
         this.doAdvancement();
         if(!this.turnedover) {
             this.doScoring();
+        }
+
+        db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position) 
+            VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.team_id,
+                this.position], function(err) {
+            if (err) {
+                console.error('Error inserting match_ticks_history:', err.message);
+            }
+        });
+
+        if(this.gameTicks == this.GAME_LENGTH - 1) {
+            db.run(`UPDATE match_history SET home_team_score = ?, away_team_score = ? WHERE id = ?`,
+                [this.homeTeam.score, this.awayTeam.score, this.match_id],
+                function(err) {
+                    if (err) {
+                        console.error('Error updating scores in match_history:', err.message);
+                    }
+                }
+            )
         }
     }
 

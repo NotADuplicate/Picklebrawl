@@ -1,8 +1,6 @@
 import { Team } from '../server/Models/team.js'; // Adjust the path as necessary
 import { Player } from '../server/Models/player.js'; // Adjust the path as necessary
 import { Match } from '../server/Models/match.js'; // Adjust the path as necessary
-//import { Windy } from '../server/Models/Weather/windy.js'; // Adjust the path as necessary
-//import { Snowy } from '../server/Models/Weather/snowy.js'; // Adjust the path as necessary
 import * as weather from '../server/Models/Weather/index.js'
 import { use } from 'chai';
 

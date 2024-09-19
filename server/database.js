@@ -105,11 +105,11 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
-        challenge_id INT NOT NULL,
+        challenge_id INT,
         home_team_id INT NOT NULL,
         away_team_id INT NOT NULL,
-        home_team_score INT NOT NULL,
-        away_team_score INT NOT NULL,
+        home_team_score INT,
+        away_team_score INT,
         weather TEXT NOT NULL,
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id)

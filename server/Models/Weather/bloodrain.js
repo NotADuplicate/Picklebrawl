@@ -1,6 +1,7 @@
 import { Weather } from './weather.js';
 
 export class Bloodrain extends Weather {
+    name = "Bloodrain";
     description = "Violence is increased: injuries are more likely to be permanent";
 
     // TODO: once quirks are added, make it secretly power up vampires

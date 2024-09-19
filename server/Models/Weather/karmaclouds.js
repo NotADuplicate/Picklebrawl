@@ -1,6 +1,7 @@
 import { Weather } from './weather.js';
 
 export class Karmaclouds extends Weather {
+    name = "Karma clouds";
     description = "Attackers have a 1/3 chance of damage that would otherwise be applied to their "
     + "target being applied to them instead";
 
