@@ -49,6 +49,13 @@ db.serialize(() => {
         FOREIGN KEY (username) REFERENCES users(username)
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS quirks (
+        id INTEGER PRIMARY KEY NOT NULL,
+        title TEXT UNIQUE NOT NULL,
+        description TEXT NOT NULL,
+        power_modifier INTEGER
+    )`);
+
     db.run(`CREATE TABLE IF NOT EXISTS players (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -59,8 +66,9 @@ db.serialize(() => {
         trickiness INTEGER NOT NULL,
         focus INTEGER NOT NULL,
         team_id INTEGER NOT NULL,
-        quirk TEXT NOT NULL,
+        quirk INT NOT NULL,
         FOREIGN KEY (team_id) REFERENCES teams(id)
+        FOREIGN KEY (quirk) REFERENCES quirks(id)
     )`);
 
     //db.run(`DROP TABLE IF EXISTS challenge_players`);
@@ -90,6 +98,7 @@ db.serialize(() => {
         FOREIGN KEY (challenge_id) REFERENCES challenges(id),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (team_id) REFERENCES teams(id)
+        UNIQUE (challenge_id, player_id)
     );`);
 
     // Make a table where each row contains a single historical match

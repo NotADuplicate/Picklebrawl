@@ -4,6 +4,7 @@ import * as quirks from './Quirks/index.js';
 class Player {
     name;
     id;
+    quirkId;
 
     bulk = 1;
     finesse = 1;
@@ -89,10 +90,10 @@ class Player {
         const self = this;
         console.log("Saving player : " + this.name);
         db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirk.title], function(err) {
+            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
-                return cb(err);
+                return callback(err);
             }
             callback(null);
         });
@@ -100,8 +101,10 @@ class Player {
 
     pickRandomQuirk() {
         const quirkKeys = Object.keys(quirks);
-        const randomKey = quirkKeys[Math.floor(Math.random() * quirkKeys.length)];
+        this.quirkId = Math.floor(Math.random() * quirkKeys.length);
+        const randomKey = quirkKeys[this.quirkId];
         const quirkClass = quirks[randomKey];
+        console.log("Quirk id: " + this.quirkId);
         this.quirk = new quirkClass();
         console.log(`Picked quirk: ${this.quirk.title}`);
     }
@@ -109,8 +112,6 @@ class Player {
     randomize_stats(power) {
         //return; // Disable randomization for now
         const totalPoints = power + this.quirk.POWER_MODIFIER;
-        const minPoints = 1;
-        const maxPoints = Math.floor(totalPoints / 5);
 
         const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
 
@@ -119,37 +120,6 @@ class Player {
         }
         [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
         this.quirk.playerStatGenerationChanges(this, power);
-        //console.log(this.bulk, this.scoring, this.height, this.offense);
-    }
-
-    distribute_stats(power) {
-        let totalPoints = power;
-        const minPoints = 1;
-        const maxPoints = Math.floor(totalPoints / 2);
-
-        const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
-        const usedIndexes = [];
-
-        while (usedIndexes.length < stats.length) {
-            let index = Math.floor(Math.random() * stats.length);
-            while (usedIndexes.includes(index)) {
-                index = Math.floor(Math.random() * stats.length);
-            }
-            usedIndexes.push(index);
-
-            let points = Math.floor(Math.random() * maxPoints) + minPoints;
-            if (points > totalPoints) {
-                points = totalPoints;
-            }
-            stats[index] += points;
-            totalPoints -= points;
-        }
-        while (totalPoints > 0) {
-            stats[Math.floor(Math.random()*stats.length)] += 1;
-            totalPoints -= 1;
-        }
-        [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
-        //console.log(this.bulk, this.scoring, this.height, this.offense);
     }
 
     generateName() {
@@ -223,7 +193,6 @@ class Player {
         const defense = Math.floor(Math.random() * (target.bulk + target.protectBulk));
         const finalDamage = damage - defense;
         if (finalDamage < 0) {
-            //console.log(target.name + " defended the attack");
             return;
         }
         if(finalDamage > 0.5) {
@@ -257,21 +226,25 @@ class Player {
 
     load(id) {
         this.id = id;
-        const self = this;
         console.log("Loading player with id: " + id);
-        db.get(`SELECT * FROM players WHERE id = ?`, [id], function(err, row) {
-            if (err) {
-                console.log("Error loading player: " + err);
-                return cb(err);
-            }
-            if (row) {
-                //console.log("Player row: ", row)
-                self.name = row.name;
-                console.log("Loaded player: " + self.name);
-                self.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus);
-            }
+        return new Promise((resolve, reject) => {
+            db.get(`SELECT * FROM players WHERE id = ?`, [id], (err, row) => {
+                if (err) {
+                    console.log("Error loading player: " + err);
+                    return reject(err);
+                }
+                if (row) {
+                    this.name = row.name;
+                    console.log("Loaded player: " + this.name);
+                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus);
+                    resolve(this); // Resolve with the player instance
+                } else {
+                    // Handle case where no player is found
+                    console.log(`No player found with id: ${id}`);
+                    resolve(null); // Or reject with an error if preferred
+                }
+            });
         });
-        console.log("My id: ", this.id)
     }
 }
 

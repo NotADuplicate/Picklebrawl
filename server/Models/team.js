@@ -10,7 +10,7 @@ class Team {
     scoreRange = 20;
 
     constructor(teamName, owner, leagueId, loadTeamId, generatePlayers = true) {
-        console.log(loadTeamId);
+        console.log("Team id: ", loadTeamId);
         this.players = [];
         if(loadTeamId != null) {
             this.load(loadTeamId);
@@ -66,7 +66,7 @@ class Team {
     }
 
     generatePlayers() {
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 5; i++) {
             const player = new Player();
             player.pickRandomQuirk();
             player.randomize_stats(10 + Math.floor(Math.random()*5));

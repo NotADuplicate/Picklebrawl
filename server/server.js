@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { db } from './database.js';
 import { Team } from './Models/team.js';
 import leagueRoutes from './routes/leagues.js';
+import { QuirkGenerator } from './quirkGenerator.js';
 import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
 
@@ -20,6 +21,8 @@ app.use(bodyParser.json());
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
+
+QuirkGenerator.loadQuirks();
 
 // Use routers
 app.use('/', leagueRoutes);

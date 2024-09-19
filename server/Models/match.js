@@ -247,7 +247,7 @@ class Match {
             let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
             let advancingPlayer;
             for (const player of this.offenseTeam.players) {
-                if(player.offensePriority === "Advance") {
+                if(player.offensePriority === "Advance" && this.turnedover == false) {
                     advancingPlayer = player;
                     if(player.tempTrickiness < minTrickiness) {minTrickiness = player.trickiness;}
                     numAdvancers++;
@@ -262,7 +262,7 @@ class Match {
             let numDefenders = 0;
             let defendAmount = 0;
             for (const player of this.defenseTeam.players) {
-                if(player.defensePriority === "Defend Advance") {
+                if(player.defensePriority === "Defend_Advance") {
                     if(minTrickiness > player.tempFocus && Math.random() < this.TRICK_CHANCE) { //trickiness check
                         console.log(player.name + " was tricked!");
                     }
@@ -354,7 +354,7 @@ class Match {
             let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse)
             //console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
-                if(player.defensePriority === "Defend Score") {
+                if(player.defensePriority === "Defend_Score") {
                     if(shooter.tempTrickiness > player.tempFocus && Math.random() < this.TRICK_CHANCE) { //trickiness check
                         console.log(player.name + " was tricked!");
                     }

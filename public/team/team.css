@@ -1,0 +1,55 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+#team-details {
+    margin-top: 20px;
+}
+#players-table {
+    width: 80%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+#players-table th, #players-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: left;
+}
+#players-table th {
+    background-color: #f2f2f2;
+}
+
+.tooltip {
+    position: relative;
+    cursor: pointer; /* Indicates interactivity */
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: auto; /* Adjust as needed */
+    min-width: 200px; /* Set a minimum width */
+    max-width: 500px; /* Set a maximum width */
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    
+    /* Positioning */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%; /* Position above the text */
+    left: 50%;
+    transform: translateX(-50%); /* Centers the tooltip horizontally */
+    
+    /* Fade-in effect */
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }

@@ -29,7 +29,10 @@ router.get('/teams/:teamId', (req, res) => {
 router.get('/teams/:teamId/players', (req, res) => {
     console.log("Getting players");
     const teamId = req.params.teamId;
-    db.all(`SELECT * FROM players WHERE team_id = ?`, [teamId], (err, players) => {
+    db.all(`SELECT players.*, quirks.description AS quirk_description, quirks.title AS quirk_title 
+            FROM players 
+            INNER JOIN quirks ON players.quirk = quirks.id 
+            WHERE team_id = ?`, [teamId], (err, players) => {
         if (err) {
             console.log("Error fetching players:", err);
             return res.status(500).json({ message: 'Error fetching players!' });
