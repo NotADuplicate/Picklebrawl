@@ -93,7 +93,7 @@ class Match {
         }
 
         const self = this;
-        db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, weather) 
+        /*db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, weather) 
                 VALUES (?, ?, ?, ?, ?)`, [homeTeam.leagueID, homeTeam.team_id, awayTeam.team_id,
                 weather.name], function(err) {
             if (err) {
@@ -101,7 +101,7 @@ class Match {
                 return;
             }
             self.match_id = this.lastID;
-        });
+        });*/
 
     }
 
@@ -123,7 +123,7 @@ class Match {
             this.doScoring();
         }
 
-        db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position) 
+        /*db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position) 
             VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.team_id,
                 this.position], function(err) {
             if (err) {
@@ -131,7 +131,12 @@ class Match {
             }
         });
 
-        if(this.gameTicks == this.GAME_LENGTH - 1) {
+       */ if(this.gameTicks == this.GAME_LENGTH) {
+            console.log("Game over!");
+            console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
+            //this.endGame();
+        }
+       /*
             db.run(`UPDATE match_history SET home_team_score = ?, away_team_score = ? WHERE id = ?`,
                 [this.homeTeam.score, this.awayTeam.score, this.match_id],
                 function(err) {
@@ -139,8 +144,7 @@ class Match {
                         console.error('Error updating scores in match_history:', err.message);
                     }
                 }
-            )
-        }
+            )*/
     }
 
     resetTempStats() {
