@@ -331,10 +331,11 @@ function runMatch(id) {
                 }
             }
             const match = new Match(challengerTeam, challengedTeam, new Weather());
+            match.startGame();
 
-            for(let i = 0; i < 40; i++) {
+            for(let i = 0; i < 100; i++) {
                 match.tick();
-                await new Promise(r => setTimeout(r, 100));
+                //await new Promise(r => setTimeout(r, 100));
             }
         })
     })

@@ -25,6 +25,11 @@ class Player {
     offensePriorityTarget = null;
     defensePriorityTarget = null;
 
+    savedOffensePriority = "";
+    savedDefensePriority = "";
+    savedOffensePriorityTarget = null;
+    savedDefensePriorityTarget = null;
+
     tempBulk = 0;
     tempFinesse = 0;
     tempHeight = 0;
@@ -70,6 +75,7 @@ class Player {
         console.log(offense + " " + offenseTarget); 
         if (["Attack", "Advance", "Protect", "Assist", "Score", "Rest"].includes(offense)) {
             this.offensePriority = offense;
+            this.savedOffensePriority = offense;
         }
         else {
             console.log(offense);
@@ -77,6 +83,7 @@ class Player {
         }
         if (["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"].includes(defense)) {
             this.defensePriority = defense;
+            this.savedDefensePriority = defense;
         }
         else {
             console.log(defense);
@@ -101,7 +108,7 @@ class Player {
 
     pickRandomQuirk() {
         const quirkKeys = Object.keys(quirks);
-        this.quirkId = Math.floor(Math.random() * quirkKeys.length);
+        this.quirkId = 11;//Math.floor(Math.random() * quirkKeys.length);
         const randomKey = quirkKeys[this.quirkId];
         const quirkClass = quirks[randomKey];
         console.log("Quirk id: " + this.quirkId);
@@ -190,13 +197,15 @@ class Player {
 
     attack(target, INJURY_PERMANENCE_MODIFIER) {
         const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
-        const defense = Math.floor(Math.random() * (target.bulk + target.protectBulk));
+        const defense = Math.min(100, Math.floor(Math.random() * (target.bulk + target.protectBulk)));
         const finalDamage = damage - defense;
         if (finalDamage < 0) {
             return;
         }
-        if(finalDamage > 0.5) {
+        if(finalDamage > 5) {
             console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
+            console.log("Strength: " + this.strength + " Temp Strength: " + this.tempStrength);
+            console.log("Bulk: " + target.bulk + " Protect Bulk: " + target.protectBulk);
         }
         target.tempInjury += finalDamage;
         // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER

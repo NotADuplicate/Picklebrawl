@@ -14,9 +14,14 @@ class Match {
     gameTicks = 0;
     weather;
     match_id;
+    possessionLengths = [];
+    homeAdvancements = [];
+    awayAdvancements = [];
+    shotsAttempted = 0;
+    players;
 
     // CONSTANTS
-    GAME_LENGTH = 40;    // number of ticks to play the game for
+    GAME_LENGTH = 100;    // number of ticks to play the game for
     FIELD_LENGTH = 100;
     MULTIPLE_ADVANCERS_REDUCTION = 0.8;
     NO_ADVANCERS_MAX_ADVANCEMENT = 2;
@@ -31,6 +36,7 @@ class Match {
     ASSIST_MODIFIER = 1;
 
     constructor(homeTeam, awayTeam, weather) {
+        console.log("\n\n\n\n\n\n");
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.homeTeam.score = 0;
@@ -38,74 +44,76 @@ class Match {
         this.offenseTeam = this.homeTeam;
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
+    }
+
+    setTargets() {
+        // Loop through offense team players and set offenseTarget to player object
+        for (const player of this.players) {
+            console.log(player.name, player.id, player.offensePriority, player.offensePriorityTarget)
+            if (player.offensePriorityTarget !== null) {
+                player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
+                player.savedOffensePriorityTarget = player.offensePriorityTarget;
+            }
+            if (player.defensePriorityTarget !== null) {
+                player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
+                player.savedDefensePriorityTarget = player.defensePriorityTarget;
+            }
+        }
+    }
+
+    savePriorities() {
+        // Loop through offense team players and save their priorities
+        for (const player of this.players) {
+            player.savedOffensePriority = player.offensePriority;
+            player.savedOffensePriorityTarget = player.offensePriorityTarget;
+            if(player.offensePriority == "Rest") {
+                player.baseBulk *= 1.5;
+                player.baseFinesse *= 1.5;
+                player.baseHeight *= 1.5;
+                player.baseStrength *= 1.5;
+            }
+            player.savedDefensePriority = player.defensePriority;
+            player.savedDefensePriorityTarget = player.defensePriorityTarget;
+            if(player.defensePriority == "Rest") {
+                player.baseBulk *= 1.5;
+                player.baseFinesse *= 1.5;
+                player.baseHeight *= 1.5;
+                player.baseStrength *= 1.5;
+            }
+        }
+    }
+
+    startGame() {
+        this.players = this.homeTeam.players.concat(this.awayTeam.players);
         console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
+        this.setTargets();
+        this.savePriorities();
         this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
+    }
 
-        // Loop through offense team players and set offenseTarget to player object
-        for (const player of this.offenseTeam.players) {
-            console.log(player.id, player.offensePriority, player.offensePriorityTarget)
-            if (player.offensePriorityTarget !== null) {
-                console.log("Looking")
-                player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
-            }
-        }
-
-        // Loop through defense team players and set defenseTarget to player object
-        for (const player of this.defenseTeam.players) {
-            console.log(player.defensePriorityTarget);
-            if (player.defensePriorityTarget !== null) {
-                console.log("Looking")
-                player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
-            }
-        }
-
-        // Loop through offense team players and set offenseTarget to player object
-        for (const player of this.defenseTeam.players) {
-            if (player.offensePriorityTarget !== null) {
-                console.log("Looking")
-                player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
-            }
-        }
-
-        // Loop through defense team players and set defenseTarget to player object
-        for (const player of this.offenseTeam.players) {
-            if (player.defensePriorityTarget !== null) {
-                console.log("Looking")
-                player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
-            }
-        }
+    endGame() {
+        console.log("Game over!");
+        console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
+        console.log("Possession lengths: " + this.possessionLengths);
+        console.log("Average possession length: " + this.possessionLengths.reduce((a, b) => a + b, 0) / this.possessionLengths.length);
+        console.log("Shots attempted: " + this.shotsAttempted);
+        console.log("Average " + this.offenseTeam.teamName + " advancement: " + this.homeAdvancements.reduce((a, b) => a + b, 0) / this.homeAdvancements.length);
+        console.log("Average " + this.defenseTeam.teamName + " advancement: " + this.awayAdvancements.reduce((a, b) => a + b, 0) / this.awayAdvancements.length);
     }
 
     // Function to get player object by id
     getPlayerById(id) {
         console.log("Finding player: " + id);
-        for (const player of this.offenseTeam.players) {
+        for (const player of this.players) {
             if (player.id === id) {
                 console.log("Found player: " + player.name);
                 return player;
             }
         }
-        for (const player of this.defenseTeam.players) {
-            if (player.id === id) {
-                console.log("Found player: " + player.name);
-                return player;
-            }
-        }
-
-        const self = this;
-        /*db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, weather) 
-                VALUES (?, ?, ?, ?, ?)`, [homeTeam.leagueID, homeTeam.team_id, awayTeam.team_id,
-                weather.name], function(err) {
-            if (err) {
-                console.error('Error inserting match:', err.message);
-                return;
-            }
-            self.match_id = this.lastID;
-        });*/
-
     }
 
     tick() { //every game tick
+        console.log("");
         this.turnedover = false;
         console.log("Tick " + this.gameTicks);
         console.log(this.offenseTeam.teamName + " " + this.position + " " + this.defenseTeam.teamName);
@@ -113,6 +121,7 @@ class Match {
         this.gameTicks++;
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.resetTempStats();
+        this.setRandomPriorities(); //randomly change priorities
         this.doPriority("Assist", this.assist, true) //calculate assists and add temp stats to player
         this.doPriority("Protect", this.protect, true) //calculate protection and add ProtectBulk to player 
         this.resetInjuries();
@@ -123,28 +132,36 @@ class Match {
             this.doScoring();
         }
 
-        /*db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position) 
-            VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.team_id,
-                this.position], function(err) {
-            if (err) {
-                console.error('Error inserting match_ticks_history:', err.message);
-            }
-        });
-
-       */ if(this.gameTicks == this.GAME_LENGTH) {
-            console.log("Game over!");
-            console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-            //this.endGame();
+       if(this.gameTicks == this.GAME_LENGTH) {
+            this.endGame();
         }
-       /*
-            db.run(`UPDATE match_history SET home_team_score = ?, away_team_score = ? WHERE id = ?`,
-                [this.homeTeam.score, this.awayTeam.score, this.match_id],
-                function(err) {
-                    if (err) {
-                        console.error('Error updating scores in match_history:', err.message);
-                    }
-                }
-            )*/
+    }
+
+    setRandomPriorities() { //each player has a 5% chance to change their priority, saves their base priority
+        const offensePriorityList = ["Assist", "Protect", "Attack", "Advance", "Score"];
+        const defensePriorityList = ["Assist", "Protect", "Attack", "Defend_Advance", "Defend_Score"];
+        for(const player of this.offenseTeam.players) {
+            if(Math.random() < 0.05 && player.offensePriority == player.savedOffensePriority) {
+                player.offensePriority = offensePriorityList[Math.floor(Math.random() * offensePriorityList.length)];
+                player.offensePriorityTarget = "Any";
+                console.log(player.name + " changed priority from " + player.savedOffensePriority + " to " + player.offensePriority);
+            }
+            else {
+                player.offensePriority = player.savedOffensePriority;
+                player.offensePriorityTarget = player.savedOffensePriorityTarget;
+            }
+        }
+        for(const player of this.defenseTeam.players) {
+            if(Math.random() < 0.05 && player.defensePriority == player.savedDefensePriority) {
+                player.defensePriority = defensePriorityList[Math.floor(Math.random() * defensePriorityList.length)];
+                player.defensePriorityTarget = "Any";
+                console.log(player.name + " changed priority from " + player.savedDefensePriority + " to " + player.defensePriority);
+            }
+            else {
+                player.defensePriority = player.savedDefensePriority;
+                player.defensePriorityTarget = player.savedDefensePriorityTarget;
+            }
+        }
     }
 
     resetTempStats() {
@@ -169,6 +186,7 @@ class Match {
 
     resetInjuries() {
         for(const player of this.offenseTeam.players) {
+            player.tempInjury = 0;
             if(!player.injury) {
                 player.bulk = player.baseBulk;
                 player.finesse = player.baseFinesse;
@@ -183,13 +201,19 @@ class Match {
             }
         }
         for(const player of this.defenseTeam.players) {
-            if(!player.injury) {
-                player.bulk += player.tempInjury;
-                player.finesse += player.tempInjury;
-                player.height += player.tempInjury;
-                player.strength += player.tempInjury;
-            }
             player.tempInjury = 0;
+            if(!player.injury) {
+                player.bulk = player.baseBulk;
+                player.finesse = player.baseFinesse;
+                player.height = player.baseHeight;
+                player.strength = player.baseStrength;
+                if(player.tempInjury > 0) {
+                    console.log(player.name + " temp injury: " + player.tempInjury + " finesse: " + player.finesse);
+                }
+            }
+            else {
+                player.bulk = player.baseBulk * 0.5;
+            }
         }
     }
 
@@ -221,13 +245,28 @@ class Match {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
-                            this.assist(player, player.offensePriorityTarget);
+                            if(player.offensePriorityTarget == "Any") {
+                                this.assist(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else {
+                                this.assist(player, player.offensePriorityTarget);
+                            }
                             break;
                         case "Protect":
-                            this.protect(player, player.offensePriorityTarget);
+                            if(player.offensePriorityTarget == "Any") {
+                                this.protect(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else {
+                                this.protect(player, player.offensePriorityTarget);
+                            }
                             break;
                         case "Attack":
-                            this.attack(player, player.offensePriorityTarget);
+                            if(player.offensePriorityTarget == "Any") {
+                                this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
+                            }
+                            else {
+                                this.attack(player, player.offensePriorityTarget);
+                            }
                             break;
                         default:
                             console.log("Action: ", player.offensePriorityTarget.name)
@@ -246,14 +285,29 @@ class Match {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
-                            this.assist(player, player.defensePriorityTarget);
+                            if(player.defensePriorityTarget == "Any") {
+                                this.assist(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
+                            }
+                            else {
+                                this.assist(player, player.defensePriorityTarget);
+                            }   
                             break;
                         case "Protect":
-                            this.protect(player, player.defensePriorityTarget);
+                            if(player.defensePriorityTarget == "Any") {
+                                this.protect(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
+                            }
+                            else {
+                                this.protect(player, player.defensePriorityTarget);
+                            }
                             break;
-                            case "Attack":
+                        case "Attack":
+                            if(player.defensePriorityTarget == "Any") {
+                                this.attack(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else {
                                 this.attack(player, player.defensePriorityTarget);
-                                break;
+                            }
+                            break;
                         default:
                             action(player, player.defensePriorityTarget);
                     }
@@ -289,7 +343,7 @@ class Match {
                     advancingPlayer = player;
                     if(player.tempTrickiness < minTrickiness) {minTrickiness = player.trickiness;}
                     numAdvancers++;
-                    advanceAmount += Math.random() * (player.strength + player.tempStrength) + 0.1;
+                    advanceAmount += Math.random() * (player.strength + player.tempStrength) + 2;
                     //console.log(player.name + " strength " + player.strength + " + " + player.tempStrength);
                 }
             }
@@ -319,6 +373,8 @@ class Match {
             } else {
                 netAdvance = 0;
             }
+            if(this.offenseTeam == this.awayTeam) {this.awayAdvancements.push(netAdvance);}
+            else {this.homeAdvancements.push(netAdvance);}
 
             // Cap net advancement if necessary
             if(this.MAX_ADVANCEMENT_PER_TICK != null) {
@@ -371,6 +427,7 @@ class Match {
     turnover() { 
         console.log("Turnover!");
         this.turnedover = true;
+        this.possessionLengths.push(this.possessionTicks);
         this.possessionTicks = 0;
         this.position = this.FIELD_LENGTH - this.position;
         const tempTeam = this.offenseTeam;
@@ -385,6 +442,7 @@ class Match {
                 numShooters++;
             }
         }
+        this.shotsAttempted++;
         console.log(shooter.name + " is shooting!");
         //console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
@@ -402,7 +460,7 @@ class Match {
                 }
             }
             shooting -= (this.FIELD_LENGTH-this.position) * this.SHOOTING_DISTANCE_MODIFIER;
-            score = shooting > -1; //wanted to make it easier to score bc its influenced by distance and defenders
+            score = shooting > -2; //wanted to make it easier to score bc its influenced by distance and defenders
         }
         if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
