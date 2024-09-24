@@ -19,6 +19,13 @@ export class Quirk {
         // Handles match-specific changes in stats
         // e.g. the -2 to stats if the alphabet completionist only sees 24 letters in a match
         console.log("No quirk effects\n");
+        return false;
+    }
+
+    challengeStatModification(players, player) {
+        // Handles challenge-specific changes in stats
+        // e.g. the -2 to stats if the alphabet completionist only sees 24 letters in a challenge
+        //console.log("No quirk effects\n");
         return;
     }
 

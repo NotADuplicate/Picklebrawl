@@ -295,6 +295,28 @@ router.get('/challenges/:id/players-actions', (req, res) => {
     });
 });
 
+// Get quirk effects for all players in a challenge
+router.post('/challenges/:id/quirk-effects', (req, res) => {
+    console.log("Getting quirk effects")
+    const { id } = req.params;
+    const { ids } = req.body;
+    let players = [];
+    Promise.all(ids.map(playerId => {
+        console.log("PlayerId: ", playerId)
+        const player = new Player();
+        return player.load(playerId).then(() => {
+            players.push(player);
+        });
+    })).then(() => {
+        players.forEach(player => {
+            //console.log("Player: ", player)
+            console.log("Player quirk: ", player.quirk)
+            player.quirk.challengeStatModification(players, player);
+        });
+        res.json(players);
+    });
+});
+
 function runMatch(id) {
     console.log("Running match ", id)
     db.all('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
@@ -341,5 +363,5 @@ function runMatch(id) {
     })
 }
 
-runMatch(1);
+//runMatch(1);
 export default router;

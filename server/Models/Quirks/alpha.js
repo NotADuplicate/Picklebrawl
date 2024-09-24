@@ -7,11 +7,11 @@ export class Alpha extends Quirk {
     STAT_CHANGE = 1
 
     startGameStatModification(match, player) {
-        isAlpha = true;
+        let isAlpha = true;
         // First, figure out which team they're on, so we know who to compare them to
         if(player in match.homeTeam.players) {
             // Compare to home team players
-            for(otherPlayer in match.homeTeam.players) {
+            for(const otherPlayer of match.homeTeam.players) {
                 if(otherPlayer.name < player.name) {
                     isAlpha = False;
                 }
@@ -19,7 +19,7 @@ export class Alpha extends Quirk {
         }
         else {
             // Compare to away team players
-            for(otherPlayer in match.awayTeam.players) {
+            for(const otherPlayer of match.awayTeam.players) {
                 if(otherPlayer.name < player.name) {
                     isAlpha = False;
                 }
@@ -28,14 +28,32 @@ export class Alpha extends Quirk {
 
         // If isAlpha, change the stats
         if(isAlpha) {
-            player.bulk += this.STAT_CHANGE;
-            player.agility += this.STAT_CHANGE;
-            player.height += this.STAT_CHANGE;
-            player.strength += this.STAT_CHANGE;
             player.baseBulk += this.STAT_CHANGE;
-            player.baseAgility += this.STAT_CHANGE;
+            player.baseFinesse += this.STAT_CHANGE;
             player.baseHeight += this.STAT_CHANGE;
             player.baseStrength += this.STAT_CHANGE;
         }
+    }
+
+    challengeStatModification(players, player) {
+        let isAlpha = true;
+        // Compare to home team players
+        for(const otherPlayer of players) {
+            console.log("OTHER PLAYER NAME: " + otherPlayer.name)
+            if(otherPlayer.name < player.name) {
+                console.log("NOT ALPHA")
+                isAlpha = false;
+            }
+        }
+
+        // If isAlpha, change the stats
+        if(isAlpha) {
+            console.log("IS ALPHA")
+            player.bulk += this.STAT_CHANGE;
+            player.finesse += this.STAT_CHANGE;
+            player.height += this.STAT_CHANGE;
+            player.strength += this.STAT_CHANGE;
+        }
+        return true;
     }
 }

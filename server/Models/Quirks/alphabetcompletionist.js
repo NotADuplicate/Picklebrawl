@@ -20,12 +20,9 @@ export class AlphabetCompletionist extends Quirk {
 
     startGameStatModification(match, player) {
         // Make string of all names
-        allNames = '';
-        match.offenseTeam.players.forEach(otherPlayer => {
-            allNames.append(otherPlayer.name);
-        });
-        match.defenseTeam.players.forEach(otherPlayer => {
-            allNames.append(otherPlayer.name);
+        let allNames = '';
+        match.players.forEach(otherPlayer => {
+            allNames.concat(otherPlayer.name);
         });
         allNames = allNames.toLowerCase();
 
@@ -35,16 +32,41 @@ export class AlphabetCompletionist extends Quirk {
             letterSet.add(allNames[i])
         }
 
-        missingLetters = 26 - letterSet.size
+        let missingLetters = 26 - letterSet.size
+
+        // Change stats based on missing letters
+        player.baseBulk -= missingLetters;
+        player.baseFinesse -= missingLetters;
+        player.baseHeight -= missingLetters;
+        player.baseStrength -= missingLetters;
+    }
+
+    challengeStatModification(players, player) {
+        // Make string of all names
+        console.log("HERE\n")
+        let allNames = '';
+        players.forEach(otherPlayer => {
+            allNames = allNames.concat(otherPlayer.name);
+        });
+        allNames = allNames.toLowerCase();
+        console.log(allNames);
+
+        // Use set to count independent letters
+        let letterSet = new Set();
+        for(let i = 0; i < allNames.length; i++) {
+            letterSet.add(allNames[i])
+            console.log(allNames[i]);
+        }
+
+        console.log(letterSet);
+
+        let missingLetters = 26 - letterSet.size
 
         // Change stats based on missing letters
         player.bulk -= missingLetters;
-        player.agility -= missingLetters;
+        player.finesse -= missingLetters;
         player.height -= missingLetters;
         player.strength -= missingLetters;
-        player.baseBulk -= missingLetters;
-        player.baseAgility -= missingLetters;
-        player.baseHeight -= missingLetters;
-        player.baseStrength -= missingLetters;
+        return true;
     }
 }

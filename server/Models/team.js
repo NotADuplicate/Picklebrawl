@@ -8,7 +8,7 @@ class Team {
     owner;
     teamId;
     leagueId;
-    scoreRange = 20;
+    scoreRange = 30;
 
     constructor(teamName, owner, leagueId, loadTeamId, generatePlayers = true) {
         console.log("Team id: ", loadTeamId);

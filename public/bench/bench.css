@@ -31,6 +31,16 @@ ul {
     padding: 0;
 }
 
+.oldplayer {
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
 .player {
     padding: 10px;
     margin: 5px 0;
@@ -39,6 +49,20 @@ ul {
     border-radius: 5px;
     cursor: pointer;
     text-align: center;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0px;
+    justify-content: center;
+}
+
+.player.show-priority {
+    justify-content: flex-start;
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .player.locked {
@@ -61,23 +85,57 @@ ul {
 }
 
 .stats {
-    font-size: 0.8em;
-    color: #666;
+    display: flex;
+    gap: 20px; /* Adjust the gap as needed for spacing */
+    justify-content: flex-start;
 }
+.stat, .quirk {
+    position: relative;
+    cursor: pointer;
+}
+.tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 3px;
+    white-space: normal;
+    min-width: 200px;
+    max-width: 300px;
+    z-index: 10;
+}
+.stat:hover .tooltip,
+.quirk:hover .tooltip {
+    display: block;
+}
+
 
 .priority {
-    margin-top: 5px;
-    display: none;
+    display: flex;
+    flex-direction: column;
+    margin-left: 50px;
+    align-items: flex-start;
 }
-
 .priority-menu {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+.priority-menu label {
     margin-right: 10px;
 }
-
 .target-menu {
-    display: inline-block;
-    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.target-menu label {
+    margin-right: 10px;
 }
 
 #lock-button {

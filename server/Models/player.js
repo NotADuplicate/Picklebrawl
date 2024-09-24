@@ -48,7 +48,7 @@ class Player {
         this.name = this.generateName();
     }
 
-    setStats(bulk, finesse, height, strength, trickiness, focus) {
+    setStats(bulk, finesse, height, strength, trickiness, focus, quirkId) {
         this.bulk = bulk;
         this.finesse = finesse;
         this.height = height;
@@ -61,6 +61,13 @@ class Player {
         this.baseStrength = strength
         this.baseTrickiness = trickiness;
         this.baseFocus = focus;
+
+        this.quirkId = quirkId;
+        console.log("Quirk id: " + quirkId);
+        const quirkKeys = Object.keys(quirks);
+        const quirkClass = quirks[quirkKeys[quirkId]];
+        this.quirk = new quirkClass();
+        
     }
 
     get name() {
@@ -108,7 +115,7 @@ class Player {
 
     pickRandomQuirk() {
         const quirkKeys = Object.keys(quirks);
-        this.quirkId = 11;//Math.floor(Math.random() * quirkKeys.length);
+        this.quirkId = Math.floor(Math.random() * quirkKeys.length);
         const randomKey = quirkKeys[this.quirkId];
         const quirkClass = quirks[randomKey];
         console.log("Quirk id: " + this.quirkId);
@@ -245,7 +252,7 @@ class Player {
                 if (row) {
                     this.name = row.name;
                     console.log("Loaded player: " + this.name);
-                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus);
+                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);
                     resolve(this); // Resolve with the player instance
                 } else {
                     // Handle case where no player is found

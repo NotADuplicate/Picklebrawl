@@ -16,4 +16,15 @@ export class QuirkGenerator {
             });
         }
     }
+
+    static findQuirk(title) {
+        for (let i = 0; i < quirkKeys.length; i++) {
+            const quirkClass = quirks[quirkKeys[i]];
+            const quirk = new quirkClass();
+            if (quirk.title === title) {
+                return quirk;
+            }
+        }
+        return null;
+    }
 }

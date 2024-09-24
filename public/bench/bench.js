@@ -1,5 +1,3 @@
-//import { get } from "request";
-
 const myTeamId = localStorage.getItem('myTeamId');
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -68,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} playerName - The name of the player.
  * @param {object} stats - An object containing the player's stats.
  */
-function addPlayerToTeam(teamId, playerName, stats, playerId) {
+function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirkDescription) {
     const sanitizedPlayerName = playerName.replace(/\s+/g, '_');
     const teamList = document.getElementById(`${teamId}-list`);
     const template = document.getElementById('player-template');
@@ -84,12 +82,38 @@ function addPlayerToTeam(teamId, playerName, stats, playerId) {
 
     player.dataset.team = teamId;
     player.querySelector('.player-name').textContent = playerName;
-    player.querySelector('.stats').textContent = `Blk: ${stats.Blk}, Fin: ${stats.Fin}, Ht: ${stats.Ht}, Str: ${stats.Str}, Trk: ${stats.Trk}, Fcs: ${stats.Fcs}`;
+    player.querySelector('.quirk .quirk-name').textContent = playerQuirk;
+    player.querySelector('.quirk .tooltip').textContent = quirkDescription;
+    const playerStats = {
+        Blk: stats.Blk,
+        Fin: stats.Fin,
+        Ht: stats.Ht,
+        Str: stats.Str,
+        Trk: stats.Trk,
+        Fcs: stats.Fcs
+    };
+    
+    Object.keys(playerStats).forEach(stat => {
+        const statElement = player.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
+        statElement.textContent = stats[stat];
+    });
+    
     player.className = 'player';
     player.dataset.team = teamId;
     player.dataset.locked = 'false';
     player.dataset.location = 'team';
+
     player.dataset.playerId = playerId;
+    player.dataset.bulk = stats.Blk;
+    player.dataset.finesse = stats.Fin;
+    player.dataset.height = stats.Ht;
+    player.dataset.strength = stats.Str;
+    player.dataset.trickiness = stats.Trk;
+    player.dataset.focus = stats.Fcs;
+    player.dataset.quirkTitle = playerQuirk;
+    player.dataset.stats = JSON.stringify(stats);
+    
+    console.log(stats);
 
 
     player.addEventListener('click', () => {
@@ -102,14 +126,14 @@ function addPlayerToTeam(teamId, playerName, stats, playerId) {
 
     // Add event listeners for priority dropdowns after appending the player to the DOM
     if(player.dataset.team === 'your-team') {
-        const priorityDiv = priorityTemplate.content.cloneNode(true).querySelector('.priority');
-        player.appendChild(priorityDiv);
-        const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
-        const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
-        const offenseTargetMenu = priorityDiv.querySelector('.offense-target-menu');
-        const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
-        const defenseTargetMenu = priorityDiv.querySelector('.defense-target-menu');
-        const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+        //const priorityDiv = priorityTemplate.content.cloneNode(true).querySelector('.priority');
+        //player.appendChild(priorityDiv);
+        const offensePrioritySelect = player.querySelector('.offense-priority-select');
+        const defensePrioritySelect = player.querySelector('.defense-priority-select');
+        const offenseTargetMenu = player.querySelector('.offense-target-menu');
+        const offenseTargetSelect = player.querySelector('.offense-target-select');
+        const defenseTargetMenu = player.querySelector('.defense-target-menu');
+        const defenseTargetSelect = player.querySelector('.defense-target-select');
 
         Object.entries(offensePriorities).forEach(([key]) => {
             const option = document.createElement('option');
@@ -135,9 +159,9 @@ function addPlayerToTeam(teamId, playerName, stats, playerId) {
                 targetMenu.style.display = 'block';
                 const targetPlayers = targetType === 'enemy' ? document.querySelectorAll('.other-team .player[data-location="bench"]') : document.querySelectorAll('.your-team .player[data-location="bench"]');
                 targetPlayers.forEach(targetPlayer => {
-                    const playerName = targetPlayer.querySelector('div').textContent.trim();
+                    const playerName = targetPlayer.querySelector('.player-name').textContent.trim();
                     const option = document.createElement('option');
-                    option.value = player.dataset.playerId;
+                    option.value = targetPlayer.dataset.playerId;
                     option.textContent = playerName;
                     targetSelect.appendChild(option);
                 });
@@ -170,7 +194,7 @@ fetch(`http://localhost:3000/teams/${myTeamId}/players`)
                     Str: player.strength,
                     Trk: player.trickiness,
                     Fcs: player.focus
-                }, player.id);
+                }, player.id, player.quirk_title, player.quirk_description);
             });
         } else {
             throw new Error('Players data is not an array');
@@ -329,6 +353,7 @@ function selectPlayer(player) {
                 teamList.removeChild(player);
                 benchList.appendChild(player);
                 player.dataset.location = 'bench';
+                applyQuirkStats();
             } else {
                 alert('Bench is full!');
             }
@@ -337,6 +362,14 @@ function selectPlayer(player) {
             benchList.removeChild(player);
             teamList.appendChild(player);
             player.dataset.location = 'team';
+            stats = JSON.parse(player.dataset.stats);
+            Object.keys(stats).forEach(stat => {
+                const statElement = player.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
+                statElement.textContent = stats[stat];
+                statElement.style.color = 'black';
+                statElement.style.fontWeight = 'normal';
+            });
+            applyQuirkStats();
         }
     }
 }
@@ -398,6 +431,7 @@ function bothTeamsReady(playerIds, lockButton) {
             const priorityDiv = player.querySelector('.priority');
             if (priorityDiv) {
                 priorityDiv.style.display = 'flex';
+                player.classList.add('show-priority');
             }
         }
     });
@@ -441,4 +475,59 @@ function getActions(response) {
         readyDiv.textContent = 'READY';
         readyDiv.style.color = 'darkgreen';
     }
+}
+
+function applyQuirkStats() {
+    const playerElements = document.querySelectorAll('.player');
+    const benchPlayers = Array.from(playerElements).filter(playerElement => playerElement.dataset.location === 'bench');
+    let ids = [];
+    benchPlayers.forEach(player => {
+        ids.push(player.dataset.playerId);
+    });
+
+    fetch(`http://localhost:3000/challenges/${challengeId}/quirk-effects`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data)
+        data.forEach(player => {
+            const playerElement = playerDict[player.id];
+            const playerStats = {
+                Blk: player.bulk,
+                Fin: player.finesse,
+                Ht: player.height,
+                Str: player.strength,
+                Trk: player.trickiness,
+                Fcs: player.focus
+            };
+            Object.keys(playerStats).forEach(stat => {
+                const statElement = playerElement.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
+                console.log(stat)
+                const stats = JSON.parse(playerElement.dataset.stats);
+                const originalStatValue = stats[stat];
+                const newStatValue = playerStats[stat];
+
+                statElement.textContent = newStatValue;
+                console.log("Original: " + originalStatValue + " New: " + newStatValue);
+
+                if (newStatValue > originalStatValue) {
+                    console.log("Green")
+                    statElement.style.fontWeight = 'bold';
+                    statElement.style.color = 'darkgreen';
+                } else if(newStatValue < originalStatValue) {
+                    console.log("Red")
+                    statElement.style.fontWeight = 'bold';
+                    statElement.style.color = 'darkred';
+                } else {
+                    statElement.style.color = 'black';
+                    statElement.style.fontWeight = 'normal';
+                }
+            });
+        });
+    });
 }
