@@ -12,7 +12,7 @@ class Match {
     position = 50;
     possessionTicks = 0;
     gameTicks = 0;
-    weather;
+    weather;    // stored as a weather object
     match_id;
     possessionLengths = [];
     homeAdvancements = [];
@@ -44,6 +44,18 @@ class Match {
         this.offenseTeam = this.homeTeam;
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
+
+        // Insert the match into the match_history database
+        // TODO: insert value for challenge_id
+        const self = this;
+        db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, `
+            + `weather) VALUES (?, ?, ?, ?)`, 
+            [homeTeam.leagueId, homeTeam.teamId, awayTeam.teamId, weather.name], function(err) {
+            if (err) {
+                console.log('Error inserting match into match_history:', err.message);
+            }
+            self.match_id = this.lastID;
+        });
     }
 
     setTargets() {
@@ -64,6 +76,7 @@ class Match {
     savePriorities() {
         // Loop through offense team players and save their priorities
         for (const player of this.players) {
+            // Save offense priorities
             player.savedOffensePriority = player.offensePriority;
             player.savedOffensePriorityTarget = player.offensePriorityTarget;
             if(player.offensePriority == "Rest") {
@@ -72,6 +85,7 @@ class Match {
                 player.baseHeight *= 1.5;
                 player.baseStrength *= 1.5;
             }
+            // Save defense priorities
             player.savedDefensePriority = player.defensePriority;
             player.savedDefensePriorityTarget = player.defensePriorityTarget;
             if(player.defensePriority == "Rest") {
@@ -79,6 +93,38 @@ class Match {
                 player.baseFinesse *= 1.5;
                 player.baseHeight *= 1.5;
                 player.baseStrength *= 1.5;
+            }
+            // Insert priorities into player_history
+            var player_history_id;    // save the id of this row in the db
+            const self = this;
+            db.run(`INSERT INTO player_history ` 
+                + `(match_id, tick_start, tick_end, player_id, offensive_role, defensive_role) `
+                + `VALUES (?, ?, ?, ?, ?, ?)`,
+                [self.match_id, 0, self.GAME_LENGTH-1, player.id, player.offensePriority, 
+                player.defensePriority], function(err) {
+                if (err) {
+                    console.error('Error inserting player into player_history:', err.message);
+                }
+                player_history_id = this.lastID
+            });
+            // If targets are not null, add them to player_history too
+            if (player.offensePriorityTarget != null) {
+                db.run(`UPDATE player_history SET offensive_target_id = ? WHERE id = ?`,
+                    [player.offensePriorityTarget.id, player_history_id], function(err) {
+                        if (err) {
+                            console.error(err);
+                        }
+                    }
+                );
+            }
+            if (player.defensePriorityTarget != null) {
+                db.run(`UPDATE player_history SET defensive_target_id = ? WHERE id = ?`,
+                    [player.defensePriorityTarget.id, player_history_id], function(err) {
+                        if (err) {
+                            console.error(err);
+                        }
+                    }
+                );
             }
         }
     }
@@ -99,6 +145,15 @@ class Match {
         console.log("Shots attempted: " + this.shotsAttempted);
         console.log("Average " + this.offenseTeam.teamName + " advancement: " + this.homeAdvancements.reduce((a, b) => a + b, 0) / this.homeAdvancements.length);
         console.log("Average " + this.defenseTeam.teamName + " advancement: " + this.awayAdvancements.reduce((a, b) => a + b, 0) / this.awayAdvancements.length);
+
+        // Update match_history
+        const self = this;
+        db.run(`UPDATE match_history SET home_team_score = ?, away_team_score = ? WHERE id = ?`,
+            [self.homeTeam.score, self.awayTeam.score, self.match_id], function(err) {
+            if (err) {
+                console.error("Error updating scores in match_history:", err.message);
+            }
+        });
     }
 
     // Function to get player object by id

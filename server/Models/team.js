@@ -88,6 +88,7 @@ class Team {
             self.teamName = row.name;
             self.owner = row.owner;
             self.leagueId = row.league_id;
+            self.teamId = row.id;
             console.log("Loaded team: " + self.teamName);
         });
         console.log("Finished loading db command")
