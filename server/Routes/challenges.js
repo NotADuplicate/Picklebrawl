@@ -260,6 +260,50 @@ router.post('/challenges/:id/add-actions', (req, res) => {
     });
 });
 
+//Remove actions from one side of a challenge
+router.post('/challenges/:id/remove-actions', (req, res) => {
+    console.log("Add actions")
+    const { id } = req.params;
+    const { teamId } = req.body;
+    db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
+        if (err) {
+            console.error('Error fetching row:', err);
+            return;
+        }
+        if (!row) {
+            console.error('No row found');
+            return;
+        }
+
+        // Check which team ID matches
+        let columnToUpdate;
+        if (row.challenger_team_id == teamId) {
+            columnToUpdate = 'challenger_actions_set';
+        } else if (row.challenged_team_id == teamId) {
+            columnToUpdate = 'challenged_actions_set';
+        } else {
+            console.log('No matching team ID found');
+            console.log('Team ID:', teamId);
+            console.log('Row:', row);
+            return;
+        }
+        console.log("Updating challenges set: ", columnToUpdate)
+
+        // Update the players set column
+        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
+
+        db.run(query, [false, id], function(err) {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({ error: 'Internal server error' });
+                } else {
+                    res.json({ id });
+                }
+                console.log("Updated challenge players set of team: ", columnToUpdate)
+        });
+    });
+});
+
 router.get('/challenges/:id/players-actions', (req, res) => {
     console.log("AAAA\n\n")
     const { id } = req.params;

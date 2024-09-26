@@ -10,18 +10,23 @@
     <button id="backButton" style="position: absolute; top: 10px; left: 10px;">Back</button>
     <div class="container">
         <div class="team your-team" id="your-team">
-            <h2>Your Team</h2>
+            <h2 id="your-team-name">Your Team</h2>
+            <div id="your-team-owner" style="text-align: center; font-size: smaller;"></div>
             <button class="toggle-button" data-target="your-team-list">▼</button>
             <ul id="your-team-list">
             </ul>
-            <h3>Starters</h3>
-            <button class="toggle-button" data-target="your-team-bench">▼</button>
+            <div class="team-header">
+                <h3>Starters</h3>
+                <button class="toggle-button" data-target="your-team-bench">▼</button>
+                <button id="lock-button">Lock In Starters</button>
+            </div>
             <ul id="your-team-bench">
                 <!-- Players moved here will be displayed -->
             </ul>
         </div>
         <div class="team other-team" id="other-team">
-            <h2>Other Team</h2>
+            <h2 id="other-team-name">Other Team</h2>
+            <div id="other-team-owner" style="text-align: center; font-size: smaller;"></div>
             <div id="other-team-ready" style="text-align: center; font-size: larger;"></div>
             <button class="toggle-button" data-target="other-team-list">▼</button>
             <ul id="other-team-list">
@@ -33,7 +38,6 @@
             </ul>
         </div>
     </div>
-    <button id="lock-button">Lock In Starters</button>
     <script src="bench.js"></script>
 
     <template id="player-template">
@@ -64,20 +68,25 @@
                     </div>
                 </div>
             </div>
-            <div class="priority" style="display: none;">
-                <div class="priority-menu offense-priority">
-                    <label>Offense Action: </label>
-                    <select class="offense-priority-select"></select>
-                    <div class="target-menu offense-target-menu" style="display: none;">
-                        <label>Target: </label>
+            <div class="priority">
+                <div class="priority-group offense-priority-group">
+                    <div class="priority-menu offense-priority">
+                        <div class="priority-container">
+                            <label>Offense Action:</label>
+                            <select class="offense-priority-select"></select>
+                        </div>
+                        <div class="tooltip">Select the offensive action for this player.</div>
+                    </div>
+                    <div class="target-menu offense-target-menu">
                         <select class="offense-target-select"></select>
                     </div>
                 </div>
-                <div class="priority-menu defense-priority">
-                    <label>Defense Action: </label>
-                    <select class="defense-priority-select"></select>
-                    <div class="target-menu defense-target-menu" style="display: none;">
-                        <label>Target: </label>
+                <div class="priority-group defense-priority-group">
+                    <div class="priority-menu defense-priority">
+                        <label>Defense Action:</label>
+                        <select class="defense-priority-select"></select>
+                    </div>
+                    <div class="target-menu defense-target-menu">
                         <select class="defense-target-select"></select>
                     </div>
                 </div>

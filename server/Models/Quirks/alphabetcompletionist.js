@@ -3,7 +3,7 @@ import { Quirk } from './quirk.js';
 export class AlphabetCompletionist extends Quirk {
     title = "Alphabet Completionist";
     description = ("Stats decrease for each letter not included in the names of each player in the match");
-    POWER_MODIFIER = 3;
+    POWER_MODIFIER = 4;
     BASE_STAT_INCREASE = 2;
     STAT_DECREASE = 1;
 
@@ -39,6 +39,8 @@ export class AlphabetCompletionist extends Quirk {
         player.baseFinesse -= missingLetters;
         player.baseHeight -= missingLetters;
         player.baseStrength -= missingLetters;
+        player.baseTrickiness -= missingLetters;
+        player.baseFocus -= missingLetters;
     }
 
     challengeStatModification(players, player) {
@@ -67,6 +69,8 @@ export class AlphabetCompletionist extends Quirk {
         player.finesse -= missingLetters;
         player.height -= missingLetters;
         player.strength -= missingLetters;
+        player.trickiness -= missingLetters;
+        player.focus -= missingLetters;
         return true;
     }
 }

@@ -3,8 +3,8 @@ import { Quirk } from './quirk.js';
 export class Alpha extends Quirk {
     title = "Alpha";
     description = ("The player gets a stat boost if their name is first alphabetically on their team");
-    POWER_MODIFIER = -1;
-    STAT_CHANGE = 1
+    POWER_MODIFIER = -2;
+    STAT_CHANGE = 2
 
     startGameStatModification(match, player) {
         let isAlpha = true;

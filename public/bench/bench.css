@@ -4,65 +4,96 @@ body {
 
 .container {
     display: flex;
-    justify-content: space-between;
-    padding: 20px;
+    justify-content: flex-start; /* Align items without space between */
+    padding: 0px;
+    margin: 0px;
+    gap: 0px; /* Ensures no gap between items */
 }
 
 .team {
     border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 0px;
+    border-radius: 0px;
+    box-sizing: border-box; /* Ensures borders and padding are included in the width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0px;
+    width: auto;
 }
 
 .your-team {
-    width: 65%;
+    width: 55%; /* Both teams take up 50% of the width */
+    box-sizing: border-box; /* Include padding and borders in width */
+    margin: 10px; /* Remove margin between elements */
 }
 
 .other-team {
-    width: 30%;
+    width: 45%; /* Both teams take up 50% of the width */
+    box-sizing: border-box; /* Include padding and borders in width */
+    margin: 0px; /* Remove margin between elements */
 }
 
 h2, h3 {
     text-align: center;
+    margin: 0;
 }
 
 ul {
     list-style-type: none;
     padding: 0;
-}
-
-.oldplayer {
-    padding: 10px;
-    margin: 5px 0;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
 }
 
 .player {
-    padding: 10px;
-    margin: 5px 0;
+    padding: 0px 0px;
+    margin: 1px 6px; /* Increase margin to create more space between players */
     background-color: #f0f0f0;
     border: 1px solid #ccc;
     border-radius: 5px;
     cursor: pointer;
     text-align: center;
-    display: flex;
-    align-items: center;
-    margin-bottom: 0px;
-    justify-content: center;
+    display: inline-block;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 46%; /* Keep the width as it is */
+    height: 70px;
+    transition: width 0.5s, margin 0.5s;
+    gap: 0px; /* Remove gap between elements */
+}
+
+
+.player.selected {
+    width: 90%;
+    height: 70px;
+    margin: 5px auto;
+    display: block;
 }
 
 .player.show-priority {
-    justify-content: flex-start;
+    display: flex; /* Use flexbox layout */
+    flex-direction: row; /* Align items horizontally */
+    justify-content: flex-start; /* Align items to the start */
+    align-items: left; /* Center items vertically */
+}
+
+.player.show-priority .player-details {
+    flex: 1; /* Allow player details to take up available space */
+    text-align: left; /* Align text to the left */
+    padding: 0;
 }
 
 .player-details {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin: 0px;
+    gap: 0px;
 }
 
 .player.locked {
@@ -74,9 +105,19 @@ ul {
     background-color: #e0e0e0;
 }
 
+.team-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-header h2, .team-header h3 {
+    margin: 0;
+}
+
 .toggle-button {
     display: block;
-    margin: 0 auto 10px auto;
+    margin-left: 10px;
     cursor: pointer;
 }
 
@@ -93,8 +134,11 @@ ul {
     position: relative;
     cursor: pointer;
 }
+
 .tooltip {
-    display: none;
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+    pointer-events: none; /* Ensures the tooltip doesn't interfere with mouse events */
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -108,18 +152,50 @@ ul {
     max-width: 300px;
     z-index: 10;
 }
+
 .stat:hover .tooltip,
+.priority-menu:hover .tooltip,
 .quirk:hover .tooltip {
-    display: block;
+    opacity: 1;
+    transition-delay: 0.5s; /* Adds a 1-second delay before the tooltip appears */
 }
 
+/* Grouping offense or defense action with its target */
+.priority-group {
+    display: flex;
+    align-items: left; /* Align items vertically centered */
+    margin-bottom: 10px; /* Space between offense and defense groups */
+}
 
 .priority {
+    display: none;
+}
+
+.priority-menu {
+    display: flex;
+    align-items: center;
+    position: relative; /* Positioning context for tooltip */
+}
+
+.priority-container {
+    display: flex;
+    align-items: center;
+}
+
+.priority-container label {
+    margin-right: 5px;
+}
+
+/* Show priority menus when .show-priority class is present */
+.player.show-priority .priority {
     display: flex;
     flex-direction: column;
-    margin-left: 50px;
     align-items: flex-start;
+    margin-left: 0px; /* Adjust as needed */
+    padding: 0px;
+    gap: 0px; /* Space between priority items */
 }
+
 .priority-menu {
     display: flex;
     align-items: center;
@@ -127,10 +203,11 @@ ul {
     gap: 10px;
 }
 .priority-menu label {
-    margin-right: 10px;
+    margin-right: 50px;
+    margin-left: 0px;
 }
 .target-menu {
-    display: flex;
+    display: none;
     align-items: center;
     margin-bottom: 10px;
 }
