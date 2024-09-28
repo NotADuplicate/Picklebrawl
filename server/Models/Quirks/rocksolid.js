@@ -1,9 +1,16 @@
 import { Quirk } from './quirk.js';
 
 export class RockSolid extends Quirk {
+    static likelihood = 3;
+    static POWER_MODIFIER = -1;
+    static title = "Rock Solid";
+    static description = ("Cannot be tricked");
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = true;
 
-    playerStatGenerationChanges(player, power) {
-        const totalPoints = Math.round(power * 1/2);
+    static playerStatGenerationChanges(player, power) {
+        console.log("Rock Solid playerStatGenerationChanges\n");
+        const totalPoints = Math.round(power * 1/3);
         console.log("Player stats: ", player.bulk, player.finesse, player.height, player.strength, player.trickiness, player.focus);
         const stats = [player.bulk, player.finesse, player.height, player.strength];
 
@@ -11,13 +18,9 @@ export class RockSolid extends Quirk {
             stats[Math.floor(Math.random()*stats.length)] += 1;
         }
         [player.bulk, player.finesse, player.height, player.strength] = stats;
-        player.bulk += Math.floor(power / 5);
+        player.bulk += Math.floor(power / 4);
         player.focus = 0;
         player.trickiness = 0;        
         return;
     }
-
-    POWER_MODIFIER = -1;
-    title = "Rock Solid";
-    description = ("Cannot be tricked");
 }

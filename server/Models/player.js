@@ -63,10 +63,9 @@ class Player {
         this.baseFocus = focus;
 
         this.quirkId = quirkId;
-        console.log("Quirk id: " + quirkId);
         const quirkKeys = Object.keys(quirks);
         const quirkClass = quirks[quirkKeys[quirkId]];
-        this.quirk = new quirkClass();
+        this.quirk = quirkClass;
         
     }
 
@@ -80,7 +79,13 @@ class Player {
 
     setPriorities(offense, defense, offenseTarget = null, defenseTarget = null)  {
         console.log(offense + " " + offenseTarget); 
-        if (["Attack", "Advance", "Protect", "Assist", "Score", "Rest"].includes(offense)) {
+        let validOffense = ["Attack", "Advance", "Protect", "Assist", "Score", "Rest"];
+        let validDefense = ["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"];
+        Object.entries(this.quirk.extraActions()).forEach(([key]) => {
+            validOffense.push(key);
+            validDefense.push(key);
+        });
+        if (validOffense.includes(offense)) {
             this.offensePriority = offense;
             this.savedOffensePriority = offense;
         }
@@ -88,7 +93,7 @@ class Player {
             console.log(offense);
             throw new Error("Invalid offense priority");
         }
-        if (["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"].includes(defense)) {
+        if (validDefense.includes(defense)) {
             this.defensePriority = defense;
             this.savedDefensePriority = defense;
         }
@@ -113,14 +118,29 @@ class Player {
         });
     }
 
-    pickRandomQuirk() {
+    pickRandomQuirk(draft = false) {
         const quirkKeys = Object.keys(quirks);
-        this.quirkId = Math.floor(Math.random() * quirkKeys.length);
-        const randomKey = quirkKeys[this.quirkId];
-        const quirkClass = quirks[randomKey];
+        const filteredQuirkKeys = quirkKeys.filter(key => (!draft && quirks[key].APPEARS_IN_GENERATION) || (draft && quirks[key].APPEARS_IN_DRAFT));
+        const totalLikelihood = filteredQuirkKeys.reduce((sum, key) => sum + quirks[key].likelihood, 0);
+        
+        let randomValue = Math.random() * totalLikelihood;
+        let cumulativeLikelihood = 0;
+        let selectedQuirkKey;
+        
+        for (const key of filteredQuirkKeys) {
+            cumulativeLikelihood += quirks[key].likelihood;
+            if (randomValue < cumulativeLikelihood) {
+                selectedQuirkKey = key;
+                break;
+            }
+        }
+    
+        const quirkClass = quirks[selectedQuirkKey];
+        console.log("Picked quirk: " + selectedQuirkKey);
+        this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
         console.log("Quirk id: " + this.quirkId);
-        this.quirk = new quirkClass();
-        console.log(`Picked quirk: ${this.quirk.title}`);
+        this.quirk = quirkClass;
+        console.log(`Picked quirk: ${quirkClass.title}`);
     }
 
     randomize_stats(power) {
@@ -130,8 +150,15 @@ class Player {
         const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
 
         for (let i = 0; i < power; i++) {
-            stats[Math.floor(Math.random()*stats.length)] += 1;
+            stats[Math.floor(Math.random()*stats.length-1)] += 1;
         }
+
+        const extraStats = stats[4]; //trickiness and focus should split points between them
+        stats[4] = 0;
+        for(let i = 0; i < extraStats; i++) {
+            stats[4+Math.floor(Math.random()*2)] += 1;
+        }
+
         [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
         this.quirk.playerStatGenerationChanges(this, power);
     }
@@ -203,18 +230,20 @@ class Player {
     }
 
     attack(target, INJURY_PERMANENCE_MODIFIER) {
-        const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
-        const defense = Math.min(100, Math.floor(Math.random() * (target.bulk + target.protectBulk)));
-        const finalDamage = damage - defense;
-        if (finalDamage < 0) {
-            return;
+        if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
+            const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
+            const defense = Math.min(100, Math.floor(Math.random() * (target.bulk + target.protectBulk)));
+            const finalDamage = damage - defense;
+            if (finalDamage < 0) {
+                return;
+            }
+            if(finalDamage > 5) {
+                console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
+                console.log("Strength: " + this.strength + " Temp Strength: " + this.tempStrength);
+                console.log("Bulk: " + target.bulk + " Protect Bulk: " + target.protectBulk);
+            }
+            target.tempInjury += finalDamage;
         }
-        if(finalDamage > 5) {
-            console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
-            console.log("Strength: " + this.strength + " Temp Strength: " + this.tempStrength);
-            console.log("Bulk: " + target.bulk + " Protect Bulk: " + target.protectBulk);
-        }
-        target.tempInjury += finalDamage;
         // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER
         /*if(Math.random() < finalDamage*0.1) {
             console.log(target.name + " is injured");
@@ -242,7 +271,6 @@ class Player {
 
     load(id) {
         this.id = id;
-        console.log("Loading player with id: " + id);
         return new Promise((resolve, reject) => {
             db.get(`SELECT * FROM players WHERE id = ?`, [id], (err, row) => {
                 if (err) {
@@ -251,7 +279,6 @@ class Player {
                 }
                 if (row) {
                     this.name = row.name;
-                    console.log("Loaded player: " + this.name);
                     this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);
                     resolve(this); // Resolve with the player instance
                 } else {

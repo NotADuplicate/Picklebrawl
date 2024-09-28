@@ -1,16 +1,19 @@
 import { Quirk } from './quirk.js';
 
 export class AlphabetCompletionist extends Quirk {
-    title = "Alphabet Completionist";
-    description = ("Stats decrease for each letter not included in the names of each player in the match");
-    POWER_MODIFIER = 4;
-    BASE_STAT_INCREASE = 2;
-    STAT_DECREASE = 1;
+    static title = "Alphabet Completionist";
+    static description = ("Stats decrease for each letter not included in the names of each player in the match");
+    static POWER_MODIFIER = 4;
+    static BASE_STAT_INCREASE = 2;
+    static STAT_DECREASE = 1;
+    static likelihood = 3;
+    static APPEARS_IN_GENERATION = false;
+    static APPEARS_IN_DRAFT = true;
 
-    playerStatGenerationChanges(player, power) {
+    static playerStatGenerationChanges(player, power) {
+        console.log("AlphabetCompletionist playerStatGenerationChanges\n");
         player.finesse += this.BASE_STAT_INCREASE;
         player.bulk += this.BASE_STAT_INCREASE;
-        player.agility += this.BASE_STAT_INCREASE;
         player.height += this.BASE_STAT_INCREASE;
         player.strength += this.BASE_STAT_INCREASE;
         player.trickiness += this.BASE_STAT_INCREASE;
@@ -18,7 +21,7 @@ export class AlphabetCompletionist extends Quirk {
         return;
     }
 
-    startGameStatModification(match, player) {
+    static startGameStatModification(match, player) {
         // Make string of all names
         let allNames = '';
         match.players.forEach(otherPlayer => {
@@ -43,7 +46,7 @@ export class AlphabetCompletionist extends Quirk {
         player.baseFocus -= missingLetters;
     }
 
-    challengeStatModification(players, player) {
+    static challengeStatModification(players, player) {
         // Make string of all names
         console.log("HERE\n")
         let allNames = '';

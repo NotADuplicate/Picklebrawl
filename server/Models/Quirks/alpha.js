@@ -1,12 +1,15 @@
 import { Quirk } from './quirk.js';
 
 export class Alpha extends Quirk {
-    title = "Alpha";
-    description = ("The player gets a stat boost if their name is first alphabetically on their team");
-    POWER_MODIFIER = -2;
-    STAT_CHANGE = 2
+    static title = "Alpha";
+    static description = ("The player gets a stat boost if their name is first alphabetically on their team");
+    static POWER_MODIFIER = -2;
+    static STAT_CHANGE = 2
+    static likelihood = 6
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = true;
 
-    startGameStatModification(match, player) {
+    static startGameStatModification(match, player) {
         let isAlpha = true;
         // First, figure out which team they're on, so we know who to compare them to
         if(player in match.homeTeam.players) {
@@ -35,20 +38,17 @@ export class Alpha extends Quirk {
         }
     }
 
-    challengeStatModification(players, player) {
+    static challengeStatModification(players, player) {
         let isAlpha = true;
         // Compare to home team players
         for(const otherPlayer of players) {
-            console.log("OTHER PLAYER NAME: " + otherPlayer.name)
             if(otherPlayer.name < player.name) {
-                console.log("NOT ALPHA")
                 isAlpha = false;
             }
         }
 
         // If isAlpha, change the stats
         if(isAlpha) {
-            console.log("IS ALPHA")
             player.bulk += this.STAT_CHANGE;
             player.finesse += this.STAT_CHANGE;
             player.height += this.STAT_CHANGE;

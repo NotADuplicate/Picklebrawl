@@ -1,10 +1,13 @@
 import { Quirk } from './quirk.js';
 
 export class WeakestLink extends Quirk {
-    title = "Weakest Link";
-    description = ("All of your stats are set to double the lowest of that stat on your team");
+    static likelihood = 2;
+    static title = "Weakest Link";
+    static description = ("All of your stats are set to double the lowest of that stat on your team");
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = true;
 
-    playerStatGenerationChanges(player, power) {
+    static playerStatGenerationChanges(player, power) {
         player.finesse = 0;
         player.strength = 0;
         player.trickiness = 0;
@@ -14,7 +17,7 @@ export class WeakestLink extends Quirk {
         return;
     }
 
-    startGameStatModification(match, player) {
+    static startGameStatModification(match, player) {
         let lowestFinesse = 5;
         let lowestStrength = 5;
         let lowestTrickiness = 5;
@@ -55,7 +58,7 @@ export class WeakestLink extends Quirk {
         player.baseBulk = lowestBulk * 2;
     }
 
-    challengeStatModification(players, player) {
+    static challengeStatModification(players, player) {
         console.log("Weakest Link Challenge Stat Modification");
         let lowestFinesse = 5;
         let lowestStrength = 5;

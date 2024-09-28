@@ -1,13 +1,16 @@
 import { Quirk } from './quirk.js';
 
 export class Streaky extends Quirk {
-    title = "Streaky";
-    description = ("The player may have either higher or lower stats, recalculated at the start "
+    static likelihood = 6;
+    static title = "Streaky";
+    static description = ("The player may have either higher or lower stats, recalculated at the start "
     + "of each match");
-    STAT_CHANGE = 2
-    CHANCE_FOR_STAT_INCREASE = 0.5
+    static STAT_CHANGE = 2
+    static CHANCE_FOR_STAT_INCREASE = 0.5
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = true;
 
-    startGameStatModification(match, player) {
+    static startGameStatModification(match, player) {
         console.log(player.name + " is STREAKY")
         if(Math.random() < this.CHANCE_FOR_STAT_INCREASE) {
             player.baseBulk += this.STAT_CHANGE;

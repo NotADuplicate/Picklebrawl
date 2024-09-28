@@ -353,11 +353,29 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
         });
     })).then(() => {
         players.forEach(player => {
-            //console.log("Player: ", player)
-            console.log("Player quirk: ", player.quirk)
             player.quirk.challengeStatModification(players, player);
         });
         res.json(players);
+    });
+});
+
+// Get quirk actions for all players in a challenge
+router.post('/challenges/quirk-actions', (req, res) => {
+    console.log("Getting quirk actions")
+    const { ids } = req.body;
+    let extraActions = [];
+    Promise.all(ids.map(playerId => {
+        console.log("PlayerId: ", playerId)
+        const player = new Player();
+        return player.load(playerId).then(() => {
+            const action = player.quirk.extraActions();
+            if(action) {
+                extraActions.push({ playerId, action });
+            }
+        });
+    })).then(() => {
+        console.log("Extra actions: ", extraActions)
+        res.json(extraActions);
     });
 });
 
@@ -397,7 +415,7 @@ function runMatch(id) {
                 }
             }
             const match = new Match(challengerTeam, challengedTeam, new Weather());
-            match.startGame();
+            await match.startGame();
 
             for(let i = 0; i < 100; i++) {
                 match.tick();

@@ -1,6 +1,9 @@
 import { Quirk } from './quirk.js';
 
 export class SunWorshipper extends Quirk {
-    title = "Sun Worshipper";
-    description = ("Worships the sun");
+    static likelihood = 6;
+    static title = "Sun Worshipper";
+    static description = ("Worships the sun");
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = false;
 }

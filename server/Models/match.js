@@ -44,18 +44,6 @@ class Match {
         this.offenseTeam = this.homeTeam;
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
-
-        // Insert the match into the match_history database
-        // TODO: insert value for challenge_id
-        const self = this;
-        db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, `
-            + `weather) VALUES (?, ?, ?, ?)`, 
-            [homeTeam.leagueId, homeTeam.teamId, awayTeam.teamId, weather.name], function(err) {
-            if (err) {
-                console.log('Error inserting match into match_history:', err.message);
-            }
-            self.match_id = this.lastID;
-        });
     }
 
     setTargets() {
@@ -131,10 +119,27 @@ class Match {
 
     startGame() {
         this.players = this.homeTeam.players.concat(this.awayTeam.players);
-        console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
-        this.setTargets();
-        this.savePriorities();
-        this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
+        const self = this;
+        return new Promise((resolve, reject) => {
+            db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, `
+                + `weather) VALUES (?, ?, ?, ?)`, 
+                [homeTeam.leagueId, homeTeam.teamId, awayTeam.teamId, weather.name], function(err) {
+                if (err) {
+                    console.log('Error inserting match into match_history:', err.message);
+                    reject(err);
+                }
+                self.match_id = this.lastID;
+                this.setTargets();
+                this.savePriorities();
+                console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
+                this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
+                
+                for(const player of this.players) {
+                    player.quirk.startGameEffect(player, this);
+                }
+                resolve();
+            });
+        });
     }
 
     endGame() {
@@ -175,6 +180,11 @@ class Match {
         this.possessionTicks++;
         this.gameTicks++;
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
+        
+        for(const player of this.players) {
+            player.quirk.tickEffect(player, this);
+        }
+
         this.resetTempStats();
         this.setRandomPriorities(); //randomly change priorities
         this.doPriority("Assist", this.assist, true) //calculate assists and add temp stats to player
@@ -488,6 +498,9 @@ class Match {
         const tempTeam = this.offenseTeam;
         this.offenseTeam = this.defenseTeam;
         this.defenseTeam = tempTeam;
+        for(const player of this.players) {
+            player.quirk.turnoverEffect(player, this);
+        }
     }
 
     shoot(shooter) {

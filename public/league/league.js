@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`http://localhost:3000/challenges?teamId=${myTeamId}`)
         .then(response => response.json())
         .then(challenges => {
-            console.log('My team ID:', myTeamId);
             console.log('Challenges:', challenges);
             challenges.forEach(challenge => {
                 console.log('Chalenge:', challenge.id);

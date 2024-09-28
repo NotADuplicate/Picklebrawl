@@ -7,11 +7,10 @@ const challengeId = urlParams.get('challengeId');
 const leagueName = localStorage.getItem('leagueName');
 const otherTeamId = (challengedId !== myTeamId) ? challengedId : challengerId;
 const challenger = (challengerId === myTeamId) ? true : false;
-console.log("Challenger: " + challenger);
 let playerDict = {};
 let startersLocked = false;
 
-const offensePriorities = {
+let offensePriorities = {
     Advance: "Target neither",
     Attack: "Target enemy",
     Protect: "Target teammate",
@@ -20,7 +19,7 @@ const offensePriorities = {
     Rest: "Target neither"
 };
 
-const defensePriorities = {
+let defensePriorities = {
     Defend_Advance: "Target neither",
     Attack: "Target enemy",
     Protect: "Target teammate",
@@ -29,7 +28,7 @@ const defensePriorities = {
     Rest: "Target neither"
 };
 
-const prioritiesDescriptions = {
+let prioritiesDescriptions = {
     Advance: "Use strength to move the ball forward. Trickiness can help avoid defenders with lower focus.",
     Score: "Use finesse to shoot the ball. Scoring is easier the further down the field you are. Multiple scorers split the defenders between scorers. Trickiness can help avoid defenders with lower focus.",
     Attack: "Use strength to attack an enemy.",
@@ -176,7 +175,6 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
         };
 
         offensePrioritySelect.addEventListener('change', (event) => {
-            console.log(event.target.value + ": " + offensePriorities[event.target.value]);
             const selectedPriority = event.target.value;
             updateTargetMenu(selectedPriority, offensePriorities[selectedPriority].split(' ')[1], offenseTargetMenu, offenseTargetSelect);
         });
@@ -224,7 +222,6 @@ fetch(`http://localhost:3000/teams/${myTeamId}`)
     teamDetailsElement.innerHTML = `
         <p>Owner: ${team.owner}</p>
     `;
-    console.log("Got my team")
 });
 
 fetch(`http://localhost:3000/teams/${otherTeamId}`)
@@ -236,7 +233,6 @@ fetch(`http://localhost:3000/teams/${otherTeamId}`)
     otherTeamDetailsElement.innerHTML = `
         <p>Owner: ${team.owner}</p>
     `;
-    console.log("Got other team")
 });
 
 fetch(`http://localhost:3000/teams/${myTeamId}/players`)
@@ -244,7 +240,6 @@ fetch(`http://localhost:3000/teams/${myTeamId}/players`)
     .then(players => {
         if (Array.isArray(players)) {
             players.forEach(player => {
-                console.log(player);
                 addPlayerToTeam('your-team', player.name, {
                     Blk: player.bulk,
                     Fin: player.finesse,
@@ -257,7 +252,6 @@ fetch(`http://localhost:3000/teams/${myTeamId}/players`)
         } else {
             throw new Error('Players data is not an array');
         }
-        console.log("Got all my players")
     })
 
 fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
@@ -279,7 +273,6 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
         }
     })
 
-    console.log("Challenge ID: " + challengeId);
     fetch(`http://localhost:3000/challenges/${challengeId}/players-actions`)
         .then(response => response.json())
         .then(response => {
@@ -295,8 +288,6 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
                 getActions(response);
             }
             else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) {
-                console.log("Setting players");
-                console.log(playerIds);
                 for(let i = 0; i < playerIds.length; i++) {
                     const id = playerIds[i];
                     selectPlayer(playerDict[id]);
@@ -325,7 +316,6 @@ function lockStarters() {
     if(startersLocked == false) {
         const lockButton = document.getElementById('lock-button');
         lockButton.textContent = 'Undo';
-        console.log("Lock")
         const yourTeamPlayers = document.querySelectorAll('.your-team .player');
         let starterIds = [];
         yourTeamPlayers.forEach(player => {
@@ -338,7 +328,6 @@ function lockStarters() {
 
         const teamId = myTeamId;
         const players = starterIds;
-        console.log(players)
         fetch(`http://localhost:3000/challenges/${challengeId}/add-players`, {
             method: 'POST',
             headers: {
@@ -403,9 +392,7 @@ function unlockStarters() {
 }
 
 function selectPlayer(player) {
-    //console.log("Selecting player: ", player);
     const currentTeam = player.dataset.team;
-    console.log("Current team: ", currentTeam);
     if (player.dataset.locked === 'false') {
         const benchList = document.getElementById(`${currentTeam}-bench`);
         const teamList = document.getElementById(`${currentTeam}-list`);
@@ -462,7 +449,6 @@ function lockActions() {
             });
             const teamId = myTeamId;
             const players = playerIds;
-            console.log(players);
             fetch(`http://localhost:3000/challenges/${challengeId}/add-actions`, {
                 method: 'POST',
                 headers: {
@@ -515,13 +501,57 @@ function unlockActions() {
 
 function bothTeamsReady(playerIds, lockButton) {
     console.log("All players are set");
+    let teamPlayerIds = [];
     for(let i = 0; i < playerIds.length; i++) {
         const id = playerIds[i];
         selectPlayer(playerDict[id]);
         playerDict[id].dataset.locked = true;
         playerDict[id].classList.add('locked');
+        if(playerDict[id].dataset.team === 'your-team') {
+            teamPlayerIds.push(id);
+        }
         lockButton.textContent = 'Lock in actions';
     }
+
+    //Add quirk actions
+    fetch(`http://localhost:3000/challenges/quirk-actions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: teamPlayerIds})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Quirk actions added successfully:', data);
+        data.forEach(action => {
+            console.log(action);
+            const player = playerDict[action.playerId];
+            Object.entries(action.action).forEach(([key]) => {
+                prioritiesDescriptions[key] = action.action[key].description;
+                if(action.action[key].offense) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = key;
+                    console.log("Offense: ", action.action[key].target);
+                    offensePriorities[key] = action.action[key].target;
+                    player.querySelector('.offense-priority-select').appendChild(option);
+
+                }
+                if(action.action[key].defense) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = key;
+                    defensePriorities[key] = action.action[key].target;
+                    player.querySelector('.defense-priority-select').appendChild(option);
+                }
+            });
+        });
+    })
+    .catch(error => {
+        console.error('Error adding quirk actions:', error);
+    });
+
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     yourTeamPlayers.forEach(player => {
         if (player.dataset.location === 'bench') {
@@ -534,14 +564,13 @@ function bothTeamsReady(playerIds, lockButton) {
     });
 }
 
-function getActions(response) {
+function getActions(response) { 
     console.log("Getting actions");
     console.log(response);
     if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
         console.log("All actions set, starting match");
     }
     else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) {
-        console.log("Setting actions");
         const playerActions = response.playersActions;
         for(let i = 0; i < playerActions.length; i++) {
             if(playerActions[i].team_id == myTeamId) {
@@ -550,7 +579,6 @@ function getActions(response) {
                 const player = playerDict[action.player_id];
                 console.log("Player: ", player);
                 const priorityDiv = player.querySelector('.priority');
-                console.log(priorityDiv);
                 const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
                 const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
                 const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
@@ -646,7 +674,16 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         targetMenu.style.display = 'none';
     } else {
         targetMenu.style.display = 'block';
-        const targetPlayers = targetType === 'enemy' ? document.querySelectorAll('.other-team .player[data-location="bench"]') : document.querySelectorAll('.your-team .player[data-location="bench"]');
+        let targetPlayers = [];
+        if(targetType === 'either') {
+            targetPlayers = document.querySelectorAll('.player[data-location="bench"]')
+        }
+        else if(targetType === 'teammate') {
+            targetPlayers = document.querySelectorAll('.your-team .player[data-location="bench"]');
+        }
+        else if(targetType === 'enemy') {
+            targetPlayers = document.querySelectorAll('.other-team .player[data-location="bench"]');
+        }
         targetPlayers.forEach(targetPlayer => {
             const playerName = targetPlayer.querySelector('.player-name').textContent.trim();
             console.log(playerName);

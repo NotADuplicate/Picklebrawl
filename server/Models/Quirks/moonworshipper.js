@@ -1,6 +1,9 @@
 import { Quirk } from './quirk.js';
 
 export class MoonWorshipper extends Quirk {
-    title = "Moon Worshipper";
-    description = ("Worships the moon");
+    static title = "Moon Worshipper";
+    static description = ("Worships the moon");
+    static likelihood = 6;
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = false;
 }
