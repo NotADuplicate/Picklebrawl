@@ -425,5 +425,5 @@ function runMatch(id) {
     })
 }
 
-//runMatch(1);
+runMatch(1);
 export default router;

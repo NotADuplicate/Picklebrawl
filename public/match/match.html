@@ -11,9 +11,6 @@
         <div class="team-container left-team">
             <ul class="player-list">
                 <!-- Player components for the left team -->
-                <li class="player">Player 1</li>
-                <li class="player">Player 2</li>
-                <!-- Add more players as needed -->
             </ul>
         </div>
         <div class="middle-line-container">
@@ -24,12 +21,40 @@
         <div class="team-container right-team">
             <ul class="player-list">
                 <!-- Player components for the right team -->
-                <li class="player">Player 3</li>
-                <li class="player">Player 4</li>
-                <!-- Add more players as needed -->
             </ul>
         </div>
     </div>
     <script src="match.js"></script>
+
+    <template id="player-template">
+        <li class="player" data-locked="false" data-location="team">
+            <div class="player-details">
+                <div class="player-name"></div>
+                <div class="quirk"><span class="quirk-name"></span>
+                    <div class="tooltip"></div>
+                </div>
+                <div class="stats">
+                    <div class="stat" data-stat="Blk">Blk: <span class="stat-value"></span>
+                        <div class="tooltip">Bulk: Take less damage and defend advancing</div>
+                    </div>
+                    <div class="stat" data-stat="Fin">Fin: <span class="stat-value"></span>
+                        <div class="tooltip">Finesse: Used for assisting and scoring</div>
+                    </div>
+                    <div class="stat" data-stat="Ht">Ht: <span class="stat-value"></span>
+                        <div class="tooltip">Height: Used for defending scoring and protecting teammates</div>
+                    </div>
+                    <div class="stat" data-stat="Str">Str: <span class="stat-value"></span>
+                        <div class="tooltip">Strength: Used for advancing and attacking enemies</div>
+                    </div>
+                    <div class="stat" data-stat="Trk">Trk: <span class="stat-value"></span>
+                        <div class="tooltip">Trickiness: Any defenders with lower focus can be tricked</div>
+                    </div>
+                    <div class="stat" data-stat="Fcs">Fcs: <span class="stat-value"></span>
+                        <div class="tooltip">Focus: Prevents you from being tricked when defending a player</div>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </template>
 </body>
 </html>

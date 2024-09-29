@@ -123,20 +123,20 @@ class Match {
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, `
                 + `weather) VALUES (?, ?, ?, ?)`, 
-                [homeTeam.leagueId, homeTeam.teamId, awayTeam.teamId, weather.name], function(err) {
+                [this.homeTeam.leagueId, this.homeTeam.teamId, this.awayTeam.teamId, this.weather.name], function(err) {
                 if (err) {
                     console.log('Error inserting match into match_history:', err.message);
                     reject(err);
                 }
                 self.match_id = this.lastID;
-                this.setTargets();
-                this.savePriorities();
-                console.log("NEW MATCH: " + this.homeTeam.teamName + " vs " + this.awayTeam.teamName);
-                this.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
+                self.setTargets();
+                self.savePriorities();
+                console.log("NEW MATCH: " + self.homeTeam.teamName + " vs " + self.awayTeam.teamName);
+                self.weather.startGameEffect(this, this.offenseTeam, this.defenseTeam);
                 
-                for(const player of this.players) {
-                    player.quirk.startGameEffect(player, this);
-                }
+                /*for(const player of self.players) {
+                    player.quirk.startGameEffect(player, self);
+                }*/
                 resolve();
             });
         });

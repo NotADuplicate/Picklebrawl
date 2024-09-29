@@ -79,7 +79,7 @@ class Player {
 
     setPriorities(offense, defense, offenseTarget = null, defenseTarget = null)  {
         console.log(offense + " " + offenseTarget); 
-        let validOffense = ["Attack", "Advance", "Protect", "Assist", "Score", "Rest"];
+        /*let validOffense = ["Attack", "Advance", "Protect", "Assist", "Score", "Rest"];
         let validDefense = ["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"];
         Object.entries(this.quirk.extraActions()).forEach(([key]) => {
             validOffense.push(key);
@@ -100,7 +100,7 @@ class Player {
         else {
             console.log(defense);
             throw new Error("Invalid defense priority");
-        }
+        }*/
         this.offensePriorityTarget = offenseTarget;
         this.defensePriorityTarget = defenseTarget;
     }

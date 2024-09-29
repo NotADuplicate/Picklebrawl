@@ -679,7 +679,8 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
             targetPlayers = document.querySelectorAll('.player[data-location="bench"]')
         }
         else if(targetType === 'teammate') {
-            targetPlayers = document.querySelectorAll('.your-team .player[data-location="bench"]');
+            targetPlayers = document.querySelectorAll('.your-team .player[data-location="bench"]')
+            
         }
         else if(targetType === 'enemy') {
             targetPlayers = document.querySelectorAll('.other-team .player[data-location="bench"]');
