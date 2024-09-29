@@ -21,7 +21,7 @@ class Match {
     players;
 
     // CONSTANTS
-    GAME_LENGTH = 100;    // number of ticks to play the game for
+    GAME_LENGTH = 20;    // number of ticks to play the game for // TODO: set to 100 when done testing
     FIELD_LENGTH = 100;
     MULTIPLE_ADVANCERS_REDUCTION = 0.8;
     NO_ADVANCERS_MAX_ADVANCEMENT = 2;
@@ -47,7 +47,7 @@ class Match {
     }
 
     runMatch() {
-        for(let i = 0; i < 20; i++) { // TODO: set i < this.GAME_LENGTH
+        for(let i = 0; i < this.GAME_LENGTH; i++) {
             this.tick();
             //await new Promise(r => setTimeout(r, 100));
         }
@@ -396,7 +396,7 @@ class Match {
     }
 
     attack(player, target) {
-        player.attack(target, this.weather.INJURY_PERMANENCE_MODIFIER);
+        player.attack(this, target, this.weather.INJURY_PERMANENCE_MODIFIER);
     }
     
     assist(player, target) {
@@ -547,9 +547,23 @@ class Match {
             this.offenseTeam.score += 1;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
             this.position = this.FIELD_LENGTH / 2;
+            db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id) `
+            + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, true, this.offenseTeam.teamId],
+            function(err) {
+                if (err) {
+                    console.error('Error inserting score into scoring_history:', err.message);
+                }
+            });
         }
         else {
             console.log("Shot missed!\n");
+            db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id) `
+            + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, false, this.offenseTeam.teamId],
+            function(err) {
+                if (err) {
+                    console.error('Error inserting score into scoring_history:', err.message);
+                }
+            });
         }
         this.turnover();
     }

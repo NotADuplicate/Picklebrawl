@@ -169,6 +169,7 @@ db.serialize(() => {
         FOREIGN KEY (attacked_player_id) REFERENCES players(id)
     );`);
 
+    db.run("DROP TABLE IF EXISTS scoring_history");
     db.run(`CREATE TABLE IF NOT EXISTS scoring_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -179,7 +180,6 @@ db.serialize(() => {
         FOREIGN KEY (tick) REFERENCES match_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
         FOREIGN KEY (team_id) REFERENCES teams(id)
-        PRIMARY KEY (match_id, tick)
     );`);
 
 });

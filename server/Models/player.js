@@ -233,8 +233,9 @@ class Player {
         //return "John Doe";
     }
 
-    attack(target, INJURY_PERMANENCE_MODIFIER) {
+    attack(match, target, INJURY_PERMANENCE_MODIFIER) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
+            // TODO: add code in quirk attack effects to add to db
             const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
             const defense = Math.min(100, Math.floor(Math.random() * (target.bulk + target.protectBulk)));
             const finalDamage = damage - defense;
@@ -247,6 +248,15 @@ class Player {
                 console.log("Bulk: " + target.bulk + " Protect Bulk: " + target.protectBulk);
             }
             target.tempInjury += finalDamage;
+
+            db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+                + `damage_done, permanent_injury) VALUES (?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
+                this.id, target.id, finalDamage, false], function(err) {
+                    if (err) {
+                        console.error('Error inserting attack into attack_history:', err.message);
+                    }
+            });
+
         }
         // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER
         /*if(Math.random() < finalDamage*0.1) {
