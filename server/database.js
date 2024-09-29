@@ -140,16 +140,13 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS player_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
-        tick_start INT NOT NULL,
-        tick_end INT NOT NULL,
+        second_half BOOL NOT NULL,
         player_id INT NOT NULL,
         offensive_role TEXT NOT NULL,
         offensive_target_id INT,
         defensive_role TEXT NOT NULL,
         defensive_target_id INT,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
-        FOREIGN KEY (tick_start) REFERENCES match_history(tick),
-        FOREIGN KEY (tick_end) REFERENCES match_history(tick),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (offensive_target_id) REFERENCES players(id),
         FOREIGN KEY (defensive_target_id) REFERENCES players(id)

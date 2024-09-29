@@ -106,10 +106,10 @@ class Match {
             console.log("DEFENSE:", player.defensePriority)
 
             db.run(`INSERT INTO player_history ` 
-                + `(match_id, tick_start, tick_end, player_id, offensive_role, offensive_target_id, `
+                + `(match_id, second_half, player_id, offensive_role, offensive_target_id, `
                 + `defensive_role, defensive_target_id) `
-                + `VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [self.match_id, 0, self.GAME_LENGTH-1, player.id, player.offensePriority, offenseId,
+                + `VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [self.match_id, false, player.id, player.offensePriority, offenseId,
                 player.defensePriority, defenseId], function(err) {
                 if (err) {
                     console.error('Error inserting player into player_history:', err.message);
