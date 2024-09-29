@@ -9,6 +9,7 @@ import leagueRoutes from './routes/leagues.js';
 import { QuirkGenerator } from './quirkGenerator.js';
 import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
+import statsRoutes from './Routes/stats.js';
 
 const app = express();
 const PORT = 3000;
@@ -28,6 +29,7 @@ QuirkGenerator.loadQuirks();
 app.use('/', leagueRoutes);
 app.use('/', teamRoutes);
 app.use('/', challengesRoutes);
+app.use('/', statsRoutes);
 
 // Serve login.html as the default page
 app.get('/', (req, res) => {
