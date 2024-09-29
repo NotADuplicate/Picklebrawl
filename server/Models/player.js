@@ -101,8 +101,12 @@ class Player {
             console.log(defense);
             throw new Error("Invalid defense priority");
         }*/
+        this.offensePriority = offense;
+        this.defensePriority = defense;
         this.offensePriorityTarget = offenseTarget;
         this.defensePriorityTarget = defenseTarget;
+        this.savedOffensePriority = offense;
+        this.savedDefensePriority = defense;
     }
 
     save(callback, teamId) {

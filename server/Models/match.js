@@ -46,6 +46,13 @@ class Match {
         this.weather = weather;
     }
 
+    runMatch() {
+        for(let i = 0; i < 20; i++) { // TODO: set i < this.GAME_LENGTH
+            this.tick();
+            //await new Promise(r => setTimeout(r, 100));
+        }
+    }
+
     setTargets() {
         // Loop through offense team players and set offenseTarget to player object
         for (const player of this.players) {
@@ -85,35 +92,30 @@ class Match {
             // Insert priorities into player_history
             var player_history_id;    // save the id of this row in the db
             const self = this;
+
+            // Set target ids
+            var offenseId = null;
+            var defenseId = null;
+            if (player.offensePriorityTarget != null) {
+                offenseId = player.offensePriorityTarget.id
+            }
+            if (player.defensePriorityTarget != null) {
+                defenseId = player.defensePriorityTarget.id
+            }
+            console.log("OFFENSE:", player.offensePriority)
+            console.log("DEFENSE:", player.defensePriority)
+
             db.run(`INSERT INTO player_history ` 
-                + `(match_id, tick_start, tick_end, player_id, offensive_role, defensive_role) `
-                + `VALUES (?, ?, ?, ?, ?, ?)`,
-                [self.match_id, 0, self.GAME_LENGTH-1, player.id, player.offensePriority, 
-                player.defensePriority], function(err) {
+                + `(match_id, tick_start, tick_end, player_id, offensive_role, offensive_target_id, `
+                + `defensive_role, defensive_target_id) `
+                + `VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [self.match_id, 0, self.GAME_LENGTH-1, player.id, player.offensePriority, offenseId,
+                player.defensePriority, defenseId], function(err) {
                 if (err) {
                     console.error('Error inserting player into player_history:', err.message);
                 }
-                player_history_id = this.lastID
+                player_history_id = this.lastID;
             });
-            // If targets are not null, add them to player_history too
-            if (player.offensePriorityTarget != null) {
-                db.run(`UPDATE player_history SET offensive_target_id = ? WHERE id = ?`,
-                    [player.offensePriorityTarget.id, player_history_id], function(err) {
-                        if (err) {
-                            console.error(err);
-                        }
-                    }
-                );
-            }
-            if (player.defensePriorityTarget != null) {
-                db.run(`UPDATE player_history SET defensive_target_id = ? WHERE id = ?`,
-                    [player.defensePriorityTarget.id, player_history_id], function(err) {
-                        if (err) {
-                            console.error(err);
-                        }
-                    }
-                );
-            }
         }
     }
 
@@ -137,6 +139,7 @@ class Match {
                 /*for(const player of self.players) {
                     player.quirk.startGameEffect(player, self);
                 }*/
+                self.runMatch();
                 resolve();
             });
         });
@@ -196,6 +199,15 @@ class Match {
         if(!this.turnedover) {
             this.doScoring();
         }
+
+        db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position) `
+            + `VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.teamId, this.position],
+            function(err) {
+                if (err) {
+                    console.error('Error inserting into match_tick_history:', err.message);
+                }
+            }
+        )
 
        if(this.gameTicks == this.GAME_LENGTH) {
             this.endGame();

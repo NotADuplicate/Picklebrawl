@@ -417,10 +417,6 @@ function runMatch(id) {
             const match = new Match(challengerTeam, challengedTeam, new Weather());
             await match.startGame();
 
-            for(let i = 0; i < 100; i++) {
-                match.tick();
-                //await new Promise(r => setTimeout(r, 100));
-            }
         })
     })
 }
