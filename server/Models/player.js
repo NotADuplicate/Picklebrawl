@@ -42,7 +42,11 @@ class Player {
     injury = false;
     quirk = null;
 
-    PLAYER_ASSIST_MODIFIER = 0.8;
+    hp;
+    maxHp;
+    ATTACK_MODIFIER = 1;
+
+    PLAYER_ASSIST_MODIFIER = 0.5;
 
     constructor() {
         this.name = this.generateName();
@@ -66,7 +70,11 @@ class Player {
         const quirkKeys = Object.keys(quirks);
         const quirkClass = quirks[quirkKeys[quirkId]];
         this.quirk = quirkClass;
-        
+    }
+
+    setHp() {
+        this.maxHp = this.baseBulk + 1;
+        this.hp = this.maxHp;
     }
 
     get name() {
@@ -236,8 +244,8 @@ class Player {
     attack(match, target, INJURY_PERMANENCE_MODIFIER) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
-            const damage = Math.floor(Math.random() * (this.strength + this.tempStrength));
-            const defense = Math.min(100, Math.floor(Math.random() * (target.bulk + target.protectBulk)));
+            const damage = (Math.random() * (this.strength + this.tempStrength));
+            const defense = Math.min(20, (Math.random() * (target.bulk + target.protectBulk)));
             const finalDamage = damage - defense;
             if (finalDamage < 0) {
                 return;
@@ -249,13 +257,20 @@ class Player {
             }
             target.tempInjury += finalDamage;
 
-            db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
-                + `damage_done, permanent_injury) VALUES (?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
-                this.id, target.id, finalDamage, false], function(err) {
-                    if (err) {
-                        console.error('Error inserting attack into attack_history:', err.message);
-                    }
-            });
+            let hpDamage = 0;
+            if(finalDamage > 1) {
+                hpDamage = Math.random(0,finalDamage-1)*this.ATTACK_MODIFIER;
+                db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+                    + `damage_done, permanent_injury) VALUES (?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
+                    this.id, target.id, 100*hpDamage/target.maxHp, false], function(err) {
+                        if (err) {
+                            console.error('Error inserting attack into attack_history:', err.message);
+                        }
+                        console.log("Damage: ", damage, " Defense: ", defense);
+                        console.log("Target max hp: ", target.maxHp, " Hp damage: ", hpDamage);
+                });
+            }
+            target.hp = Math.max(0,target.hp-hpDamage);
 
         }
         // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER

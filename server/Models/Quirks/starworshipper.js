@@ -7,8 +7,9 @@ export class StarWorshipper extends Quirk {
     static STAT_BOOST = 1
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = false;
+    static START_EFFECT_ORDER = 5;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         player.bulk += this.STAT_BOOST;
         player.height += this.STAT_BOOST;
         player.strength += this.STAT_BOOST;

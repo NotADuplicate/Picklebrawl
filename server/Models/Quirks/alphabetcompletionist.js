@@ -9,6 +9,7 @@ export class AlphabetCompletionist extends Quirk {
     static likelihood = 3;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
     static playerStatGenerationChanges(player, power) {
         console.log("AlphabetCompletionist playerStatGenerationChanges\n");
@@ -21,7 +22,7 @@ export class AlphabetCompletionist extends Quirk {
         return;
     }
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         // Make string of all names
         let allNames = '';
         match.players.forEach(otherPlayer => {

@@ -7,8 +7,9 @@ export class PackAnimal extends Quirk {
     static likelihood = 5;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         let teammatesWithQuirk = 0;
         for (const otherPlayer of match.players) {
             if (otherPlayer.quirk instanceof PackAnimal && otherPlayer !== player && otherPlayer.team === player.team) {

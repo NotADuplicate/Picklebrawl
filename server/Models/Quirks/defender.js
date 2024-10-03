@@ -8,8 +8,9 @@ export class Defender extends Quirk {
     static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         if (match.defenseTeam.players.includes(player)) {
             player.baseFinesse += this.STAT_INCREASE;
             player.baseBulk += this.STAT_INCREASE;

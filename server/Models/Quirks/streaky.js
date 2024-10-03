@@ -9,8 +9,9 @@ export class Streaky extends Quirk {
     static CHANCE_FOR_STAT_INCREASE = 0.5
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         console.log(player.name + " is STREAKY")
         if(Math.random() < this.CHANCE_FOR_STAT_INCREASE) {
             player.baseBulk += this.STAT_CHANGE;

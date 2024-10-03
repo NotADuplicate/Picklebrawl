@@ -42,7 +42,7 @@ export class PackAnimal extends Quirk {
         return;
     }
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         for (const otherPlayer of match.players) {
             if (otherPlayer.quirk instanceof PackAnimal && otherPlayer !== player) {
                 return;

@@ -284,6 +284,10 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
                 });
             }
             if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
+                if(response.flags.challengedActionsSet && response.flags.challengerActionsSet) {
+                    console.log("All actions set, starting match");
+                    goToMatch(challengeId);
+                }
                 bothTeamsReady(playerIds, lockButton);
                 getActions(response);
             }
@@ -694,4 +698,9 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
             targetSelect.appendChild(option);
         });
     }
+}
+
+async function goToMatch(challengeId) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    window.location.href = '../match/match.html?challengeId=' + challengeId;
 }

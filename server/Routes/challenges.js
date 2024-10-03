@@ -379,15 +379,16 @@ router.post('/challenges/quirk-actions', (req, res) => {
     });
 });
 
-function runMatch(id) {
+function runMatch(challengeId) {
+    let id = challengeId;
     console.log("Running match ", id)
-    db.all('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         console.log("Row: ", row)
         if(err) {
             console.error(err);
             return res.status(500).json({ error: 'Internal server error' });
         }
-        const { challenger_team_id, challenged_team_id } = row[0];
+        const { challenger_team_id, challenged_team_id } = row;
         const challengerTeam = new Team(null, null, null, challenger_team_id, false);
         const challengedTeam = new Team(null, null, null, challenged_team_id, false);
         db.all('SELECT * FROM challenge_players WHERE challenge_id = ?', [id], async (err, rows) => {
@@ -395,11 +396,9 @@ function runMatch(id) {
                 console.error(err);
                 return res.status(500).json({ error: 'Internal server error' });
             }
-            //console.log("Rows: ", rows)
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const { player_id, offense_action, defense_action, offense_target_id, defense_target_id } = row;
-                console.log(row)
                 console.log(offense_target_id, defense_target_id)
                 const player = new Player();
                 await player.load(player_id);
@@ -415,11 +414,9 @@ function runMatch(id) {
                 }
             }
             const match = new Match(challengerTeam, challengedTeam, new Weather());
-            await match.startGame();
+            await match.startGame(challengeId);
 
         })
     })
 }
-
-runMatch(1);
 export default router;

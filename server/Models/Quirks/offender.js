@@ -8,8 +8,10 @@ export class Offender extends Quirk {
     static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
+        console.log(match.homeTeam.teamName);
         if (match.offenseTeam.players.includes(player)) {
             player.baseFinesse += this.STAT_INCREASE;
             player.baseBulk += this.STAT_INCREASE;

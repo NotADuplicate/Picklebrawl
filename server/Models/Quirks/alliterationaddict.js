@@ -6,8 +6,9 @@ export class AlliterationAddict extends Quirk {
     static likelihood = 5;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         let count = 0; 
         const firstLetter = player.name.charAt(0).toLowerCase();
         for (const otherPlayer of match.players) {

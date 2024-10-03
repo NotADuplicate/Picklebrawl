@@ -8,15 +8,16 @@ export class Alpha extends Quirk {
     static likelihood = 6
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 2;
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         let isAlpha = true;
         // First, figure out which team they're on, so we know who to compare them to
         if(player in match.homeTeam.players) {
             // Compare to home team players
             for(const otherPlayer of match.homeTeam.players) {
                 if(otherPlayer.name < player.name) {
-                    isAlpha = False;
+                    isAlpha = false;
                 }
             }
         }
@@ -24,7 +25,7 @@ export class Alpha extends Quirk {
             // Compare to away team players
             for(const otherPlayer of match.awayTeam.players) {
                 if(otherPlayer.name < player.name) {
-                    isAlpha = False;
+                    isAlpha = false;
                 }
             }
         }

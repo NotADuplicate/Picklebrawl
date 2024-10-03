@@ -3,22 +3,9 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    height: 100vh;
     background-color: #f0f0f0;
-}
-
-.match-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 80%;
-    max-width: 1200px;
-}
-
-.team-container {
-    width: 30%;
 }
 
 .player-list {
@@ -34,19 +21,31 @@ body {
     margin: 5px 0;
     text-align: center;
     border-radius: 5px;
+    transition: transform 0.5s ease-in-out;
 }
 
-.middle-line-container {
-    width: 10%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.player.centered-left {
+    transform: translateX(20vw); /* Move towards the center from the left */
+}
+
+.player.centered-right {
+    transform: translateX(-20vw); /* Move towards the center from the right */
+}
+
+.player.highlighted {
+    background-color: #ffeb3b; /* Highlight color */
+    border-color: #fbc02d; /* Highlight border color */
+}
+
+.horizontal-line-container {
+    width: 90%;
+    margin-top: 20px;
     position: relative;
 }
 
-.middle-line {
-    width: 2px;
-    height: 300px;
+.horizontal-line {
+    width: 100%;
+    height: 2px;
     background-color: #000;
     position: relative;
 }
@@ -57,8 +56,133 @@ body {
     background-color: red;
     border-radius: 50%;
     position: absolute;
-    top: 50%;
+    top: -9px; /* Adjust to center the icon vertically */
     left: 50%;
-    transform: translate(-50%, -50%);
-    transition: top 0.5s;
+    transform: translateX(-50%);
+    transition: left 0.5s;
+}
+
+.match-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80%;
+    max-width: 1200px;
+    margin-top: 20px;
+}
+
+.team-info-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+}
+
+.left-team-info {
+    align-items: flex-start;
+}
+
+.right-team-info {
+    align-items: flex-end;
+}
+
+.team-name {
+    font-weight: bold;
+    font-size: 3em;
+}
+
+.team-score {
+    font-weight: bold;
+    font-size: 3em;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.team-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#match-text-box {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow-y: auto;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.health-bar-container {
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.health-bar {
+    height: 10px;
+    background-color: #4caf50;
+    width: 100%; /* Default to full health */
+}
+
+.game-timer {
+    font-weight: bold;
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.score-timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.home-team-players,
+.away-team-players {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+}
+
+.quirk {
+    position: relative;
+    cursor: pointer;
+}
+.quirk:hover .tooltip {
+    opacity: 1;
+    transition-delay: 0.5s; /* Adds a 1-second delay before the tooltip appears */
+}
+
+.tooltip {
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+    pointer-events: none; /* Ensures the tooltip doesn't interfere with mouse events */
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 3px;
+    white-space: normal;
+    min-width: 200px;
+    max-width: 300px;
+    z-index: 10;
 }

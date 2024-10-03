@@ -1,15 +1,14 @@
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { db } from './database.js';
-import { Team } from './Models/team.js';
 import leagueRoutes from './routes/leagues.js';
 import { QuirkGenerator } from './quirkGenerator.js';
 import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
 import statsRoutes from './Routes/stats.js';
+import matchRoutes from './Routes/match.js';
 
 const app = express();
 const PORT = 3000;
@@ -30,6 +29,7 @@ app.use('/', leagueRoutes);
 app.use('/', teamRoutes);
 app.use('/', challengesRoutes);
 app.use('/', statsRoutes);
+app.use('/', matchRoutes);
 
 // Serve login.html as the default page
 app.get('/', (req, res) => {

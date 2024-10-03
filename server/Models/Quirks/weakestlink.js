@@ -6,6 +6,7 @@ export class WeakestLink extends Quirk {
     static description = ("All of your stats are set to double the lowest of that stat on your team");
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static START_EFFECT_ORDER = 5;
 
     static playerStatGenerationChanges(player, power) {
         player.finesse = 0;
@@ -17,7 +18,7 @@ export class WeakestLink extends Quirk {
         return;
     }
 
-    static startGameStatModification(match, player) {
+    static startGameEffect(match, player) {
         let lowestFinesse = 5;
         let lowestStrength = 5;
         let lowestTrickiness = 5;
