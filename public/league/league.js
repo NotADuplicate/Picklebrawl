@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let challengedIds = {}
 
     // Fetch and display league details
-    fetch(`http://localhost:3000/leagues?leagueName=${leagueName}`)
+    fetch(`/leagues?leagueName=${leagueName}`)
     .then(response => response.json())
     .then(leagues => {
         leaguesList.innerHTML = '';
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Fetch and display teams
-            fetch(`http://localhost:3000/teams?leagueId=${league.id}`)
+            fetch(`/teams?leagueId=${league.id}`)
             .then(response => response.json())
             .then(teams => {
                 teamsContainer.innerHTML = '';
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch and display challenges
     function getChallenges(challengeButtons) {
-    fetch(`http://localhost:3000/challenges?teamId=${myTeamId}`)
+    fetch(`/challenges?teamId=${myTeamId}`)
         .then(response => response.json())
         .then(challenges => {
             console.log('Challenges:', challenges);
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(button.innerText === 'Challenge') {
             console.log('Challenging team:', teamId);
             // Send challenge request
-            fetch(`http://localhost:3000/challenges`, {
+            fetch(`/challenges`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else if (button.innerText === 'Accept Challenge') {
             // Accept challenge
-            fetch(`http://localhost:3000/challenges/${button.value}/accept`, {
+            fetch(`/challenges/${button.value}/accept`, {
                 method: 'POST'
             })
             .then(response => response.json())
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startLeague(leagueName) {
-        fetch('http://localhost:3000/start-league', {
+        fetch('/start-league', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

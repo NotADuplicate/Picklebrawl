@@ -32,10 +32,17 @@ router.get('/match/match-tick', (req, res) => {
                 if (err) {
                     return res.status(500).json({ message: 'Error fetching attack history!' });
                 }
-                res.json({
-                    matchTick: tick_row,
-                    scoringHistory: score_row,
-                    attackHistory: attack_rows
+                db.all('SELECT * FROM match_trick_history WHERE match_id = ? AND tick = ?', [matchId, tick], (err, trick_rows) => {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).json({ message: 'Error fetching trick history!' });
+                    }
+                    res.json({
+                        matchTick: tick_row,
+                        scoringHistory: score_row,
+                        attackHistory: attack_rows,
+                        trickHistory: trick_rows
+                    });
                 });
             });
         });

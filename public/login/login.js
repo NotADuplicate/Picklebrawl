@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginButton = document.getElementById('show-login');
     const showCreateAccountButton = document.getElementById('show-create-account');
 
+    fetch(`/leagues?user=${1}`)
+    .then(response => response.json())
+    .then(leagues => {
+    });
+
     const loggedInUser = localStorage.getItem('loggedInUser');
     const loggedInPassword = localStorage.getItem('loggedInPassword');
     if (loggedInUser && loggedInPassword) {
@@ -38,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function createAccount(username, password) {
-        fetch('http://localhost:3000/create-account', {
+        fetch('/create-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -61,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function login(username, password) {
-        fetch('http://localhost:3000/login', {
+        fetch('/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

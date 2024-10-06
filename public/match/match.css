@@ -22,6 +22,8 @@ body {
     text-align: center;
     border-radius: 5px;
     transition: transform 0.5s ease-in-out;
+    position: relative;
+    transform-origin: center;
 }
 
 .player.centered-left {
@@ -158,6 +160,7 @@ body {
     list-style-type: none; /* Remove bullet points */
     padding: 0; /* Remove default padding */
     margin: 0; /* Remove default margin */
+    overflow: visible; /* Allow players to overflow the container */
 }
 
 .quirk {
@@ -185,4 +188,39 @@ body {
     min-width: 200px;
     max-width: 300px;
     z-index: 10;
+}
+
+.player-icon {
+    position: absolute;
+}
+
+.home-team .player-icon {
+    top: -25px; /* Adjust as needed to position the ball */
+    right: -25px; /* Adjust as needed to position the ball */
+}
+
+.away-team .player-icon {
+    top: -25px; /* Adjust as needed to position the ball */
+    left: -25px; /* Adjust as needed to position the ball */
+}
+
+.ball-icon {
+    width: 50px;
+    height: 50px;
+    display: block; /* Initially hide the ball icon */
+    /*transition: transform 0.5s ease-in-out; /* Smooth animation */
+    /*transform: rotate(0deg); /* Set initial rotation */
+}
+
+@keyframes rotateAnimation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotate-360 {
+    animation: rotateAnimation 0.5s ease-in-out;
 }

@@ -9,14 +9,14 @@ const password = "password"
 const username2 = "username2"
 
 //Must create user accounts before league
-fetch('http://localhost:3000/create-account', {
+fetch('/create-account', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
     },
     body: JSON.stringify({ username, password })
 })
-fetch('http://localhost:3000/create-account', {
+fetch('/create-account', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -29,7 +29,7 @@ leaguePassword = "leaguePassword"
 teamName = "teamName"
 teamName2 = "teamName2"
 //Then can create a league
-fetch('http://localhost:3000/create-league', {
+fetch('/create-league', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -37,7 +37,7 @@ fetch('http://localhost:3000/create-league', {
     body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
 })
 //Then join the league
-fetch('http://localhost:3000/join-league', {
+fetch('/join-league', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -48,19 +48,19 @@ fetch('http://localhost:3000/join-league', {
 teamId = 3;
 myTeamId = 4;
 //Then can create a challenge
-fetch(`http://localhost:3000/challenges`, {
+fetch(`/challenges`, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
     },
     body: JSON.stringify({ teamId, myTeamId })
 })
-fetch(`http://localhost:3000/challenges/${1}/accept`, {
+fetch(`/challenges/${1}/accept`, {
     method: 'POST'
 })
 
 //Then can add players to the challenge
-fetch(`http://localhost:3000/challenges/${1}/add-players`, {
+fetch(`/challenges/${1}/add-players`, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'

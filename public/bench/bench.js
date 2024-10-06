@@ -213,7 +213,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
 }
 
 // Fetch and display team details
-fetch(`http://localhost:3000/teams/${myTeamId}`)
+fetch(`/teams/${myTeamId}`)
 .then(response => response.json())
 .then(team => {
     const teamNameElement = document.getElementById('your-team-name');
@@ -224,7 +224,7 @@ fetch(`http://localhost:3000/teams/${myTeamId}`)
     `;
 });
 
-fetch(`http://localhost:3000/teams/${otherTeamId}`)
+fetch(`/teams/${otherTeamId}`)
 .then(response => response.json())
 .then(team => {
     const otherTeamNameElement = document.getElementById('other-team-name');
@@ -235,7 +235,7 @@ fetch(`http://localhost:3000/teams/${otherTeamId}`)
     `;
 });
 
-fetch(`http://localhost:3000/teams/${myTeamId}/players`)
+fetch(`/teams/${myTeamId}/players`)
     .then(response => response.json())
     .then(players => {
         if (Array.isArray(players)) {
@@ -254,7 +254,7 @@ fetch(`http://localhost:3000/teams/${myTeamId}/players`)
         }
     })
 
-fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
+fetch(`/teams/${otherTeamId}/players`)
     .then(response => response.json())
     .then(players => {
         if (Array.isArray(players)) {
@@ -273,7 +273,7 @@ fetch(`http://localhost:3000/teams/${otherTeamId}/players`)
         }
     })
 
-    fetch(`http://localhost:3000/challenges/${challengeId}/players-actions`)
+    fetch(`/challenges/${challengeId}/players-actions`)
         .then(response => response.json())
         .then(response => {
             console.log("Challenge players: ", response);
@@ -332,7 +332,7 @@ function lockStarters() {
 
         const teamId = myTeamId;
         const players = starterIds;
-        fetch(`http://localhost:3000/challenges/${challengeId}/add-players`, {
+        fetch(`/challenges/${challengeId}/add-players`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -370,7 +370,7 @@ function unlockStarters() {
     const teamId = myTeamId;
     const players = starterIds;
 
-    fetch(`http://localhost:3000/challenges/${challengeId}/remove-players`, {
+    fetch(`/challenges/${challengeId}/remove-players`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -453,7 +453,7 @@ function lockActions() {
             });
             const teamId = myTeamId;
             const players = playerIds;
-            fetch(`http://localhost:3000/challenges/${challengeId}/add-actions`, {
+            fetch(`/challenges/${challengeId}/add-actions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -474,7 +474,7 @@ function unlockActions() {
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     const teamId = myTeamId;
 
-    fetch(`http://localhost:3000/challenges/${challengeId}/remove-actions`, {
+    fetch(`/challenges/${challengeId}/remove-actions`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -518,7 +518,7 @@ function bothTeamsReady(playerIds, lockButton) {
     }
 
     //Add quirk actions
-    fetch(`http://localhost:3000/challenges/quirk-actions`, {
+    fetch(`/challenges/quirk-actions`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -627,7 +627,7 @@ function applyQuirkStats() {
         ids.push(player.dataset.playerId);
     });
 
-    fetch(`http://localhost:3000/challenges/${challengeId}/quirk-effects`, {
+    fetch(`/challenges/${challengeId}/quirk-effects`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createLeague(leagueName, leaguePassword, teamName) {
         const username = localStorage.getItem('loggedInUser');
         console.log("Creating league: ", leagueName, leaguePassword, username, teamName);
-        fetch('http://localhost:3000/create-league', {
+        fetch('/create-league', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function joinLeague(leagueName, leaguePassword, teamName) {
         const username = localStorage.getItem('loggedInUser');
-        fetch('http://localhost:3000/join-league', {
+        fetch('/join-league', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadLeagues() {
         console.log("Getting leagues");
-        fetch(`http://localhost:3000/leagues?user=${loggedInUser}`)
+        fetch(`/leagues?user=${loggedInUser}`)
         .then(response => response.json())
         .then(leagues => {
             console.log("Leagues: ", leagues);

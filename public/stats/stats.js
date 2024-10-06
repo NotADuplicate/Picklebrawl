@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getGameStats(teamId) {
-    fetch(`http://localhost:3000/game-stats?teamId=${teamId}`)
+    fetch(`/game-stats?teamId=${teamId}`)
     .then(response => response.json())
     .then(stats => {
         console.log(stats)

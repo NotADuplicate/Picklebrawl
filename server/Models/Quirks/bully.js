@@ -7,4 +7,15 @@ export class Bully extends Quirk {
     static likelihood = 2;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
+
+    tickEffect(player, match) {
+        if (match.offenseTeam.players.includes(player) && player.offensePriority === "Advance") {
+            match.defenseTeam.players.forEach(defender => {
+                if (defender.defensePriority === "Defend_Advance") {
+                    player.attack(defender);
+                    defender.attack(player);
+                }
+            });
+        }
+    }
 }

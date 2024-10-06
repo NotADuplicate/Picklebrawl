@@ -3,7 +3,7 @@ import path from 'path';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { db } from './database.js';
-import leagueRoutes from './routes/leagues.js';
+import leagueRoutes from './Routes/leagues.js';
 import { QuirkGenerator } from './quirkGenerator.js';
 import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
@@ -11,7 +11,7 @@ import statsRoutes from './Routes/stats.js';
 import matchRoutes from './Routes/match.js';
 
 const app = express();
-const PORT = 3000;
+const PORT = 9000;
 
 // Convert import.meta.url to __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -74,5 +74,5 @@ app.post('/login', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on :${PORT}`);
 });

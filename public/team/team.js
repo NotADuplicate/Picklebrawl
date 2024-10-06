@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const teamId = urlParams.get('teamId');
 
     // Fetch and display team details
-    fetch(`http://localhost:3000/teams/${teamId}`)
+    fetch(`/teams/${teamId}`)
     .then(response => response.json())
     .then(team => {
         teamNameElement.textContent = team.teamName;
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p>Owner: ${team.owner}</p>
         `;
 
-        fetch(`http://localhost:3000/teams/${teamId}/players`)
+        fetch(`/teams/${teamId}/players`)
         .then(response => response.json())
         .then(players => {
             if (Array.isArray(players)) {
