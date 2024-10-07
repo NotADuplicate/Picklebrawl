@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tutorial</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome to Picklebrawl!</h1>
+        <p>
+            Picklebrawl is a team management sports simulator game that plays right in your browser!
+            Learn the basics of how to play here.
+        </p>
+    </header>
+    
+    <main>
+        <section class="tutorial-step">
+            <h2>Getting Started</h2>
+            <p>To begin, create an account on the login page. Then, create or join a league! 
+                (You may need to reload the page to see it show up on your homepage.)
+                You can share the League Name and Password with your friends so you can play against them.
+            </p>
+        </section>
+
+        <section class="tutorial-step">
+            <h2>Friendlies</h2>
+            <p>
+                Friendlies are games that are played before the tournament starts. 
+                (Tournaments haven't been implemented yet, but you can play as many friendlies as
+                you'd like.)
+                You can play with
+                your friends to get a sense of strategy for your own team, and learn about theirs.
+            </p>
+            <p>
+                View the league you've joined by clicking the View button on the homepage. Along the right-hand
+                side, you will see all of the teams in the league, including yours!
+            </p>
+            <p>
+                To challenge another team, click the "Challenge" button by their team name.
+                They will have to accept your challenge (done on the same page, by clicking the
+                "Accept Challenge" button). Once accepted, both of you can "View Challenge".
+            </p>
+        </section>
+
+        <section class="tutorial-step">
+            <h2>Preparing for a Game</h2>
+            <p>Picklebrawl is all about team management. Choose players that work well together
+                and put them on roles that they will excel in. Once your team is set, you have
+                no control over how the match goes. The match will play on its own once both
+                teams have locked in their players and strategy, and you don't even have to watch
+                it happening live -- you can watch it after its over, whenever you have time to 
+                log on!
+            </p>
+            <ul>
+                <li>Click on the "View Challenge" button next to a team where both of you have agreed to a challenge.</li>
+                <li>
+                    First, you will choose your players from your bench. You will not be able to 
+                    see which players your opponent has chosen at this point, although you can see
+                    their entire team and guess what choices they may make. Once you're confident
+                    with your choices, press "Lock In Starters"!
+                </li>
+                <li>
+                    Until both you and your opponent have locked in your starters, the 
+                    person who locked in starters first will only see a greyed out bench with the 
+                    option to undo their lock-in. Once both players lock in, there's no going 
+                    back.
+                </li>
+                <li>
+                    There are currently some bugs with these starters showing up, so you may need
+                    to use the "Back" button on the upper-left hand corner of the page, then
+                    press "View Challenge" again until the menus show as expected.
+                </li>
+                <li>
+                    Second, once both challengers have locked in their starters, you will choose 
+                    each starter's role. Each player has one role for
+                    when your team is on offense and one role for when your team is on defense. 
+                    More detail on these is given in the "Roles" section of the tutorial. At this
+                    stage, you will be able to see the starters your opponent has picked. Once
+                    you're done picking roles, press "Lock In Actions"!
+                </li>
+                <li>
+                    Again, until both players have locked in their actions, the player who locked
+                    in first will only see a greyed out menu with the option to undo their lock in.
+                    If your opponent is already locked in, you will see "READY" in green under their
+                    name on the action-picking menu.
+                    Once both players lock in their actions, the final stage of the challenge happens!
+                </li>
+            </ul>
+        </section>
+
+        <section class="tutorial-step">
+            <h2>Playing a Game</h2>
+            <p>
+                Once both players have locked in their players and actions, the game will play 
+                itself. If you were on the action-picking menu when the game starts, it will 
+                automatically show you the game -- otherwise you'll have to press "View Challenge"
+                to watch the animation. 
+            </p>
+            <p>
+                The animation will show you a tick-by-tick play of how the game went, with visuals
+                showing which team has possession, where it is on the field, and which players 
+                currently have the ball. There is a running console log as well which helps you 
+                keep track of which players did what during the game. 
+            </p>
+        </section>
+
+        <section class="tutorial-step"></section>
+            <h2>Player Info/Stats</h2>
+            <p>
+                Each time you join a league, a team of 8 players is automatically generated for 
+                you. Each of these players has unique names, stats, and quirks. When planning your 
+                team, you can always mouse over any stat or quirk to see a brief description. 
+                There are currently
+                6 stats a player can have, each of which giving the player different strengths:
+            </p>
+            <ul>
+                <li>
+                    Bulk: Players with high values take less damage when attacked and are better 
+                    at defending advancement from the other team
+                </li>
+                <li>
+                    Finesse: Players with high values are better at scoring and assisting other players
+                </li>
+                <li>
+                    Height: Players with high values are better at defending scoring and 
+                    protecting their teammates from attacks
+                </li>
+                <li>
+                    Strength: Players with high values are better at advancing and attacking
+                </li>
+                <li>
+                    Trickiness: This stat is tied to Focus. If this player is on offense 
+                    (advancing or scoring) and they're being defended by a player with lower Focus
+                    than this player's Trickiness, then this player has a chance to juke out the 
+                    defender and advance/score as if they were not defended at all.
+                </li>
+                <li>
+                    Focus: This stat is tied to Trickiness. If this player is on defense (defending 
+                    advancing or scoring) and they're defending against a player with lower
+                    Trickiness than this player's Focus, then this player has no chance of getting
+                    juked out and always defends, lessening the chance of a large advance/successful
+                    score.
+                </li>
+            </ul>
+            <p>
+                Each player also generates with a quirk. Learn about them as you play!
+            </p>
+        </section>
+
+        <section class="tutorial-step">
+            <h2>Roles</h2>
+            <p>
+                There are some roles players can only have while they're playing offense, some 
+                players can only have while they're playing defense, and some that are universal 
+                which can be used regardless of whether the player is playing offense or defense. 
+                Multiple players can have the same roles. When choosing roles for your starters, 
+                if you hover the mouse over a role that has been selected for a player, a tooltip 
+                will appear to describe what that role does.
+            </p>
+
+            <h4>Offensive Roles</h4>
+            <ul>
+                <li>
+                    Advance: This player will attempt to move towards the opponent's goal
+                    once your team is in possession of the ball. This role is aided by high 
+                    Strength.
+                </li>
+                <li>
+                    Score: This player will attempt to score once your team has advanced close 
+                    enough to the opponent's goal. This role is aided by high Finesse.
+                </li>
+            </ul>
+
+            <h4>Defensive Roles</h4>
+            <ul>
+                <li>
+                    Defend Advance: This player will lessen the amount that opposing players are 
+                    able to move towards your goal when your team doesn't have possession of the 
+                    ball. This role is aided by high Bulk.
+                </li>
+                <li>
+                    Defend Score: This player will lessen the chances of an opposing Scorer making
+                    a successful goal when they try to shoot. This role is aided by high Height.
+                </li>
+            </ul>
+
+            <h4>Universal Roles</h4>
+            <ul>
+                <li>
+                    Attack: This player will attack a player on the opposing team. If successful,
+                    the player who was attacked will have significantly lower stats depending on 
+                    how much damage was done for a brief time. This role is aided by high Strength,
+                    and players with high Bulk naturally take less damage from attacks. Note that
+                    this feature is still being balanced!
+                </li>
+                <li>
+                    Protect: This player will protect another player on your team from being 
+                    attacked. If you have a star Scorer with very low Bulk, for example, giving
+                    them a Protector might prevent the opposing team from attacking that Scorer
+                    for huge amounts of damage and ruining your whole strategy. This role is aided 
+                    by high Height.
+                </li>
+                <li>
+                    Assist: This player will help another player on your team, whatever their role 
+                    is. This role is aided by Finesse. 
+                    
+                    This comes particularly in handy if you want two players on the same role, but
+                    only one player with good stats for that role, e.g. you want two Advancers but only 
+                    have one player with high Strength. In this case, if you have a player with high 
+                    Finesse, you can have them assist the Advancer, and it will be almost as good as 
+                    simply having two advancers. Furthermore, if you have no idea what starters your 
+                    opponent might pick, choosing a starter with high Finesse allows you more 
+                    flexibility when it comes to possible strategies you might pick during your 
+                    choosing roles stage.
+                </li>
+                <li>
+                    Rest: This player will do nothing during the section of the game this role is 
+                    picked for (offense or defense), but will become more effective at their role 
+                    during the other section of the game.
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Picklebrawl. All rights reserved.</p>
+    </footer>
+</body>
+</html>

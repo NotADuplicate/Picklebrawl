@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if(lockButton.textContent === 'Undo') {
             unlockStarters();
         }
-        else if(lockButton.textContent === 'Lock in actions') {
+        else if(lockButton.textContent === 'Lock In Actions') {
             lockActions();
         }
         else if(lockButton.textContent === 'Undo actions') {
@@ -496,7 +496,7 @@ function unlockActions() {
                 defenseTargetSelect.disabled = false;
             });
             const lockButton = document.getElementById('lock-button');
-            lockButton.textContent = 'Lock in actions';
+            lockButton.textContent = 'Lock In Actions';
         })
         .catch(error => {
             console.error('Error removing actions:', error);
@@ -514,7 +514,7 @@ function bothTeamsReady(playerIds, lockButton) {
         if(playerDict[id].dataset.team === 'your-team') {
             teamPlayerIds.push(id);
         }
-        lockButton.textContent = 'Lock in actions';
+        lockButton.textContent = 'Lock In Actions';
     }
 
     //Add quirk actions
