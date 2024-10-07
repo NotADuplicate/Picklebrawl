@@ -71,20 +71,9 @@ router.post('/challenges/:id/add-players', (req, res) => {
     const { id } = req.params;
     const { teamId, players } = req.body;
     console.log("Req body players: ", req.body.players)
-    for(let i = 0; i < players.length; i++) {
-        const player = players[i];
-        console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player)
-        db.run(
-            'INSERT INTO challenge_players (challenge_id, team_id, player_id) VALUES (?, ?, ?)', [id, teamId, player], function (err) {
-                if (err) {
-                    console.error(err);
-                    res.status(500).json({ error: 'Internal server error' });
-                }
-            }
-        );
-    }
+
     console.log("Done adding players to challenge players")
-    db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
             return;
@@ -98,7 +87,15 @@ router.post('/challenges/:id/add-players', (req, res) => {
         let columnToUpdate;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_players_set';
+            if(row.challenger_players_set) {
+                console.log("Challenger players already set")
+                return;
+            }
         } else if (row.challenged_team_id == teamId) {
+            if(row.challenged_players_set) {
+                console.log("Challenged players already set")
+                return;
+            }
             columnToUpdate = 'challenged_players_set';
         } else {
             console.log('No matching team ID found');
@@ -106,7 +103,36 @@ router.post('/challenges/:id/add-players', (req, res) => {
             console.log('Row:', row);
             return;
         }
+        console.log(row)
         console.log("Updating challenges set: ", columnToUpdate)
+
+        const getQuery = `SELECT ${columnToUpdate} FROM challenges WHERE id = ?`;
+        db.get(getQuery, [id], (err, row) => {
+            if (err) {
+                console.error('Error fetching row:', err);
+                return;
+            }
+            console.log("Row: ", row);
+            if(row[columnToUpdate]) {
+                console.log("Players already set")
+                return;
+            }
+            for(let i = 0; i < players.length; i++) {
+                const player = players[i];
+                console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player)
+                db.run(
+                    'INSERT INTO challenge_players (challenge_id, team_id, player_id) VALUES (?, ?, ?)', [id, teamId, player], function (err) {
+                        if (err) {
+                            console.log("Error adding player to challenge players: ", err)
+                            console.error(err);
+                            res.status(500).json({ error: 'Internal server error' });
+                            return;
+                        }
+                        console.log("Added player to challenge players: ", player)
+                    }
+                );
+            }
+        });
 
         // Update the players set column
         const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
@@ -140,7 +166,7 @@ router.post('/challenges/:id/remove-players', (req, res) => {
             }
         );
     }
-    console.log("Done adding players to challenge players")
+    console.log("Done removing players to challenge players")
     db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
@@ -186,32 +212,6 @@ router.post('/challenges/:id/add-actions', (req, res) => {
     const { id } = req.params;
     const { teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets } = req.body;
     console.log("Req body players: ", req.body.players)
-    for(let i = 0; i < players.length; i++) {
-        const player = players[i];
-        console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player, "OffenseActions: ", offenseActions[i], "OffenseTargets: ", offenseTargets[i], "DefenseActions: ", defenseActions[i], "DefenseTargets: ", defenseTargets[i])
-        db.run(
-            'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ? WHERE challenge_id = ? AND player_id = ?'
-            , [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], id, player], function (err) {
-                if (err) {
-                    console.error(err);
-                    res.status(500).json({ error: 'Internal server error' });
-                }
-            }
-        );
-        db.get(
-            'SELECT * FROM challenge_players WHERE challenge_id = ? AND player_id = ?',
-            [id, player],
-            (err, row) => {
-                if (err) {
-                    console.error(err);
-                    res.status(500).json({ error: 'Internal server error' });
-                } else {
-                    console.log('Updated row:', row);
-                }
-            }
-        );
-    }
-    console.log("Done adding actions to challenge players")
     db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
@@ -236,6 +236,44 @@ router.post('/challenges/:id/add-actions', (req, res) => {
         }
         console.log("Updating challenges set: ", columnToUpdate)
 
+        const getQuery = `SELECT ${columnToUpdate} FROM challenges WHERE id = ?`;
+
+        db.get(getQuery, [id], (err, row) => {
+            if (err) {
+                console.error('Error fetching row:', err);
+                return;
+            }
+            console.log("Row: ", row);
+            if(row[columnToUpdate]) {
+                console.log("Actions already set")
+                return;
+            }
+            for(let i = 0; i < players.length; i++) {
+                const player = players[i];
+                console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player, "OffenseActions: ", offenseActions[i], "OffenseTargets: ", offenseTargets[i], "DefenseActions: ", defenseActions[i], "DefenseTargets: ", defenseTargets[i])
+                db.run(
+                    'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ? WHERE challenge_id = ? AND player_id = ?'
+                    , [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], id, player], function (err) {
+                        if (err) {
+                            console.error(err);
+                            res.status(500).json({ error: 'Internal server error' });
+                        }
+                    }
+                );
+                db.get(
+                    'SELECT * FROM challenge_players WHERE challenge_id = ? AND player_id = ?',
+                    [id, player],
+                    (err, row) => {
+                        if (err) {
+                            console.error(err);
+                            //res.status(500).json({ error: 'Internal server error' });
+                        } else {
+                            console.log('Updated row:', row);
+                        }
+                    }
+                );
+            }
+
         // Update the players set column
         const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
 
@@ -258,6 +296,7 @@ router.post('/challenges/:id/add-actions', (req, res) => {
             }
         });
     });
+    }); 
 });
 
 //Remove actions from one side of a challenge
@@ -419,5 +458,4 @@ function runMatch(challengeId) {
         })
     })
 }
-runMatch(1);
 export default router;

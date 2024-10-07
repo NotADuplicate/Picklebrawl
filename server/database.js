@@ -102,7 +102,7 @@ db.serialize(() => {
     );`);
 
     // Make a table where each row contains a single historical match
-    db.run("DROP TABLE IF EXISTS match_history");
+    //db.run("DROP TABLE IF EXISTS match_history");
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
@@ -125,7 +125,7 @@ db.serialize(() => {
     who attempted to score and if they succeeded (can only allow 1 attempt per tick if that's ok),
     maybe in the future implement log of random events or ways quirks interacted
     */
-    db.run("DROP TABLE IF EXISTS match_ticks_history");
+    //db.run("DROP TABLE IF EXISTS match_ticks_history");
     db.run(`CREATE TABLE IF NOT EXISTS match_ticks_history (
         tick INT NOT NULL,
         match_id INT NOT NULL,
@@ -147,7 +147,7 @@ db.serialize(() => {
         FOREIGN KEY (player_id) REFERENCES players(id)
     );`);
 
-    db.run("DROP TABLE IF EXISTS match_trick_history");
+    //db.run("DROP TABLE IF EXISTS match_trick_history");
     db.run(`CREATE TABLE IF NOT EXISTS match_trick_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -160,7 +160,7 @@ db.serialize(() => {
         FOREIGN KEY (tricked_id) REFERENCES players(id)
     );`);
     // Roles set as ints so we can maybe set them as an enum or something
-    db.run("DROP TABLE IF EXISTS player_history");
+    //db.run("DROP TABLE IF EXISTS player_history");
     db.run(`CREATE TABLE IF NOT EXISTS player_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -176,7 +176,7 @@ db.serialize(() => {
         FOREIGN KEY (defensive_target_id) REFERENCES players(id)
     );`);
 
-    db.run("DROP TABLE IF EXISTS attack_history");
+    //db.run("DROP TABLE IF EXISTS attack_history");
     db.run(`CREATE TABLE IF NOT EXISTS attack_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -191,7 +191,7 @@ db.serialize(() => {
         FOREIGN KEY (attacked_player_id) REFERENCES players(id)
     );`);
 
-    db.run("DROP TABLE IF EXISTS scoring_history");
+    //db.run("DROP TABLE IF EXISTS scoring_history");
     db.run(`CREATE TABLE IF NOT EXISTS scoring_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
