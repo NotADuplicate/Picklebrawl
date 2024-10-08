@@ -71,8 +71,8 @@ db.serialize(() => {
         FOREIGN KEY (quirk) REFERENCES quirks(id)
     )`);
 
-    //db.run(`DROP TABLE IF EXISTS challenge_players`);
-    //db.run(`DROP TABLE IF EXISTS challenges`);
+    db.run(`DROP TABLE IF EXISTS challenge_players`);
+    db.run(`DROP TABLE IF EXISTS challenges`);
 
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

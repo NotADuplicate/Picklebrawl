@@ -33,7 +33,7 @@ app.use('/', matchRoutes);
 
 // Serve login.html as the default page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/login/login.css'));
+    res.sendFile(path.join(__dirname, '../public/home/home.html'));
 });
 
 // Endpoint to create an account

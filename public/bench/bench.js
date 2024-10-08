@@ -269,14 +269,22 @@ fetch(`/teams/${otherTeamId}/players`)
                     Fcs: player.focus
                 }, player.id, player.quirk_title, player.quirk_description);
             });
+            checkChallengeFlags();
         } else {
             throw new Error('Players data is not an array');
         }
     })
+});
 
+document.getElementById('backButton').addEventListener('click', function() {
+    window.location.href = `../league/league.html?league=${leagueName}`;
+});
+
+function checkChallengeFlags() {
     fetch(`/challenges/${challengeId}/players-actions`)
         .then(response => response.json())
         .then(response => {
+            const lockButton = document.getElementById('lock-button');
             console.log("Challenge players: ", response);
             const playerIds = [];
             if (response.playersActions !== null) {
@@ -311,11 +319,7 @@ fetch(`/teams/${otherTeamId}/players`)
         .catch(error => {
             console.error('Error fetching player actions:', error);
         });
-});
-
-document.getElementById('backButton').addEventListener('click', function() {
-    window.location.href = `../league/league.html?league=${leagueName}`;
-});
+}
 
 function lockStarters() {
     console.log("Lock starters")
@@ -345,10 +349,7 @@ function lockStarters() {
             .then(data => {
                 console.log('Players added successfully:', data);
                 startersLocked = true;
-                const readyDiv = document.getElementById('other-team-ready');
-                if(readyDiv.textContent === 'READY') {
-                    window.location.reload();
-                }
+                checkChallengeFlags();
             })
             .catch(error => {
                 console.error('Error adding players:', error);
@@ -383,6 +384,15 @@ function unlockStarters() {
     })
         .then(response => response.json())
         .then(data => {
+            if(data.message === 'Players already removed') {
+                console.log("Players have already been removed!");
+                return;
+            }
+            else if(data.message === 'Players already locked in') {
+                console.log("Actions have already been set!");
+                checkChallengeFlags();
+                return;
+            }
             console.log('Players removed successfully:', data);
             yourTeamPlayers.forEach(player => {
                 if (player.dataset.locked === 'true') {
@@ -468,7 +478,7 @@ function lockActions() {
         .then(response => response.json())
         .then(data => {
             console.log('Actions added successfully:', data);
-            window.location.reload();
+            checkChallengeFlags();
         })
         .catch(error => {
             console.error('Error adding players:', error);
@@ -490,6 +500,16 @@ function unlockActions() {
     })
         .then(response => response.json())
         .then(data => {
+            if(data.message === 'Actions already removed') {
+                console.log("Actions have already been removed!");
+                return;
+            }
+            else if(data.message === 'Actions already locked in') {
+                console.log("Actions have already been set!");
+                checkChallengeFlags();
+                return;
+            }
+            actionsLocked = false;
             console.log('Actions removed successfully:', data);
             yourTeamPlayers.forEach(player => {
                 const priorityDiv = player.querySelector('.priority');

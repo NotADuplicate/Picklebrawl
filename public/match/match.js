@@ -29,10 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     console.log("Match ID: ", data);
                     matchId = data.id;
-                    getTeams(matchId);
-                    getPlayers(matchId);
-                    console.log("Team positions: ", teamPositions);
-                    showGame(matchId);
+                    setupGame(matchId);
                 })
                 .catch(error => {
                     console.error('Error fetching matchId from challengeId:', error);
@@ -43,13 +40,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Exit the function if neither matchId nor challengeId is provided
         }
     } else {
-        getTeams(matchId);
-        getPlayers(matchId);
-        showGame(matchId);
+        setupGame(matchId);
     }
 });
 
+async function setupGame(matchId) {
+    await getTeams(matchId);
+    await getPlayers(matchId);
+    showGame(matchId);
+}
+
 function getPlayers(matchId) {
+    return new Promise((resolve, reject) => {
     fetch('/match/players?matchId=' + matchId)
         .then(response => response.json())
         .then(data => {
@@ -81,13 +83,17 @@ function getPlayers(matchId) {
             });
             givePlayerBall(1);
             captureTeamPositions();
+            resolve();
         })
         .catch(error => {
             console.error('Error fetching players:', error);
+            reject(error);
         });
+    });
 }
 
 function getTeams(matchId) {
+    return new Promise((resolve, reject) => {
     fetch('/match/teams?matchId=' + matchId)
         .then(response => response.json())
         .then(data => {
@@ -108,10 +114,13 @@ function getTeams(matchId) {
                 homeTeamName = data[1].name;
                 awayTeamName = data[0].name;
             }
+            resolve();
         })
         .catch(error => {
             console.error('Error fetching teams:', error);
+            reject(error);
         });
+    });
 }
 
 async function showGame(matchId) {

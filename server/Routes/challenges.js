@@ -154,20 +154,8 @@ router.post('/challenges/:id/remove-players', (req, res) => {
     const { id } = req.params;
     const { teamId, players } = req.body;
     console.log("Req body players: ", req.body.players)
-    for(let i = 0; i < players.length; i++) {
-        const player = players[i];
-        console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player)
-        db.run(
-            'DELETE FROM challenge_players WHERE challenge_id = ? AND team_id = ? AND player_id = ?', [id, teamId, player], function (err) {
-            if (err) {
-                console.error(err);
-                res.status(500).json({ error: 'Internal server error' });
-            }
-            }
-        );
-    }
-    console.log("Done removing players to challenge players")
-    db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
+
+    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
             return;
@@ -176,13 +164,29 @@ router.post('/challenges/:id/remove-players', (req, res) => {
             console.error('No row found');
             return;
         }
+        console.log("Row: ", row);
 
+        if(row.challenger_players_set && row.challenged_players_set) {
+            console.log("Players already been locked in");
+            res.json({ message: 'Players already locked in' });
+            return;
+        }
         // Check which team ID matches
         let columnToUpdate;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_players_set';
+            if(!row.challenger_players_set) {
+                res.json({ message: 'Players already removed' });
+                console.log("Challenger players already removed")
+                return;
+            }
         } else if (row.challenged_team_id == teamId) {
             columnToUpdate = 'challenged_players_set';
+            if(!row.challenged_players_set) {
+                res.json({ message: 'Players already removed' });
+                console.log("Challenged players already removed")
+                return;
+            }
         } else {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
@@ -199,7 +203,17 @@ router.post('/challenges/:id/remove-players', (req, res) => {
                     console.error(err);
                     res.status(500).json({ error: 'Internal server error' });
                 } else {
-                    res.json({ id });
+                    db.run(
+                        'DELETE FROM challenge_players WHERE challenge_id = ? AND team_id = ?', [id, teamId], function (err) {
+                        if (err) {
+                            console.error(err);
+                            res.status(500).json({ error: 'Internal server error' });
+                        }
+                        else {
+                            res.json({ message: "Players successfully removed" });
+                        }
+                        }
+                    );
                 }
                 console.log("Updated challenge players set of team: ", columnToUpdate)
         });
@@ -304,7 +318,7 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
     console.log("Add actions")
     const { id } = req.params;
     const { teamId } = req.body;
-    db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
             return;
@@ -314,12 +328,28 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
             return;
         }
 
+        if(row.challenger_actions_set && row.challenged_actions_set) {
+            console.log("Actions already been locked in");
+            res.json({ message: 'Actions already locked in' });
+            return;
+        }
+
         // Check which team ID matches
         let columnToUpdate;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_actions_set';
+            if(!row.challenger_actions_set) {
+                res.json({ message: 'Actions already removed' });
+                console.log("Challenger actions already removed")
+                return;
+            }
         } else if (row.challenged_team_id == teamId) {
             columnToUpdate = 'challenged_actions_set';
+            if(!row.challenged_actions_set) {
+                res.json({ message: 'Actions already removed' });
+                console.log("Challenged actions already removed")
+                return;
+            }
         } else {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
@@ -336,7 +366,7 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
                     console.error(err);
                     res.status(500).json({ error: 'Internal server error' });
                 } else {
-                    res.json({ id });
+                    res.json({ message: "Actions successfully removed" });
                 }
                 console.log("Updated challenge players set of team: ", columnToUpdate)
         });
