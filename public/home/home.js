@@ -15,13 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
     messageDiv.innerText = `Welcome back, ${loggedInUser}!`;
 
     showCreateLeagueButton.addEventListener('click', () => {
-        createLeagueForm.classList.remove('hidden');
-        joinLeagueForm.classList.add('hidden');
+        createLeagueForm.classList.toggle('active');
+        joinLeagueForm.classList.remove('active');
     });
-
+    
     showJoinLeagueButton.addEventListener('click', () => {
-        joinLeagueForm.classList.remove('hidden');
-        createLeagueForm.classList.add('hidden');
+        joinLeagueForm.classList.toggle('active');
+        createLeagueForm.classList.remove('active');
     });
 
     document.getElementById('create-league-form').addEventListener('submit', function (event) {
@@ -106,17 +106,32 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Leagues: ", leagues);
             leaguesList.innerHTML = '';
             leagues.forEach(league => {
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>${league.leagueName}</strong><br>
-                    Founder: ${league.founder}<br>
-                    Started: ${league.started ? 'Yes' : 'No'}<br>
-                `;
+                const leagueItem = document.createElement('li');
+
+                const leagueName = document.createElement('span');
+                leagueName.className = 'league-name';
+                leagueName.textContent = league.leagueName;
+            
+                const leagueStatus = document.createElement('span');
+                leagueStatus.className = league.started ? 'league-status started' : 'league-status not-started';
+                leagueStatus.textContent = league.started ? 'Started' : 'Not Started';
+            
+                const leagueActions = document.createElement('div');
+                leagueActions.className = 'league-actions';
+            
                 const viewButton = document.createElement('button');
-                viewButton.innerText = 'View';
-                viewButton.addEventListener('click', () => viewLeague(league.leagueName));
-                listItem.appendChild(viewButton);
-                leaguesList.appendChild(listItem);
+                viewButton.textContent = 'View';
+                viewButton.addEventListener('click', () => {
+                    viewLeague(league.leagueName);
+                });
+            
+                leagueActions.appendChild(viewButton);
+            
+                leagueItem.appendChild(leagueName);
+                leagueItem.appendChild(leagueStatus);
+                leagueItem.appendChild(leagueActions);
+            
+                leaguesList.appendChild(leagueItem);
             });
         })
         .catch(error => {

@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const backButton = document.getElementById('back-button');
     const teamsContainer = document.getElementById('teams-container');
     const leagueTitle = document.getElementById('league-title');
+    const leagueFounderElement = document.getElementById('league-founder');
+    const startLeagueButton = document.getElementById('start-league-button');
 
     const urlParams = new URLSearchParams(window.location.search);
     const leagueName = urlParams.get('league');
@@ -18,18 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`/leagues?leagueName=${leagueName}`)
     .then(response => response.json())
     .then(leagues => {
-        leaguesList.innerHTML = '';
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
         if (league) {
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `<strong>${league.leagueName}</strong><br>Founder: ${league.founder}<br>Started: ${league.started ? 'Yes' : 'No'}`;
-            leaguesList.appendChild(listItem);
-
-            if (league.founder === loggedInUser && !league.started) {
-                const startButton = document.createElement('button');
-                startButton.innerText = 'Start League';
-                startButton.addEventListener('click', () => startLeague(leagueName));
-                leaguesList.appendChild(startButton);
+            //const listItem = document.createElement('li');
+            leagueFounderElement.textContent = league.founder;
+            // Disable the start league button if the league has already started or if the logged-in user is not the founder
+            if (league.started || loggedInUser !== league.founder) {
+                startLeagueButton.disabled = true;
+                startLeagueButton.textContent = league.hasStarted ? 'League Started' : 'Start League';
+            } else {
+                startLeagueButton.addEventListener('click', () => {
+                    startLeague(leagueName);
+                });
             }
 
             // Fetch and display teams
@@ -40,31 +42,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 challengeButtons = {};
                 teams.forEach(team => {
                     if(team.owner == loggedInUser) {
-                        myTeamId = team.id
+                        myTeamId = team.id;
                         localStorage.setItem('myTeamId', myTeamId);
                     }
-                    const teamDiv = document.createElement('div');
-                    teamDiv.className = 'team';
-                    teamDiv.innerHTML = `
-                        <div>
-                            <div class="team-name">${team.name}</div>
-                            <div>Owner: ${team.owner}</div>
-                        </div>
-                        <button>View</button>
-                    `;
+                    const teamCard = document.createElement('div');
+                    teamCard.className = 'team-card';
+                
+                    const teamInfo = document.createElement('div');
+                    teamInfo.className = 'team-info';
+                
+                    const teamName = document.createElement('h3');
+                    teamName.className = 'team-name';
+                    teamName.textContent = team.name;
+                
+                    const teamOwner = document.createElement('p');
+                    teamOwner.className = 'team-owner';
+                    teamOwner.textContent = `Owner: ${team.owner}`;
+                
+                    teamInfo.appendChild(teamName);
+                    teamInfo.appendChild(teamOwner);
+                
+                    const teamActions = document.createElement('div');
+                    teamActions.className = 'team-actions';
+                
+                    const viewButton = document.createElement('button');
+                    viewButton.className = 'view-button';
+                    viewButton.textContent = 'View';
+                    viewButton.addEventListener('click', () => {
+                        window.location.href = `../team/team.html?teamId=${team.id}`;
+                    });
+                    teamActions.appendChild(viewButton);
+                
                     if (team.owner !== loggedInUser) {
                         const challengeButton = document.createElement('button');
                         challengeButton.className = 'challenge-button';
                         challengeButton.setAttribute('data-team-id', team.id);
                         challengeButton.innerText = 'Challenge';
-                        teamDiv.appendChild(challengeButton);
                         challengeButton.addEventListener('click', () => challenge(team.id, myTeamId, challengeButton));
+                        teamActions.appendChild(challengeButton);
                         challengeButtons[team.id] = challengeButton;
                     }
-                    teamDiv.querySelector('button').addEventListener('click', () => {
-                        window.location.href = `../team/team.html?teamId=${team.id}`;
-                    });
-                    teamsContainer.appendChild(teamDiv);
+                
+                    teamCard.appendChild(teamInfo);
+                    teamCard.appendChild(teamActions);
+                    teamsContainer.appendChild(teamCard);
                 });
                 getChallenges(challengeButtons);
             })

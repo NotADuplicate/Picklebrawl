@@ -1,11 +1,11 @@
 import { Quirk } from './quirk.js';
 
-export class PackAnimal extends Quirk {
-    static POWER_MODIFIER = 2;
-    static title = "Pack Animal";
+export class Codependent extends Quirk {
+    static POWER_MODIFIER = 4;
+    static title = "Codependent";
     static description = ("Sets your highest stat(s) to 1 unless someone else has this quirk");
     static likelihood = 5;
-    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
 
     //Since this quirk decreases your highest stat, the generation should prevent having multiple stats tied for highest

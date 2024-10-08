@@ -2,38 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <style>
-        .hidden {
-            display: none;
-        }
-    </style>
+    <title>Picklebrawl - Login</title>
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
-    <h1>Login</h1>
-    
-    <div id="message"></div>
+    <header>
+        <h1>Welcome to Picklebrawl!</h1>
+    </header>
 
-    <div id="buttons">
-        <button id="show-login">Login</button>
-        <button id="show-create-account">Create Account</button>
-    </div>
+    <main>
+        <div id="message"></div>
 
-    <form id="login-form" class="hidden">
-        <h2>Login</h2>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>
+        <div id="form-container">
+            <div id="buttons">
+                <button id="show-login">Login</button>
+                <button id="show-create-account">Create Account</button>
+            </div>
 
-    <form id="create-account-form" class="hidden">
-        <h2>Create Account</h2>
-        <input type="text" id="new-username" placeholder="Username" required>
-        <input type="password" id="new-password" placeholder="Password" required>
-        <button type="submit">Create Account</button>
-    </form>
+            <form id="login-form" class="hidden">
+                <h2>Login</h2>
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
 
-    <script src="/login/login.js"></script>
+            <form id="create-account-form" class="hidden">
+                <h2>Create Account</h2>
+                <input type="text" id="new-username" placeholder="Username" required>
+                <input type="password" id="new-password" placeholder="Password" required>
+                <button type="submit">Create Account</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2024 Picklebrawl. All rights reserved.
+    </footer>
+
+    <script src="login.js"></script>
 </body>
 </html>

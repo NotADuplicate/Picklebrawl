@@ -1,42 +1,141 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
+    background-color: #f4f7f9;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
     color: #333;
 }
 
+/* Header */
 header {
-    background: #007bff;
-    color: white;
-    padding: 20px;
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 40px 20px;
     text-align: center;
 }
 
+header h1 {
+    margin: 0;
+    font-size: 48px;
+}
+
+header p {
+    font-size: 18px;
+}
+
+/* Tabs Navigation */
+.tabs {
+    display: flex;
+    justify-content: center;
+    background-color: #34495e;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-button:hover {
+    background-color: #3d566e;
+}
+
+.tab-button.active {
+    border-bottom: 3px solid #e74c3c;
+}
+
+/* Main Content */
 main {
     max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 .tutorial-step {
-    margin-bottom: 20px;
+    background-color: #fff;
+    margin-bottom: 40px;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .tutorial-step h2 {
-    color: #007bff;
     margin-top: 0;
+    color: #2c3e50;
 }
 
+.tutorial-step p {
+    line-height: 1.6;
+}
+
+.tutorial-step ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.tutorial-step li {
+    margin-bottom: 10px;
+}
+
+.tutorial-step h4 {
+    color: #34495e;
+    margin-top: 30px;
+}
+
+/* Footer */
 footer {
+    background-color: #2c3e50;
+    color: #fff;
     text-align: center;
-    padding: 10px 0;
-    background: #007bff;
-    color: white;
+    padding: 20px;
+}
+
+/* Tooltip Styling */
+.tooltip {
     position: relative;
-    bottom: 0;
-    width: 100%;
+    cursor: help;
+    border-bottom: 1px dotted #999;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    width: 200px;
+    text-align: center;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #2c3e50 transparent;
+    z-index: 10;
 }

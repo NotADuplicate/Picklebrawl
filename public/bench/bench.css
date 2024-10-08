@@ -1,5 +1,39 @@
 body {
     font-family: Arial, sans-serif;
+    background-color: #f4f7f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 10px;
+    position: relative;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 0px;
+    text-align: center;
+}
+
+#backButton {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#backButton:hover {
+    background-color: #c0392b;
 }
 
 .container {
@@ -62,8 +96,8 @@ ul {
     align-items: flex-start;
     justify-content: flex-start;
     width: 46%; /* Keep the width as it is */
-    height: 70px;
-    transition: width 0.5s, margin 0.5s;
+    height: 77px;
+    transition: width 0.5s, margin 0.5s background-color 0.2s, transform 0.2s;
     gap: 0px; /* Remove gap between elements */
 }
 
@@ -73,6 +107,8 @@ ul {
     height: 70px;
     margin: 5px auto;
     display: block;
+    background-color: #d1ecdc;
+    border-color: #27ae60;
 }
 
 .player.show-priority {
@@ -96,23 +132,54 @@ ul {
     gap: 0px;
 }
 
+.player-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
 .player.locked {
     background-color: #e0e0e0;
     cursor: not-allowed;
 }
 
 .player:hover {
-    background-color: #e0e0e0;
+    background-color: #dce1e3;
+    transform: translateY(-3px);
+}
+
+.team {
+    background-color: #fff;
+    flex: 1 1 48%;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+.team h2 {
+    margin-top: 0;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.team-owner, .team-status {
+    text-align: center;
+    font-size: 16px;
+    color: #7f8c8d;
+    margin-bottom: 10px;
 }
 
 .team-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    margin-bottom: 20px;
 }
 
-.team-header h2, .team-header h3 {
+.team-header h3 {
     margin: 0;
+    color: #34495e;
 }
 
 .toggle-button {
@@ -216,9 +283,15 @@ ul {
 }
 
 #lock-button {
-    display: block;
-    margin: 20px auto;
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: 14px;
+    background-color: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
+}
+
+#lock-button:hover {
+    background-color: #1e8449;
 }

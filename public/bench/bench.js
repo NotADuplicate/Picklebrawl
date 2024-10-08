@@ -9,6 +9,7 @@ const otherTeamId = (challengedId !== myTeamId) ? challengedId : challengerId;
 const challenger = (challengerId === myTeamId) ? true : false;
 let playerDict = {};
 let startersLocked = false;
+let actionsLocked = false;
 
 let offensePriorities = {
     Advance: "Target neither",
@@ -96,7 +97,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
     player.dataset.team = teamId;
     player.querySelector('.player-name').textContent = playerName;
     player.querySelector('.quirk .quirk-name').textContent = playerQuirk;
-    player.querySelector('.quirk .tooltip').textContent = quirkDescription;
+    player.querySelector('.tooltip').textContent = quirkDescription;
     const playerStats = {
         Blk: stats.Blk,
         Fin: stats.Fin,
@@ -291,7 +292,7 @@ fetch(`/teams/${otherTeamId}/players`)
                 bothTeamsReady(playerIds, lockButton);
                 getActions(response);
             }
-            else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) {
+            else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) { //if your players are set
                 for(let i = 0; i < playerIds.length; i++) {
                     const id = playerIds[i];
                     selectPlayer(playerDict[id]);
@@ -299,6 +300,7 @@ fetch(`/teams/${otherTeamId}/players`)
                     playerDict[id].classList.add('locked');
                 }
                 lockButton.textContent = 'Undo';
+                startersLocked = true;
             }
             else if(response.flags.challengerPlayersSet && !challenger || response.flags.challengedPlayersSet && challenger) {
                 const readyDiv = document.getElementById('other-team-ready');
@@ -356,7 +358,9 @@ function lockStarters() {
 }
 
 function unlockStarters() {
+    console.log("Starters locked: ", startersLocked);
     if(startersLocked == true) {
+    console.log("Unlocking starters")
     startersLocked = false;
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     let starterIds = [];
@@ -431,46 +435,49 @@ function selectPlayer(player) {
 }
 
 function lockActions() {
+    if(actionsLocked == false) {
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
-            let playerIds = [];
-            let offenseActions = [];
-            let defenseActions = [];
-            let offenseTargets = [];
-            let defenseTargets = [];
-            yourTeamPlayers.forEach(player => {
-                if (player.dataset.location === 'bench') {
-                    playerIds.push(player.dataset.playerId);
-                    const priorityDiv = player.querySelector('.priority');
-                    const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
-                    const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
-                    const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
-                    const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
-                    offenseActions.push(offensePrioritySelect.value);
-                    defenseActions.push(defensePrioritySelect.value);
-                    offenseTargets.push(offenseTargetSelect.value);
-                    defenseTargets.push(defenseTargetSelect.value);
-                }
-            });
-            const teamId = myTeamId;
-            const players = playerIds;
-            fetch(`/challenges/${challengeId}/add-actions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Actions added successfully:', data);
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('Error adding players:', error);
-                });
+    let playerIds = [];
+    let offenseActions = [];
+    let defenseActions = [];
+    let offenseTargets = [];
+    let defenseTargets = [];
+    yourTeamPlayers.forEach(player => {
+        if (player.dataset.location === 'bench') {
+            playerIds.push(player.dataset.playerId);
+            const priorityDiv = player.querySelector('.priority');
+            const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+            const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+            const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+            const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+            offenseActions.push(offensePrioritySelect.value);
+            defenseActions.push(defensePrioritySelect.value);
+            offenseTargets.push(offenseTargetSelect.value);
+            defenseTargets.push(defenseTargetSelect.value);
+        }
+    });
+    const teamId = myTeamId;
+    const players = playerIds;
+    fetch(`/challenges/${challengeId}/add-actions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets })
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Actions added successfully:', data);
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error adding players:', error);
+        });
+    }
 }
 
 function unlockActions() {
+    if(actionsLocked == true) {
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     const teamId = myTeamId;
 
@@ -501,6 +508,7 @@ function unlockActions() {
         .catch(error => {
             console.error('Error removing actions:', error);
         });
+    }
 }
 
 function bothTeamsReady(playerIds, lockButton) {
@@ -574,8 +582,9 @@ function getActions(response) {
     if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
         console.log("All actions set, starting match");
     }
-    else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) {
+    else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) { //if your actions are set
         const playerActions = response.playersActions;
+        actionsLocked = true;
         for(let i = 0; i < playerActions.length; i++) {
             if(playerActions[i].team_id == myTeamId) {
                 const action = playerActions[i];

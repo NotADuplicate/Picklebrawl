@@ -5,6 +5,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginButton = document.getElementById('show-login');
     const showCreateAccountButton = document.getElementById('show-create-account');
 
+    showLoginButton.addEventListener('click', () => {
+        loginForm.classList.add('active');
+        createAccountForm.classList.remove('active');
+    });
+
+    showCreateAccountButton.addEventListener('click', () => {
+        createAccountForm.classList.add('active');
+        loginForm.classList.remove('active');
+    });
+
+
     fetch(`/leagues?user=${1}`)
     .then(response => response.json())
     .then(leagues => {
@@ -16,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         login(loggedInUser, loggedInPassword);
     }
 
-    showLoginButton.addEventListener('click', () => {
+    /*showLoginButton.addEventListener('click', () => {
         loginForm.classList.remove('hidden');
         createAccountForm.classList.add('hidden');
     });
@@ -24,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showCreateAccountButton.addEventListener('click', () => {
         createAccountForm.classList.remove('hidden');
         loginForm.classList.add('hidden');
-    });
+    });*/
 
     document.getElementById('create-account-form').addEventListener('submit', function(event) {
         event.preventDefault();

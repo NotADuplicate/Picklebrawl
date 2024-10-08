@@ -2,30 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Details</title>
     <link rel="stylesheet" href="team.css">
 </head>
 <body>
-    <h1 id="team-name">Team Details</h1>
-    <div id="team-details"></div>
-    <h2>Players</h2>
-    <table id="players-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Bulk</th>
-                <th>Finesse</th>
-                <th>Height</th>
-                <th>Strength</th>
-                <th>Trickiness</th>
-                <th>Focus</th>
-                <th>Quirk</th>
-            </tr>
-        </thead>
-        <tbody id="players-list"></tbody>
-    </table>
-    <button id="back-button">Back to League</button>
+    <header>
+        <h1 id="team-name">Team Name</h1>
+        <button id="back-button">Back to League</button>
+    </header>
+
+    <main>
+        <section id="team-details-section">
+            <!-- You can add team-specific details here if needed -->
+        </section>
+
+        <section id="players-section">
+            <h2>Players</h2>
+            <div id="players-container"></div>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2024 Picklebrawl. All rights reserved.
+    </footer>
+
     <script src="team.js"></script>
 </body>
 </html>

@@ -1,24 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>League Management</title>
-        <link rel="stylesheet" href="league.css">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <title>League Management</title>
+    <link rel="stylesheet" href="league.css">
+</head>
 <body>
-    <h1 id="league-title">League Management</h1>
-    <div id="message"></div>
-    <div id="content">
-        <div>
-            <ul id="leagues-list"></ul>
+    <header>
+        <h1 id="league-title">League Management</h1>
+        <button id="back-button">Back to Homepage</button>
+    </header>
+
+    <main>
+        <div id="message"></div>
+        <div id="content">
+            <!-- League Information Section -->
+            <section id="league-info-section">
+                <h2>League Information</h2>
+                <p><strong>Founder:</strong> <span id="league-founder"></span></p>
+                <button id="start-league-button">Start League</button>
+            </section>
+
+            <!-- Teams Section -->
+            <section id="teams-section">
+                <h2>Teams</h2>
+                <div id="teams-container"></div>
+            </section>
         </div>
-        <div>
-            <h2>Teams</h2>
-            <div id="teams-container"></div>
-        </div>
-    </div>
-    <button id="back-button" style="position: absolute; top: 20px; left: 20px;">Back to Homepage</button>
+    </main>
+
+    <footer>
+        &copy; 2024 Picklebrawl. All rights reserved.
+    </footer>
+
     <script src="league.js"></script>
 </body>
 </html>

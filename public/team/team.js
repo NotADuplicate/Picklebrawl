@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const teamNameElement = document.getElementById('team-name');
-    const teamDetailsElement = document.getElementById('team-details');
-    const playersListElement = document.getElementById('players-list');
+    const playersContainer = document.getElementById('players-container');
     const backButton = document.getElementById('back-button');
+    const teamDetailsElement = document.getElementById('team-details-section');
 
     const urlParams = new URLSearchParams(window.location.search);
     const teamId = urlParams.get('teamId');
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(`/teams/${teamId}`)
     .then(response => response.json())
     .then(team => {
-        teamNameElement.textContent = team.teamName;
+        teamNameElement.textContent = team.name;
         teamDetailsElement.innerHTML = `
             <p>Owner: ${team.owner}</p>
         `;
@@ -20,25 +20,46 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(players => {
             if (Array.isArray(players)) {
-                playersListElement.innerHTML = '';
                 players.forEach(player => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${player.name}</td>
-                        <td>${player.bulk}</td>
-                        <td>${player.finesse}</td>
-                        <td>${player.height}</td>
-                        <td>${player.strength}</td>
-                        <td>${player.trickiness}</td>
-                        <td>${player.focus}</td>
-                        <td>
-                        <span class="tooltip">
-                            ${player.quirk_title}
-                            <span class="tooltiptext">${player.quirk_description}</span>
-                        </span>
-                        </td>
-                    `;
-                    playersListElement.appendChild(row);
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'player-card';
+                
+                    const playerName = document.createElement('h3');
+                    playerName.textContent = player.name;
+                    playerCard.appendChild(playerName);
+                
+                    const playerStatsList = document.createElement('ul');
+                    playerStatsList.className = 'player-stats';
+                
+                    const stats = [
+                        { label: 'Bulk', value: player.bulk },
+                        { label: 'Finesse', value: player.finesse },
+                        { label: 'Height', value: player.height },
+                        { label: 'Strength', value: player.strength },
+                        { label: 'Trickiness', value: player.trickiness },
+                        { label: 'Focus', value: player.focus },
+                    ];
+                
+                    stats.forEach(stat => {
+                        const statItem = document.createElement('li');
+                        statItem.innerHTML = `<strong>${stat.label}:</strong> ${stat.value}`;
+                        playerStatsList.appendChild(statItem);
+                    });
+                
+                    playerCard.appendChild(playerStatsList);
+                
+                    const playerQuirk = document.createElement('p');
+                    playerQuirk.className = 'player-quirk';
+                
+                    const quirkTooltip = document.createElement('span');
+                    quirkTooltip.className = 'tooltip';
+                    quirkTooltip.textContent = player.quirk_title;
+                    quirkTooltip.setAttribute('data-tooltip', player.quirk_description);
+                
+                    playerQuirk.appendChild(quirkTooltip);
+                    playerCard.appendChild(playerQuirk);
+                
+                    playersContainer.appendChild(playerCard);
                 });
             } else {
                 throw new Error('Players data is not an array');

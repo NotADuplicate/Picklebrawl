@@ -1,48 +1,23 @@
-.hidden {
-    display: none;
-}
-
+/* General Styles */
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     font-family: Arial, sans-serif;
-}
-
-#content {
-    display: flex;
-    width: 90%;
-    justify-content: space-between;
-}
-
-#leagues-list {
-    width: 75%;
-    list-style-type: none;
+    background-color: #f4f7f9;
+    margin: 0;
     padding: 0;
+    color: #333;
 }
 
-#teams-container {
-    width: 150%; /* Increased width */
-    height: 600px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-right: 100%; /* Reduced margin-right to move it left */
-    margin-left: -100%; /* Add negative margin to shift container left */
+header {
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 20px;
+    position: relative;
 }
 
-.team {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.team-name {
-    font-weight: bold;
+header h1 {
+    margin: 0;
+    font-size: 36px;
+    text-align: center;
 }
 
 #back-button {
@@ -51,8 +26,151 @@ body {
     left: 20px;
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+
+#back-button:hover {
+    background-color: #c0392b;
+}
+
+main {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+#content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+section {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 40px;
+    box-sizing: border-box;
+}
+
+section h2 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+#league-info-section {
+    flex: 1 1 100%;
+    margin-bottom: 20px;
+}
+
+#league-info-section p {
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+#start-league-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#start-league-button:hover {
+    background-color: #1e8449;
+}
+
+#teams-section {
+    flex: 1 1 100%;
+}
+
+#teams-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ecf0f1;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-name {
+    font-size: 24px;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.team-owner {
+    font-size: 16px;
+    color: #7f8c8d;
+}
+
+.team-actions {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 14px;
+    background-color: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1f618d;
+}
+
+button.challenge-button {
+    background-color: #e67e22;
+}
+
+button.challenge-button:hover {
+    background-color: #d35400;
+}
+
+button.view-button {
+    background-color: #27ae60;
+}
+
+button.view-button:hover {
+    background-color: #1e8449;
+}
+
+footer {
+    background-color: #2c3e50;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #content {
+        flex-direction: column;
+    }
+
+    section {
+        flex: 1 1 100%;
+    }
 }
