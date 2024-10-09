@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            getMatches(league.id);
             // Fetch and display teams
             fetch(`/teams?leagueId=${league.id}`)
             .then(response => response.json())
@@ -139,6 +140,46 @@ document.addEventListener('DOMContentLoaded', () => {
             messageDiv.innerText = 'Error fetching challenges!';
         });
     }   
+
+    function getMatches(leagueId) {
+        const matchesContainer = document.getElementById('matches-container');
+        fetch(`/matches?leagueId=${leagueId}`)
+        .then(response => response.json())
+        .then(matches => {
+            console.log('Matches:', matches);
+            matches.forEach(match => {
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card';
+            
+                const matchInfo = document.createElement('div');
+                matchInfo.className = 'match-info';
+                matchInfo.innerHTML = `
+                    <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
+                    <p class="match-score">Score: ${match.home_team_score} - ${match.away_team_score}</p>
+                `;
+            
+                const matchActions = document.createElement('div');
+                matchActions.className = 'match-actions';
+                const viewButton = document.createElement('button');
+                viewButton.className = 'view-button';
+                viewButton.innerText = 'View Match';
+                viewButton.addEventListener('click', () => {
+                    // Add your logic to view the match
+                    window.location.href = '../match/match.html?matchId=' + match.id;
+                });
+            
+                matchActions.appendChild(viewButton);
+                matchCard.appendChild(matchInfo);
+                matchCard.appendChild(matchActions);
+            
+                matchesContainer.appendChild(matchCard);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching matches:', error);
+            messageDiv.innerText = 'Error fetching matches!';
+        });
+    }
 
     backButton.addEventListener('click', () => {
         window.location.href = `../home/home.html`;

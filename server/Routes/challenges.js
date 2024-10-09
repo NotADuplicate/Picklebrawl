@@ -19,6 +19,7 @@ router.get('/challenges', (req, res) => {
         'SELECT * FROM challenges WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND status = ? OR status = ?',
         [team_id, team_id, 'pending', 'accepted'],
         (err, rows) => {
+            console.log(rows);
             if (err) {
                 console.error(err);
                 res.status(500).json({ error: 'Internal server error' });
@@ -34,15 +35,28 @@ router.get('/challenges', (req, res) => {
 router.post('/challenges', (req, res) => {
     const { teamId, myTeamId } = req.body;
     console.log('Creating challenge: ', myTeamId, teamId);
-    db.run(
-        'INSERT INTO challenges (challenger_team_id, challenged_team_id) VALUES (?, ?)',
-        [myTeamId, teamId],
-        function (err) {
+    db.get(
+        'SELECT * FROM challenges WHERE (challenger_team_id = ? AND challenged_team_id = ? OR challenger_team_id = ? AND challenged_team_id = ?) AND status = ?',
+        [myTeamId, teamId, teamId, myTeamId, 'pending'],
+        (err, row) => {
             if (err) {
                 console.error(err);
                 res.status(500).json({ error: 'Internal server error' });
+            } else if (row) {
+                res.json({ row });
             } else {
-                res.status(201).json({ id: this.lastID });
+                db.run(
+                    'INSERT INTO challenges (challenger_team_id, challenged_team_id) VALUES (?, ?)',
+                    [myTeamId, teamId],
+                    function (err) {
+                        if (err) {
+                            console.error(err);
+                            res.status(500).json({ error: 'Internal server error' });
+                        } else {
+                            res.status(201).json({ id: this.lastID });
+                        }
+                    }
+                );
             }
         }
     );
@@ -450,7 +464,14 @@ router.post('/challenges/quirk-actions', (req, res) => {
 
 function runMatch(challengeId) {
     let id = challengeId;
-    console.log("Running match ", id)
+    console.log("Running match from challengeId: ", id)
+
+    db.run('UPDATE challenges SET status = ? WHERE id = ?', ['completed', id], function(err) {
+        if (err) {
+            console.error(err);
+        }
+    });
+
     db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         console.log("Row: ", row)
         if(err) {

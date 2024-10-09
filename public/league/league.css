@@ -63,6 +63,7 @@ section h2 {
     color: #2c3e50;
 }
 
+/* League Information Section */
 #league-info-section {
     flex: 1 1 100%;
     margin-bottom: 20px;
@@ -87,8 +88,9 @@ section h2 {
     background-color: #1e8449;
 }
 
+/* Teams Section */
 #teams-section {
-    flex: 1 1 100%;
+    flex: 1 1 55%;
 }
 
 #teams-container {
@@ -127,6 +129,48 @@ section h2 {
     gap: 10px;
 }
 
+/* Matches Section */
+#matches-section {
+    flex: 1 1 40%;
+}
+
+#matches-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.match-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ecf0f1;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.match-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.match-teams {
+    font-size: 18px;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.match-score {
+    font-size: 16px;
+    color: #7f8c8d;
+}
+
+.match-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Button Styles */
 button {
     padding: 10px 15px;
     font-size: 14px;

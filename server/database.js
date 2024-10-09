@@ -113,7 +113,8 @@ db.serialize(() => {
         away_team_score INT,
         weather TEXT NOT NULL,
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
-        FOREIGN KEY (away_team_id) REFERENCES teams(id)
+        FOREIGN KEY (away_team_id) REFERENCES teams(id),
+        FOREIGN KEY (league_id) REFERENCES leagues(id)
     );`);
 
     /* Store: who has possession,

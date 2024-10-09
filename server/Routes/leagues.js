@@ -87,8 +87,6 @@ router.get('/leagues', (req, res) => {
 
     query += ' GROUP BY leagues.id';
 
-    console.log("Getting leagues with query:", query, "params:", params);
-
     db.all(query, params, (err, rows) => {
         if (err) {
             return res.status(500).json({ message: 'Error fetching leagues!' });
@@ -119,6 +117,24 @@ router.post('/start-league', (req, res) => {
             }
             res.json({ message: 'League started successfully!' });
         });
+    });
+});
+
+router.get('/matches', (req, res) => {
+    console.log("Getting matches for league id:", req.query.leagueId);
+    const { leagueId } = req.query;
+    let query = `
+        SELECT match_history.id, home_team.name AS home_team_name, away_team.name AS away_team_name, home_team_score, away_team_score
+        FROM match_history, teams as home_team, teams as away_team
+        WHERE (home_team_id = home_team.id AND away_team_id = away_team.id)
+        AND match_history.league_id = ${leagueId}
+    `;
+    db.all(query, (err, matches) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Error fetching matches!' });
+        }
+        res.json(matches);
     });
 });
 

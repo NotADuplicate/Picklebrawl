@@ -250,26 +250,25 @@ fetch(`/teams/${myTeamId}/players`)
                     Fcs: player.focus
                 }, player.id, player.quirk_title, player.quirk_description);
             });
-        } else {
-            throw new Error('Players data is not an array');
-        }
-    })
-
-fetch(`/teams/${otherTeamId}/players`)
-    .then(response => response.json())
-    .then(players => {
-        if (Array.isArray(players)) {
-            players.forEach(player => {
-                addPlayerToTeam('other-team', player.name, {
-                    Blk: player.bulk,
-                    Fin: player.finesse,
-                    Ht: player.height,
-                    Str: player.strength,
-                    Trk: player.trickiness,
-                    Fcs: player.focus
-                }, player.id, player.quirk_title, player.quirk_description);
-            });
-            checkChallengeFlags();
+            fetch(`/teams/${otherTeamId}/players`)
+            .then(response => response.json())
+            .then(players => {
+                if (Array.isArray(players)) {
+                    players.forEach(player => {
+                        addPlayerToTeam('other-team', player.name, {
+                            Blk: player.bulk,
+                            Fin: player.finesse,
+                            Ht: player.height,
+                            Str: player.strength,
+                            Trk: player.trickiness,
+                            Fcs: player.focus
+                        }, player.id, player.quirk_title, player.quirk_description);
+                    });
+                    checkChallengeFlags();
+                } else {
+                    throw new Error('Players data is not an array');
+                }
+            })
         } else {
             throw new Error('Players data is not an array');
         }
@@ -730,6 +729,6 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
 }
 
 async function goToMatch(challengeId) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 100));
     window.location.href = '../match/match.html?challengeId=' + challengeId;
 }
