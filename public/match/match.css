@@ -224,3 +224,10 @@ body {
 .rotate-360 {
     animation: rotateAnimation 0.5s ease-in-out;
 }
+
+#back-to-league-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000; /* Ensure it is on top of other elements */
+}

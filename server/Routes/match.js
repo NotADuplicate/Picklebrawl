@@ -3,6 +3,8 @@ import { db } from '../database.js';
 
 const router = express.Router();
 
+const TIME_PER_TICK = 1000;
+
 router.get('match/matches', (req, res) => {
     console.log("Getting matches for league id:", req.query.leagueId);
     const { leagueId } = req.query;
@@ -37,11 +39,30 @@ router.get('/match/match-id', (req, res) => {
 router.get('/match/match-tick', (req, res) => {
     // req is the request, req.query is the parameters in the request
     const { matchId, tick } = req.query;
-    //console.log("Getting match tick for match id:", matchId);
-    db.get('SELECT * FROM match_ticks_history WHERE match_id = ? AND tick = ?', [matchId, tick], (err, tick_row) => {
+    console.log("Getting match tick for match id:", matchId, " tick: ", tick);
+    db.get('SELECT tick, possession_team_id, ball_position, player_possession_id, created_at FROM match_ticks_history, match_history WHERE match_id = ? AND tick = ? AND id = ?', [matchId, tick, matchId], (err, tick_row) => {
         if (err) {
+            console.error(err);
             return res.status(500).json({ message: 'Error fetching match tick!' });
         }
+        console.log(tick_row);
+        if(!tick_row) {
+            console.log("Match tick not found!!!");
+            return res.json({ message: 'Match tick not found' });
+        }
+        const matchCreatedAt = new Date(tick_row.created_at + ' UTC').getTime();
+        const currentTime = new Date().getTime();
+        const timePassed = currentTime - matchCreatedAt;
+        if(timePassed < TIME_PER_TICK * tick) {
+            console.log(matchCreatedAt, currentTime);
+            console.log(tick * TIME_PER_TICK, timePassed);
+            return res.json({ message: 'Match tick not reached yet' });
+        }
+        const behindRealTime = timePassed / TIME_PER_TICK > (tick_row.tick+3); //if the client is more than 3 ticks behind real time
+        console.log("Ticks passed: ", timePassed / TIME_PER_TICK);
+        console.log("Behind real time: ", behindRealTime);
+
+        console.log(`Time passed since match creation: ${timePassed} ms`);
         db.get('SELECT * FROM scoring_history, players WHERE match_id = ? AND tick = ? AND players.id = shooter_id', [matchId, tick], (err, score_row) => {
             if (err) {
                 return res.status(500).json({ message: 'Error fetching score history!' });
@@ -59,7 +80,8 @@ router.get('/match/match-tick', (req, res) => {
                         matchTick: tick_row,
                         scoringHistory: score_row,
                         attackHistory: attack_rows,
-                        trickHistory: trick_rows
+                        trickHistory: trick_rows,
+                        behindRealTime: behindRealTime
                     });
                 });
             });

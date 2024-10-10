@@ -153,10 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
                 const matchInfo = document.createElement('div');
                 matchInfo.className = 'match-info';
-                matchInfo.innerHTML = `
-                    <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
-                    <p class="match-score">Score: ${match.home_team_score} - ${match.away_team_score}</p>
-                `;
+                if(match.is_over) {
+                    matchInfo.innerHTML = `
+                        <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
+                        <p class="match-score">Score: ${match.home_team_score} - ${match.away_team_score}</p>
+                    `;
+                }
+                else {
+                    matchInfo.innerHTML = `
+                        <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
+                        <p class="match-status">In Progress</p>
+                    `;
+                }
             
                 const matchActions = document.createElement('div');
                 matchActions.className = 'match-actions';

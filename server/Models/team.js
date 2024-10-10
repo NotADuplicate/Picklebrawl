@@ -52,9 +52,8 @@ class Team {
                 });
             }
             console.log("Team saved");
+            callback(null);
         });
-        
-        callback(null);
     }
 
     addPlayer(player) {

@@ -37,16 +37,18 @@ db.serialize(() => {
         name TEXT NOT NULL,
         league_id INTEGER NOT NULL,
         owner TEXT NOT NULL,
-        FOREIGN KEY (league_id) REFERENCES leagues(id)
-        FOREIGN KEY (owner) REFERENCES users(username)
+        FOREIGN KEY (league_id) REFERENCES leagues(id),
+        FOREIGN KEY (owner) REFERENCES users(username),
+        UNIQUE(league_id, name),
+        UNIQUE(league_id, owner)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS league_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INTEGER NOT NULL,
         username TEXT NOT NULL,
         FOREIGN KEY (league_id) REFERENCES leagues(id)
         FOREIGN KEY (username) REFERENCES users(username)
+        UNIQUE(league_id, username)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS quirks (
@@ -71,8 +73,8 @@ db.serialize(() => {
         FOREIGN KEY (quirk) REFERENCES quirks(id)
     )`);
 
-    db.run(`DROP TABLE IF EXISTS challenge_players`);
-    db.run(`DROP TABLE IF EXISTS challenges`);
+    //db.run(`DROP TABLE IF EXISTS challenge_players`);
+    //db.run(`DROP TABLE IF EXISTS challenges`);
 
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,9 +114,11 @@ db.serialize(() => {
         home_team_score INT,
         away_team_score INT,
         weather TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),
-        FOREIGN KEY (league_id) REFERENCES leagues(id)
+        FOREIGN KEY (league_id) REFERENCES leagues(id),
+        FOREIGN KEY (challenge_id) REFERENCES challenges(id)
     );`);
 
     /* Store: who has possession,

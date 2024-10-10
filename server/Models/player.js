@@ -148,11 +148,8 @@ class Player {
         }
     
         const quirkClass = quirks[selectedQuirkKey];
-        console.log("Picked quirk: " + selectedQuirkKey);
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
-        console.log("Quirk id: " + this.quirkId);
         this.quirk = quirkClass;
-        console.log(`Picked quirk: ${quirkClass.title}`);
     }
 
     randomize_stats(power) {

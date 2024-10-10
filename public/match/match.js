@@ -4,6 +4,9 @@ let homeTeamName = null;
 let awayTeamName = null;
 let players = {};
 let gameOver = false;
+let realTime = true;
+let catchUp = false;
+let watchingLive = false; // If the user is watching the game live, cannot get behind
 const teamPositions = {
     home: {
         centeredX: null,
@@ -17,7 +20,18 @@ const teamPositions = {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    let tick = 1;
+    const nextTickButton = document.getElementById('next-tick-button');
+    nextTickButton.style.display = 'none';
+    nextTickButton.addEventListener('click', () => {
+        realTime = false;
+    });
+
+    const liveButton = document.getElementById('catch-up-button');
+    liveButton.style.display = 'none';
+    liveButton.addEventListener('click', () => {
+        catchUp = true;
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     let matchId = urlParams.get('matchId');
     if (!matchId) {
@@ -126,11 +140,13 @@ function getTeams(matchId) {
 async function showGame(matchId) {
     tick = 1;
     while(tick <= 101 && !gameOver) {
+        realTime = true;
         await getMatchTick(matchId, tick);
+        console.log("Finished tick: ", tick);
         const timerElement = document.getElementById('game-timer');
         timerElement.textContent = `Tick: ${tick}`;
         tick++;
-        await new Promise(resolve => setTimeout(resolve, 700));
+        await wait(700);
     }
 }
 // Function to move the slider icon
@@ -192,10 +208,41 @@ async function changeTeamPossession(team) {
 }
 
 function getMatchTick(matchId, tick) {
+    console.log("Beginning of get tick")
     return new Promise((resolve, reject) => {
     fetch('/match/match-tick?matchId=' + matchId  + '&tick=' + tick)
             .then(response => response.json())
             .then(async data => {
+                console.log(data);
+                if(data.message == "Match tick not found") {
+                    console.error("Match tick not found");
+                    return;
+                }
+                if(data.message == "Match tick not reached yet") {
+                    realTime = true;
+                    await new Promise(r => setTimeout(r, 500));
+                    console.log("Getting a new tick")
+                    await getMatchTick(matchId, tick);
+                    resolve();
+                    return;
+                }
+                const nextTickButton = document.getElementById('next-tick-button');
+                const catchUpButton = document.getElementById('catch-up-button');
+                if(data.behindRealTime && !watchingLive) {
+                    nextTickButton.style.display = 'block';
+                    catchUpButton.style.display = 'block';
+                }
+                else {
+                    console.log("Hiding next tick button");
+                    nextTickButton.style.display = 'none';
+                    catchUpButton.style.display = 'none';
+                    catchUp = false;
+                    watchingLive = true;
+                }
+
+                // Immediately finish all GSAP animations
+                gsap.globalTimeline.progress(1);
+
                 let position;
                 let scoringTrick = false; //if there was a scoring attempt that involved a trick
 
@@ -259,6 +306,7 @@ function getMatchTick(matchId, tick) {
                     toggleHighlight(data.scoringHistory.shooter_id);
                     toggleCentered(data.scoringHistory.shooter_id);
                     moveBallIconToPlayer(data.matchTick.player_possession_id);
+                    console.log("Doing visuals")
                     //givePlayerBall(data.scoringHistory.shooter_id);
                     
                     const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
@@ -270,39 +318,40 @@ function getMatchTick(matchId, tick) {
                     });
                     
                     addBoldTextToTextBox(`Shot attempted by  ${data.scoringHistory.name}`);
-                    for(let i = 0.3; i < Math.random()*3*Math.random(); i++) {
-                        await new Promise(resolve => setTimeout(resolve, 1000+Math.random()*1000));
-                        addBoldTextToTextBox('...');
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    //givePlayerBall(data.scoringHistory.shooter_id);
-                    if(scoringTrick) {
-                        addBoldTextToTextBox(`Trick shot!`);
-                        const ballIcon = players[data.scoringHistory.shooter_id].querySelector('.ball-icon');
-                        console.log(players[data.scoringHistory.shooter_id])
-                        console.log(ballIcon);
-                        if (ballIcon) {
-                            console.log('Rotating ball icon');
-                            // Reset any previous animations on the ballIcon
-                            gsap.killTweensOf(ballIcon);
-
-                            // Rotate the ball icon using GSAP
-                            gsap.fromTo(
-                                ballIcon,
-                                { rotation: 0 }, // Starting rotation
-                                {
-                                    rotation: 360,      // Ending rotation
-                                    duration: 1,      // Duration in seconds
-                                    ease: 'power1.inOut', // Easing function
-                                    onComplete: () => {
-                                        // Optional: Reset rotation after animation completes
-                                        gsap.set(ballIcon, { rotation: 0 });
-                                    }
-                                }
-                            );
+                    if(realTime) {
+                        for(let i = 0.3; i < Math.random()*3*Math.random(); i++) {
+                            await wait(1000+Math.random()*1000);
+                            addBoldTextToTextBox('...');
                         }
+                        //await wait(1000);
+                        if(scoringTrick) {
+                            addBoldTextToTextBox(`Trick shot!`);
+                            const ballIcon = players[data.scoringHistory.shooter_id].querySelector('.ball-icon');
+                            //console.log(players[data.scoringHistory.shooter_id])
+                            //console.log(ballIcon);
+                            if (ballIcon) {
+                                console.log('Rotating ball icon');
+                                // Reset any previous animations on the ballIcon
+                                gsap.killTweensOf(ballIcon);
+
+                                // Rotate the ball icon using GSAP
+                                gsap.fromTo(
+                                    ballIcon,
+                                    { rotation: 0 }, // Starting rotation
+                                    {
+                                        rotation: 360,      // Ending rotation
+                                        duration: 1,      // Duration in seconds
+                                        ease: 'power1.inOut', // Easing function
+                                        onComplete: () => {
+                                            // Optional: Reset rotation after animation completes
+                                            gsap.set(ballIcon, { rotation: 0 });
+                                        }
+                                    }
+                                );
+                            }
+                        }
+                        await wait(1000);
                     }
-                    await new Promise(resolve => setTimeout(resolve, 1000));
 
                     toggleHighlight(data.scoringHistory.shooter_id);
                     uncenterAllPlayers();
@@ -342,6 +391,7 @@ function getMatchTick(matchId, tick) {
                     changeTeamPossession(data.matchTick.possession_team_id);
                 }
                 moveBallIconToPlayer(data.matchTick.player_possession_id);
+                console.log("Ball given")
                 tick++;
                 possession = data.matchTick.possession_team_id;
                 resolve();
@@ -401,8 +451,8 @@ function givePlayerBall(playerId) {
     const ballIcons = document.querySelectorAll('.ball-icon');
     ballIcons.forEach(icon => {
         const playerElement = icon.parentElement.parentElement.parentElement;
-        console.log("Playerelement: ", playerElement);
-        console.log(playerElement.getAttribute('data-player-id'));
+        //console.log("Playerelement: ", playerElement);
+        //console.log(playerElement.getAttribute('data-player-id'));
         if (playerElement.getAttribute('data-player-id') == playerId) {
             icon.style.display = 'block';
             console.log("Ball given to player");
@@ -424,6 +474,7 @@ function moveBallIconToPlayer(playerId) {
             return;
         }
 
+        //console.log(ballIcon);
         if(ballIcon.parentElement.parentElement.parentElement.getAttribute('data-player-id') == playerId) {
             console.log("Ball already with player");
             resolve();
@@ -452,7 +503,7 @@ function moveBallIconToPlayer(playerId) {
 
         // Determine the player's team
         let team = '';
-        console.log("Classlist: ", targetPlayerElement.classList);
+        //console.log("Classlist: ", targetPlayerElement.classList);
         let targetIconX;
         if (targetPlayerElement.classList.contains('home-team')) {
             team = 'home';
@@ -473,10 +524,10 @@ function moveBallIconToPlayer(playerId) {
             reject('Player team not identified.');
             return;
         }
-        console.log("Team: ", team);
+        //console.log("Team: ", team);
 
         // Get the target X position based on team and centered state
-        console.log("CenteredX: ", targetIconX);
+        //console.log("CenteredX: ", targetIconX);
         if (targetIconX === undefined) {
             console.error(`Position for team ${team} not found.`);
             reject(`Position for team ${team} not found.`);
@@ -487,8 +538,8 @@ function moveBallIconToPlayer(playerId) {
         const targetIconRect = targetIconContainer.getBoundingClientRect();
         const targetIconY = targetIconRect.top + window.pageYOffset;
 
-        console.log('ballIconX:', ballIconX, 'ballIconY:', ballIconY);
-        console.log('targetIconX:', targetIconX, 'targetIconY:', targetIconY);
+        //console.log('ballIconX:', ballIconX, 'ballIconY:', ballIconY);
+        //console.log('targetIconX:', targetIconX, 'targetIconY:', targetIconY);
 
         // Create a temporary ball icon
         const tempBallIcon = ballIcon.cloneNode(true);
@@ -522,7 +573,7 @@ function moveBallIconToPlayer(playerId) {
                 //targetIconContainer.appendChild(ballIcon);
                 targetIconContainer.querySelector('.ball-icon').style.display = 'block';
                 document.body.removeChild(tempBallIcon);
-                console.log('Animation complete');
+                //console.log('Animation complete');
                 resolve(); // Resolve the promise when the animation completes
             }
         });
@@ -570,4 +621,16 @@ function captureTeamPositions() {
 
 function vwToPx(vw) {
     return window.innerWidth * (vw / 100);
+}
+
+async function wait(ms) {
+    return new Promise(async (resolve) => {
+        while(ms > 0) {
+            ms -= 100;
+            if(realTime && catchUp == false) {
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+    resolve();
+    });
 }

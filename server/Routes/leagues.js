@@ -49,14 +49,17 @@ router.post('/join-league', (req, res) => {
             return res.status(400).json({ message: 'Incorrect league password!' });
         }
 
-        db.run(`INSERT INTO league_users (league_id, username) VALUES (?, ?)`, [league.id, username], (err) => {
-            if (err) {
-                return res.status(400).json({ message: 'Error joining league!' });
-            }
 
-            insertTeam(teamName, league.id, username, (err) => {
+        insertTeam(teamName, league.id, username, (err) => {
+            if (err) {
+                console.log("Error creating team: ", err)
+                return res.status(400).json({ message: 'Error creating team!' });
+            }
+            db.run(`INSERT INTO league_users (league_id, username) VALUES (?, ?)`, [league.id, username], (err) => {
+                console.log("Inserted")
                 if (err) {
-                    return res.status(400).json({ message: 'Error creating team!' });
+                    console.log(err);
+                    return res.status(400).json({ message: 'Error joining league!' });
                 }
                 res.json({ message: 'Joined league and created team successfully!' });
             });
@@ -124,11 +127,24 @@ router.get('/matches', (req, res) => {
     console.log("Getting matches for league id:", req.query.leagueId);
     const { leagueId } = req.query;
     let query = `
-        SELECT match_history.id, home_team.name AS home_team_name, away_team.name AS away_team_name, home_team_score, away_team_score
-        FROM match_history, teams as home_team, teams as away_team
-        WHERE (home_team_id = home_team.id AND away_team_id = away_team.id)
-        AND match_history.league_id = ${leagueId}
+        SELECT 
+            match_history.id, 
+            created_at, 
+            home_team.name AS home_team_name, 
+            away_team.name AS away_team_name, 
+            home_team_score, 
+            away_team_score,
+            (strftime('%s', 'now') - strftime('%s', created_at)) > 120 AS is_over
+        FROM 
+            match_history
+        JOIN 
+            teams AS home_team ON home_team_id = home_team.id
+        JOIN 
+            teams AS away_team ON away_team_id = away_team.id
+        WHERE 
+            match_history.league_id = ${leagueId}
     `;
+
     db.all(query, (err, matches) => {
         if (err) {
             console.log(err);
