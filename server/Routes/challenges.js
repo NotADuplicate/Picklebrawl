@@ -9,22 +9,21 @@ const router = express.Router();
 
 // Fetch all challenges
 router.get('/challenges', (req, res) => {
-    console.log('Getting challenges');
+    console.log('Getting challenges for team: ', req.query.teamId);
     const team_id = req.query.teamId;
     if (!team_id) {
         return res.status(400).json({ error: 'team_id query parameter is required' });
     }
 
     db.all(
-        'SELECT * FROM challenges WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND status = ? OR status = ?',
+        'SELECT * FROM challenges WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND (status = ? OR status = ?)',
         [team_id, team_id, 'pending', 'accepted'],
         (err, rows) => {
-            console.log(rows);
+            console.log("Challenges: ", rows);
             if (err) {
                 console.error(err);
                 res.status(500).json({ error: 'Internal server error' });
             } else {
-                console.log('Challenges:', rows);
                 res.json(rows);
             }
         }
@@ -36,7 +35,7 @@ router.post('/challenges', (req, res) => {
     const { teamId, myTeamId } = req.body;
     console.log('Creating challenge: ', myTeamId, teamId);
     db.get(
-        'SELECT * FROM challenges WHERE (challenger_team_id = ? AND challenged_team_id = ? OR challenger_team_id = ? AND challenged_team_id = ?) AND status = ?',
+        'SELECT * FROM challenges WHERE ((challenger_team_id = ? AND challenged_team_id = ?) OR (challenger_team_id = ? AND challenged_team_id = ?)) AND status = ?',
         [myTeamId, teamId, teamId, myTeamId, 'pending'],
         (err, row) => {
             if (err) {
