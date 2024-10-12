@@ -149,38 +149,56 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Matches:', matches);
             matches.forEach(match => {
                 const matchCard = document.createElement('div');
-                matchCard.className = 'match-card';
-            
-                const matchInfo = document.createElement('div');
-                matchInfo.className = 'match-info';
-                if(match.is_over) {
-                    matchInfo.innerHTML = `
-                        <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
-                        <p class="match-score">Score: ${match.home_team_score} - ${match.away_team_score}</p>
-                    `;
-                }
-                else {
-                    matchInfo.innerHTML = `
-                        <p class="match-teams">${match.home_team_name} vs ${match.away_team_name}</p>
-                        <p class="match-status">In Progress</p>
-                    `;
-                }
-            
-                const matchActions = document.createElement('div');
-                matchActions.className = 'match-actions';
-                const viewButton = document.createElement('button');
-                viewButton.className = 'view-button';
-                viewButton.innerText = 'View Match';
-                viewButton.addEventListener('click', () => {
-                    // Add your logic to view the match
-                    window.location.href = '../match/match.html?matchId=' + match.id;
-                });
-            
-                matchActions.appendChild(viewButton);
-                matchCard.appendChild(matchInfo);
-                matchCard.appendChild(matchActions);
-            
-                matchesContainer.appendChild(matchCard);
+    matchCard.className = 'match-card';
+
+    const matchInfo = document.createElement('div');
+    matchInfo.className = 'match-info';
+
+    // Create match teams element
+    const matchTeams = document.createElement('p');
+    matchTeams.className = 'match-teams';
+    matchTeams.textContent = `${match.home_team_name} vs ${match.away_team_name}`;
+
+    // Add "Live" indicator if match is in progress
+    if (!match.is_over) {
+        const liveIndicator = document.createElement('span');
+        liveIndicator.className = 'live-indicator';
+        liveIndicator.textContent = 'Live';
+        matchTeams.appendChild(liveIndicator);
+    }
+    matchInfo.appendChild(matchTeams);
+
+    // Create match score element with spoiler effect
+    const matchScore = document.createElement('p');
+    matchScore.className = 'match-score';
+    matchScore.textContent = `Score: ${match.home_team_live_score} - ${match.away_team_live_score}`;
+    matchInfo.appendChild(matchScore);
+
+    const matchTime = document.createElement('p');
+    matchTime.className = 'match-time';
+    matchTime.textContent = match.is_over ? '' : 'Started ';
+    matchTime.textContent += timeAgo(new Date(match.created_at + ' UTC').getTime());
+    matchInfo.appendChild(matchTime);
+
+    // Add event listener to reveal score when clicked
+    matchScore.addEventListener('click', function() {
+        this.classList.toggle('revealed');
+    });
+
+    matchCard.appendChild(matchInfo);
+
+    const matchActions = document.createElement('div');
+    matchActions.className = 'match-actions';
+    const viewButton = document.createElement('button');
+    viewButton.className = 'view-button';
+    viewButton.innerText =  match.is_over ? 'Watch Replay' : 'Watch Match';
+    viewButton.addEventListener('click', () => {
+        window.location.href = `../match/match.html?matchId=${match.id}`;
+    });
+    matchActions.appendChild(viewButton);
+
+    matchCard.appendChild(matchActions);
+    matchesContainer.appendChild(matchCard);
             });
         })
         .catch(error => {
@@ -247,3 +265,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function timeAgo(date) {
+    const now = new Date();
+    const secondsPast = (now.getTime() - new Date(date).getTime()) / 1000;
+
+    if (secondsPast < 60) {
+        return `${Math.floor(secondsPast)} seconds ago`;
+    } else if (secondsPast < 3600) {
+        return `${Math.floor(secondsPast / 60)} minutes ago`;
+    } else if (secondsPast < 86400) {
+        return `${Math.floor(secondsPast / 3600)} hours ago`;
+    } else if (secondsPast < 604800) {
+        return `${Math.floor(secondsPast / 86400)} days ago`;
+    }
+    else {
+        return (new Date(date).toLocaleDateString());
+    }
+}

@@ -5,24 +5,6 @@ const router = express.Router();
 
 const TIME_PER_TICK = 1000;
 
-router.get('match/matches', (req, res) => {
-    console.log("Getting matches for league id:", req.query.leagueId);
-    const { leagueId } = req.query;
-    let query = `
-        SELECT match_history.id, home_team.name, away_team.name, home_team_score, away_team_score
-        FROM match_history, teams as home_team, teams as away_team
-        WHERE (home_team_id = home_team.id AND away_team_id = away_team.id)
-        AND teams.league_id = ${leagueId}
-    `;
-    db.all(query, (err, matches) => {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({ message: 'Error fetching matches!' });
-        }
-        res.json(matches);
-    });
-});
-
 router.get('/match/match-id', (req, res) => {
     console.log("MATCH ID\n\n\n\n\n\n\n")
     console.log("Getting match id for match name:", req.query.challengeId);

@@ -163,6 +163,27 @@ section h2 {
 .match-score {
     font-size: 16px;
     color: #7f8c8d;
+    /* Spoiler effect */
+    filter: blur(5px);
+    cursor: pointer;
+}
+
+.match-score.revealed {
+    filter: none;
+}
+
+.match-status {
+    font-size: 16px;
+    color: #e74c3c;
+}
+
+.live-indicator {
+    background-color: #e74c3c;
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 10px;
 }
 
 .match-actions {

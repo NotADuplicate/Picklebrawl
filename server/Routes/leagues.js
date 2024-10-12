@@ -128,21 +128,29 @@ router.get('/matches', (req, res) => {
     const { leagueId } = req.query;
     let query = `
         SELECT 
-            match_history.id, 
+            DISTINCT match_history.id, 
             created_at, 
             home_team.name AS home_team_name, 
             away_team.name AS away_team_name, 
             home_team_score, 
             away_team_score,
-            (strftime('%s', 'now') - strftime('%s', created_at)) > 120 AS is_over
+            (strftime('%s', 'now') - strftime('%s', created_at)) > 101 AS is_over,
+            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score ELSE 0 END) AS home_team_live_score,
+            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score ELSE 0 END) AS away_team_live_score
         FROM 
             match_history
         JOIN 
             teams AS home_team ON home_team_id = home_team.id
         JOIN 
             teams AS away_team ON away_team_id = away_team.id
+        LEFT JOIN
+            scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick < (strftime('%s', 'now') - strftime('%s', created_at))
         WHERE 
             match_history.league_id = ${leagueId}
+        GROUP BY 
+            match_history.id
+        ORDER BY
+            created_at DESC
     `;
 
     db.all(query, (err, matches) => {

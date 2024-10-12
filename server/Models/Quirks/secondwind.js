@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class SecondWind extends Quirk {
-    static likelihood = 4;
+    static likelihood = 0; //4
     static POWER_MODIFIER = -2;
     static STAT_INCREASE = 2;
     static title = "Second Wind";

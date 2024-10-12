@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class RockSolid extends Quirk {
-    static likelihood = 3;
+    static likelihood = 0; //3
     static POWER_MODIFIER = -1;
     static title = "Rock Solid";
     static description = ("Cannot be tricked");
