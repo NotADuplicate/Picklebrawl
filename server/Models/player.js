@@ -150,6 +150,7 @@ class Player {
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
         this.quirk = quirkClass;
+        console.log("Picked quirk: ", quirkClass.title);
         this.quirk.nameGenerationChanges(this);
     }
 
@@ -239,7 +240,7 @@ class Player {
         //return "John Doe";
     }
 
-    attack(match, target, INJURY_PERMANENCE_MODIFIER) {
+    attack(match, target) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
             const damage = (Math.random() * (this.strength + this.tempStrength));

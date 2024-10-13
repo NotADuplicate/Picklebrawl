@@ -10,7 +10,8 @@ export class Tenacious extends Quirk {
 
     static beTrickedEffect(player, tricker, match) {
         if (player.focus > tricker.trickiness) {
-            player.attack(tricker, match);
+            console.log("Tenacious attacking\n");
+            player.attack(match, tricker);
         }
         return true;
     }

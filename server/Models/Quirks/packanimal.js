@@ -4,7 +4,7 @@ export class PackAnimal extends Quirk {
     static POWER_MODIFIER = -3;
     static title = "Pack Animal";
     static description = ("+1 to all stats for every teammate that has this quirk");
-    static likelihood = 5;
+    static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;

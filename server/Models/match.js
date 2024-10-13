@@ -397,7 +397,7 @@ class Match {
     }
 
     attack(player, target) {
-        player.attack(this, target, this.weather.INJURY_PERMANENCE_MODIFIER);
+        player.attack(this, target);
     }
     
     assist(player, target) {
@@ -451,7 +451,7 @@ class Match {
             let topDefendAmount = 0;
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend_Advance") {
-                    if(player.quirk.beTrickedEffect(player, topAdvancer) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
+                    if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
                         db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                             + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
                             function(err) {
@@ -570,7 +570,7 @@ class Match {
                 if(player.defensePriority === "Defend_Score") {
                     console.log("Shooter trickiness: ", shooter.tempTrickiness);
                     console.log("Defender focus: ", player.tempFocus);
-                    if(player.quirk.beTrickedEffect(player, shooter) && shooter.quirk.trickEffect(shooter, player, this)) { //trickiness check
+                    if(player.quirk.beTrickedEffect(player, shooter, this) && shooter.quirk.trickEffect(shooter, player, this)) { //trickiness check
                         console.log(player.name + " was tricked!");
                         db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                             + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, player.id, "Score"],

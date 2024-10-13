@@ -12,8 +12,8 @@ export class Bully extends Quirk {
         if (match.offenseTeam.players.includes(player) && player.offensePriority === "Advance") {
             match.defenseTeam.players.forEach(defender => {
                 if (defender.defensePriority === "Defend_Advance") {
-                    player.attack(defender);
-                    defender.attack(player);
+                    player.attack(match, defender);
+                    defender.attack(match, player);
                 }
             });
         }

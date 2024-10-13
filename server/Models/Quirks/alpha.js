@@ -59,8 +59,14 @@ export class Alpha extends Quirk {
     }
 
     static nameGenerationChanges(player) {
-        while(player.name[0].toUpperCase() >= 'A' || player.name[0].toUpperCase() <= 'J') {
+        let tries = 5;
+        while((player.name <= 'B' || player.name >= 'J') && tries > 0) {
             player.name = player.generateName();
+            console.log("Alpha generated name: ", player.name);
+            tries--;
+        }
+        if(tries === 0) {
+            console.log("Alpha nameGenerationChanges failed to generate a name in 5 tries");
         }
         return;
     }

@@ -4,7 +4,7 @@ export class Duplicitous extends Quirk {
     static POWER_MODIFIER = -2;
     static title = "Duplicitous";
     static description = ("Your chance to trick players is doubled");
-    static likelihood = 6;
+    static likelihood = 5;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 
@@ -13,5 +13,10 @@ export class Duplicitous extends Quirk {
             return Math.random() < match.TRICK_CHANCE*2;
         }
         return false;
+    }
+
+    static playerStatGenerationChanges(player, power) {
+        player.trickiness = Math.max(player.trickiness, 2);
+        return;
     }
 }

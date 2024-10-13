@@ -240,9 +240,6 @@ function getMatchTick(matchId, tick) {
                     watchingLive = true;
                 }
 
-                // Immediately finish all GSAP animations
-                gsap.globalTimeline.progress(1);
-
                 let position;
                 let scoringTrick = false; //if there was a scoring attempt that involved a trick
 
@@ -629,6 +626,10 @@ async function wait(ms) {
             ms -= 100;
             if(realTime && catchUp == false) {
                 await new Promise(r => setTimeout(r, 100));
+            }
+            else {
+                // Immediately finish all GSAP animations
+                gsap.globalTimeline.progress(1);
             }
         }
     resolve();
