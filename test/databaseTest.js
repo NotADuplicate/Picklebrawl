@@ -8,36 +8,6 @@ import { Match } from '../server/Models/match.js'; // Adjust the path as necessa
 import * as weather from '../server/Models/Weather/index.js'
 import { assert } from 'chai';
 
-/*
-// Make a league
-db.run(`INSERT INTO leagues (name, password, founder, started) 
-            VALUES (?, ?, ?, ?)`, ["League A", "aaa", "Charlie", true], function(err) {
-        if (err) {
-            console.error('Error inserting league:', err.message);
-            return;
-        }
-    });
-
-// Create the teams
-let team1 = new Team('Team A', 'Charlie', 1, null);
-let team2 = new Team('Team B', 'Rachel', 1, null);
-
-team1.save()
-team2.save()
-
-// Check that they load correctly
-function loadTest() {
-    let team3 = new Team(null, null, null, 1)
-    let team4 = new Team(null, null, null, 2)
-
-    assert(team1.owner == team3.owner)
-    assert(team2.owner == team4.owner)
-    console.log("Teams loaded correctly.")
-}
-
-loadTest()
-*/
-
 // Assume that 2 teams have been added with ids 1 and 2 respectively
 // Can't get load team to work
 let team1 = new Team("A", "Rachel", 1, null, false)

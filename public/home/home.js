@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         createLeagueForm.classList.add('hidden');
 
         createLeague(leagueName, leaguePassword, teamName);
-        loadLeagues();
     });
 
     document.getElementById('join-league-form').addEventListener('submit', function (event) {
@@ -66,8 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.json())
             .then(data => {
                 messageDiv.innerText = data.message;
-                if (data.message === 'League created successfully!') {
-                    sleep(100);
+                if (data.message === 'League and team created successfully!') {
                     loadLeagues();
                 }
             })
@@ -88,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.json())
             .then(data => {
                 messageDiv.innerText = data.message;
-                if (data.message === 'Joined league successfully!') {
+                if (data.message === 'Joined league and created team successfully!') {
                     loadLeagues();
                 }
             })

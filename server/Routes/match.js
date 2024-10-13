@@ -7,7 +7,7 @@ const TIME_PER_TICK = 1000;
 
 router.get('/match/match-id', (req, res) => {
     console.log("MATCH ID\n\n\n\n\n\n\n")
-    console.log("Getting match id for match name:", req.query.challengeId);
+    console.log("Getting match id for challenge id:", req.query.challengeId);
     const { challengeId } = req.query;
     db.get('SELECT id FROM match_history WHERE challenge_id = ?', [challengeId], (err, match) => {
         if (err) {

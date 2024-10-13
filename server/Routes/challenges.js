@@ -85,7 +85,6 @@ router.post('/challenges/:id/add-players', (req, res) => {
     const { teamId, players } = req.body;
     console.log("Req body players: ", req.body.players)
 
-    console.log("Done adding players to challenge players")
     db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
@@ -126,10 +125,6 @@ router.post('/challenges/:id/add-players', (req, res) => {
                 return;
             }
             console.log("Row: ", row);
-            if(row[columnToUpdate]) {
-                console.log("Players already set")
-                return;
-            }
             for(let i = 0; i < players.length; i++) {
                 const player = players[i];
                 console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player)
@@ -179,7 +174,7 @@ router.post('/challenges/:id/remove-players', (req, res) => {
         }
         console.log("Row: ", row);
 
-        if(row.challenger_players_set && row.challenged_players_set) {
+        if((row.challenger_players_set && row.challenged_players_set) || row.challenger_actions_set || row.challenged_actions_set) {
             console.log("Players already been locked in");
             res.json({ message: 'Players already locked in' });
             return;
@@ -228,7 +223,6 @@ router.post('/challenges/:id/remove-players', (req, res) => {
                         }
                     );
                 }
-                console.log("Updated challenge players set of team: ", columnToUpdate)
         });
     });
 });
@@ -275,54 +269,55 @@ router.post('/challenges/:id/add-actions', (req, res) => {
                 console.log("Actions already set")
                 return;
             }
-            for(let i = 0; i < players.length; i++) {
-                const player = players[i];
-                console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player, "OffenseActions: ", offenseActions[i], "OffenseTargets: ", offenseTargets[i], "DefenseActions: ", defenseActions[i], "DefenseTargets: ", defenseTargets[i])
-                db.run(
-                    'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ? WHERE challenge_id = ? AND player_id = ?'
-                    , [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], id, player], function (err) {
+
+            const promises = players.map((player, i) => {
+                console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player, "OffenseActions: ", offenseActions[i], "OffenseTargets: ", offenseTargets[i], "DefenseActions: ", defenseActions[i], "DefenseTargets: ", defenseTargets[i]);
+                return new Promise((resolve, reject) => {
+                    db.run(
+                        'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ? WHERE challenge_id = ? AND player_id = ?',
+                        [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], id, player],
+                        function (err) {
+                            if (err) {
+                                console.error(err);
+                                reject(err);
+                            } else {
+                                resolve();
+                            }
+                        }
+                    );
+                });
+            });
+
+            Promise.all(promises) //wait for all players to be inserted before running match
+                .then(() => {
+                    // Update the players set column
+                    const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
+
+                    db.run(query, [true, id], function(err) {
                         if (err) {
                             console.error(err);
                             res.status(500).json({ error: 'Internal server error' });
-                        }
-                    }
-                );
-                db.get(
-                    'SELECT * FROM challenge_players WHERE challenge_id = ? AND player_id = ?',
-                    [id, player],
-                    (err, row) => {
-                        if (err) {
-                            console.error(err);
-                            //res.status(500).json({ error: 'Internal server error' });
                         } else {
-                            console.log('Updated row:', row);
+                            res.json({ id });
                         }
-                    }
-                );
-            }
+                        console.log("Updated challenge players set of team: ", columnToUpdate);
 
-        // Update the players set column
-        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
-
-        db.run(query, [true, id], function(err) {
-                if (err) {
-                    console.error(err);
+                        db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
+                            if (err) {
+                                console.error('Error fetching row:', err);
+                                return;
+                            }
+                            console.log("Challenge row after updating actions: ", row);
+                            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set) {
+                                runMatch(row.id);
+                            }
+                        });
+                    });
+                })
+                .catch(err => {
                     res.status(500).json({ error: 'Internal server error' });
-                } else {
-                    res.json({ id });
-                }
-                console.log("Updated challenge players set of team: ", columnToUpdate)
+                });
         });
-        db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
-            if (err) {
-                console.error('Error fetching row:', err);
-                return;
-            }
-            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set) {
-                runMatch(row.id);
-            }
-        });
-    });
     }); 
 });
 
@@ -387,7 +382,6 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
 });
 
 router.get('/challenges/:id/players-actions', (req, res) => {
-    console.log("AAAA\n\n")
     const { id } = req.params;
 
     db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, challenge) => {
@@ -423,12 +417,10 @@ router.get('/challenges/:id/players-actions', (req, res) => {
 
 // Get quirk effects for all players in a challenge
 router.post('/challenges/:id/quirk-effects', (req, res) => {
-    console.log("Getting quirk effects")
     const { id } = req.params;
     const { ids } = req.body;
     let players = [];
     Promise.all(ids.map(playerId => {
-        console.log("PlayerId: ", playerId)
         const player = new Player();
         return player.load(playerId).then(() => {
             players.push(player);
@@ -443,7 +435,6 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
 
 // Get quirk actions for all players in a challenge
 router.post('/challenges/quirk-actions', (req, res) => {
-    console.log("Getting quirk actions")
     const { ids } = req.body;
     let extraActions = [];
     Promise.all(ids.map(playerId => {
@@ -456,7 +447,6 @@ router.post('/challenges/quirk-actions', (req, res) => {
             }
         });
     })).then(() => {
-        console.log("Extra actions: ", extraActions)
         res.json(extraActions);
     });
 });
@@ -478,8 +468,10 @@ function runMatch(challengeId) {
             return res.status(500).json({ error: 'Internal server error' });
         }
         const { challenger_team_id, challenged_team_id } = row;
-        const challengerTeam = new Team(null, null, null, challenger_team_id, false);
-        const challengedTeam = new Team(null, null, null, challenged_team_id, false);
+        const challengerTeam = new Team();
+        challengerTeam.load(challenger_team_id);
+        const challengedTeam = new Team();
+        challengedTeam.load(challenged_team_id);
         db.all('SELECT * FROM challenge_players WHERE challenge_id = ?', [id], async (err, rows) => {
             if(err) {
                 console.error(err);
@@ -488,17 +480,12 @@ function runMatch(challengeId) {
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const { player_id, offense_action, defense_action, offense_target_id, defense_target_id } = row;
-                console.log(offense_target_id, defense_target_id)
                 const player = new Player();
                 await player.load(player_id);
-                console.log(player.id, player.name, player.bulk, player.finesse, player.height, player.strength, player.trickiness, player.focus, player.quirk)
                 player.setPriorities(offense_action, defense_action, offense_target_id, defense_target_id);
-                console.log(player.offensePriority, player.defensePriority, player.offenseTarget, player.defenseTarget)
                 if(row.team_id == challenger_team_id) {
-                    console.log("Adding player to challenger team: ", player.id , '\n')
                     challengerTeam.addPlayer(player);
                 } else {
-                    console.log("Adding player to challenged team: ", player.id, '\n')
                     challengedTeam.addPlayer(player);
                 }
             }

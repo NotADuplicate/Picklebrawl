@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class StarWorshipper extends Quirk {
-    static likelihood = 0; //2
+    static likelihood = 2; //2
     static title = "Star Worshipper";
     static description = ("Worships the stars");
     static STAT_BOOST = 1

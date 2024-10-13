@@ -8,7 +8,8 @@ console.log('Loading leagues routes');
 
 const insertTeam = (teamName, leagueId, owner, callback) => {
     console.log('Inserting team:', teamName, leagueId, owner);
-    const team = new Team(teamName, owner, leagueId);
+    const team = new Team();
+    team.setInfo(teamName, owner, leagueId);
     team.save(callback);
 };
 
@@ -56,7 +57,6 @@ router.post('/join-league', (req, res) => {
                 return res.status(400).json({ message: 'Error creating team!' });
             }
             db.run(`INSERT INTO league_users (league_id, username) VALUES (?, ?)`, [league.id, username], (err) => {
-                console.log("Inserted")
                 if (err) {
                     console.log(err);
                     return res.status(400).json({ message: 'Error joining league!' });

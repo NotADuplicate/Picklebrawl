@@ -59,4 +59,19 @@ export class Quirk {
     static extraActions() {
         return null;
     }
+
+    static trickEffect(player, target, match) {
+        if(player.trickiness > target.focus) {
+            return Math.random() < match.TRICK_CHANCE;
+        }
+        return false;
+    }
+
+    static beTrickedEffect(player, tricker, match) {
+        return true;
+    }
+
+    static nameGenerationChanges(player) {
+        return;
+    }
 }

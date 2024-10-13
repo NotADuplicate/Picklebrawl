@@ -57,4 +57,11 @@ export class Alpha extends Quirk {
         }
         return true;
     }
+
+    static nameGenerationChanges(player) {
+        while(player.name[0].toUpperCase() >= 'A' || player.name[0].toUpperCase() <= 'J') {
+            player.name = player.generateName();
+        }
+        return;
+    }
 }

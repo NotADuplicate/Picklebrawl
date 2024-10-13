@@ -10,20 +10,17 @@ class Team {
     leagueId;
     scoreRange = 30;
 
-    constructor(teamName, owner, leagueId, loadTeamId, generatePlayers = true) {
-        console.log("Team id: ", loadTeamId);
+    constructor() {
         this.players = [];
-        if(loadTeamId != null) {
-            this.load(loadTeamId);
-        }
-        else {
-            this.teamName = teamName;
-            this.owner = owner;
-            this.leagueId = leagueId;
-            console.log("NEW TEAM: " + teamName);
-            if (generatePlayers) 
-                this.generatePlayers();
-        }
+    }
+
+    setInfo(teamName, owner, leagueId, generatePlayers = true) {
+        this.teamName = teamName;
+        this.owner = owner;
+        this.leagueId = leagueId;
+        console.log("NEW TEAM: " + teamName);
+        if (generatePlayers) 
+            this.generatePlayers();
     }
 
     save(callback) {
@@ -58,7 +55,7 @@ class Team {
 
     addPlayer(player) {
         this.players.push(player);
-        console.log("Team added player: " + player.bulk + " " + player.finesse + " " + player.height + " " + player.strength);
+        console.log("Team " + this.teamName + " added player " + player.name);
     }
 
     getPlayers() {
@@ -69,27 +66,27 @@ class Team {
         for (let i = 0; i < 8; i++) {
             const player = new Player();
             player.pickRandomQuirk(false);
-            player.randomize_stats(10+i);
+            player.randomize_stats(Math.floor(Math.random() * 5) + 10);
             this.addPlayer(player);
         }
     }
 
-    load(id) {
-        const self = this;
-        console.log("Trying to load")
-        db.get(`SELECT * FROM teams WHERE id = ?`, [id], (err, row) => {
-            if (err) {
-                console.log("Error loading team: " + err);
-                return;
-            }
+    async load(id) {
+        return new Promise((resolve, reject) => {
+            db.get(`SELECT * FROM teams WHERE id = ?`, [id], (err, row) => {
+                if (err) {
+                    console.log("Error loading team: " + err);
+                    reject(err);
+                }
 
-            self.teamName = row.name;
-            self.owner = row.owner;
-            self.leagueId = row.league_id;
-            self.teamId = row.id;
-            console.log("Loaded team: " + self.teamName);
+                this.teamName = row.name;
+                this.owner = row.owner;
+                this.leagueId = row.league_id;
+                this.teamId = row.id;
+                console.log("Loaded team: " + this.teamName);
+                resolve();
+            });
         });
-        console.log("Finished loading db command")
     }
 }
 export {Team};

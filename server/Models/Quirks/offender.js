@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Offender extends Quirk {
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -5;
     static title = "Offender";
     static STAT_INCREASE = 2;
     static description = ("+" + this.STAT_INCREASE + " to all stats while on offense");

@@ -17,7 +17,7 @@ class Player {
     baseFinesse = 1;
     baseHeight = 1;
     baseStrength = 1;
-    baseTrickiness = 0;
+    baseTrickiness = 1;
     baseFocus = 1;
 
     offensePriority = "";
@@ -70,6 +70,7 @@ class Player {
         const quirkKeys = Object.keys(quirks);
         const quirkClass = quirks[quirkKeys[quirkId]];
         this.quirk = quirkClass;
+        console.log("Set stats of player ", this.name);
     }
 
     setHp() {
@@ -119,7 +120,6 @@ class Player {
 
     save(callback, teamId) {
         const self = this;
-        console.log("Saving player : " + this.name);
         db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
             [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId], function(err) {
             if (err) {
@@ -150,6 +150,7 @@ class Player {
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
         this.quirk = quirkClass;
+        this.quirk.nameGenerationChanges(this);
     }
 
     randomize_stats(power) {
