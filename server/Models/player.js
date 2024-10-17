@@ -1,5 +1,6 @@
 import {db} from '../database.js';
 import * as quirks from './Quirks/index.js';
+import {QuirkGenerator} from '../quirkGenerator.js';
 
 class Player {
     name;
@@ -30,6 +31,9 @@ class Player {
     savedOffensePriorityTarget = null;
     savedDefensePriorityTarget = null;
 
+    offenseProperty = "Default";
+    defenseProperty = "Default";
+
     tempBulk = 0;
     tempFinesse = 0;
     tempHeight = 0;
@@ -46,7 +50,7 @@ class Player {
     maxHp;
     ATTACK_MODIFIER = 1;
 
-    PLAYER_ASSIST_MODIFIER = 0.5;
+    PLAYER_ASSIST_MODIFIER = 0.75;
 
     constructor() {
         this.name = this.generateName();
@@ -86,7 +90,7 @@ class Player {
         this.id = id;
     }
 
-    setPriorities(offense, defense, offenseTarget = null, defenseTarget = null)  {
+    setPriorities(offense, defense, offenseTarget = null, defenseTarget = null, offenseProperty = null, defenseProperty = null) {
         console.log(offense + " " + offenseTarget); 
         /*let validOffense = ["Attack", "Advance", "Protect", "Assist", "Score", "Rest"];
         let validDefense = ["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"];
@@ -116,6 +120,12 @@ class Player {
         this.defensePriorityTarget = defenseTarget;
         this.savedOffensePriority = offense;
         this.savedDefensePriority = defense;
+        if(offenseProperty != null) {
+            this.offenseProperty = offenseProperty;
+        }
+        if(defenseProperty != null) {
+            this.defenseProperty = defenseProperty;
+        }
     }
 
     save(callback, teamId) {
@@ -132,20 +142,8 @@ class Player {
 
     pickRandomQuirk(draft = false) {
         const quirkKeys = Object.keys(quirks);
-        const filteredQuirkKeys = quirkKeys.filter(key => (!draft && quirks[key].APPEARS_IN_GENERATION) || (draft && quirks[key].APPEARS_IN_DRAFT));
-        const totalLikelihood = filteredQuirkKeys.reduce((sum, key) => sum + quirks[key].likelihood, 0);
-        
-        let randomValue = Math.random() * totalLikelihood;
-        let cumulativeLikelihood = 0;
-        let selectedQuirkKey;
-        
-        for (const key of filteredQuirkKeys) {
-            cumulativeLikelihood += quirks[key].likelihood;
-            if (randomValue < cumulativeLikelihood) {
-                selectedQuirkKey = key;
-                break;
-            }
-        }
+
+        const selectedQuirkKey = QuirkGenerator.pickRandomQuirk(draft);
     
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
@@ -155,6 +153,7 @@ class Player {
     }
 
     randomize_stats(power) {
+        power += this.quirk.POWER_MODIFIER;
         //return; // Disable randomization for now
         const totalPoints = power + this.quirk.POWER_MODIFIER;
 

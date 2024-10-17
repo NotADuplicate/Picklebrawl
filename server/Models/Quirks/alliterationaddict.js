@@ -1,8 +1,9 @@
 import { Quirk } from './quirk.js';
 
 export class AlliterationAddict extends Quirk {
+    static POWER_MODIFIER = -2;
     static title = "Alliteration Addict";
-    static description = ("The minimum of your stats is set to 1 + the number of players in the game with the same first letter to their name");
+    static description = ("+1 to all stats for every teammate with the same first letter in their name");
     static likelihood = 5;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
@@ -12,28 +13,28 @@ export class AlliterationAddict extends Quirk {
         let count = 0; 
         const firstLetter = player.name.charAt(0).toLowerCase();
         for (const otherPlayer of match.players) {
-            if (otherPlayer.name.charAt(0).toLowerCase() === firstLetter) {
+            if (otherPlayer.name.charAt(0).toLowerCase() === firstLetter && otherPlayer.team === player.team) {
                 count++;
             }
         }
-        player.baseBulk = Math.max(player.bulk, count);
-        player.baseFinesse = Math.max(player.finesse, count); 
-        player.baseHeight = Math.max(player.height, count);
-        player.baseStrength = Math.max(player.strength, count);
+        player.baseBulk += count;
+        player.baseFinesse += count;
+        player.baseHeight += count;
+        player.baseStrength += count
     }
 
     static challengeStatModification(players, player) {
         let count = 0; 
         const firstLetter = player.name.charAt(0).toLowerCase();
         for (const otherPlayer of players) {
-            if (otherPlayer.name.charAt(0).toLowerCase() === firstLetter) {
+            if (otherPlayer.name.charAt(0).toLowerCase() === firstLetter && otherPlayer.team === player.team) {
                 count++;
             }
         }
-        player.bulk = Math.max(player.bulk, count);
-        player.finesse = Math.max(player.finesse, count); 
-        player.height = Math.max(player.height, count);
-        player.strength = Math.max(player.strength, count);
+        player.bulk += count;
+        player.finesse += count;
+        player.height += count;
+        player.strength += count;
         return true;
     }
 }

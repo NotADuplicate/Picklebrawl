@@ -18,52 +18,49 @@ router.get('/match/match-id', (req, res) => {
     });
 });
 
-router.get('/match/match-tick', (req, res) => {
+router.get('/match/match-ticks', (req, res) => {
     // req is the request, req.query is the parameters in the request
     const { matchId, tick } = req.query;
-    console.log("Getting match tick for match id:", matchId, " tick: ", tick);
-    db.get('SELECT tick, possession_team_id, ball_position, player_possession_id, created_at FROM match_ticks_history, match_history WHERE match_id = ? AND tick = ? AND id = ?', [matchId, tick, matchId], (err, tick_row) => {
+    console.log("Getting match ticks for match id:", matchId);
+    db.all('SELECT tick, possession_team_id, ball_position, player_possession_id, created_at FROM match_ticks_history, match_history WHERE match_id = ? AND id = ?', [matchId, matchId], (err, tick_rows) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ message: 'Error fetching match tick!' });
         }
-        console.log(tick_row);
-        if(!tick_row) {
-            console.log("Match tick not found!!!");
+        if(tick_rows.length == 0) {
+            console.log("Match ticks not found!!!");
             return res.json({ message: 'Match tick not found' });
         }
-        const matchCreatedAt = new Date(tick_row.created_at + ' UTC').getTime();
-        const currentTime = new Date().getTime();
-        const timePassed = currentTime - matchCreatedAt;
-        if(timePassed < TIME_PER_TICK * tick) {
-            console.log(matchCreatedAt, currentTime);
-            console.log(tick * TIME_PER_TICK, timePassed);
-            return res.json({ message: 'Match tick not reached yet' });
-        }
-        const behindRealTime = timePassed / TIME_PER_TICK > (tick_row.tick+3); //if the client is more than 3 ticks behind real time
-        console.log("Ticks passed: ", timePassed / TIME_PER_TICK);
-        console.log("Behind real time: ", behindRealTime);
+        const matchCreatedAt = new Date(tick_rows[0].created_at + ' UTC').getTime();
 
-        console.log(`Time passed since match creation: ${timePassed} ms`);
-        db.get('SELECT * FROM scoring_history, players WHERE match_id = ? AND tick = ? AND players.id = shooter_id', [matchId, tick], (err, score_row) => {
+        db.all('SELECT * FROM scoring_history, players WHERE match_id = ? AND players.id = shooter_id', [matchId], (err, score_rows) => {
             if (err) {
+                console.log(err);
                 return res.status(500).json({ message: 'Error fetching score history!' });
             }
-            db.all('SELECT * FROM attack_history WHERE match_id = ? AND tick = ?', [matchId, tick], (err, attack_rows) => {
+            db.all('SELECT * FROM attack_history WHERE match_id = ?', [matchId, tick], (err, attack_rows) => {
                 if (err) {
+                    console.log(err);
                     return res.status(500).json({ message: 'Error fetching attack history!' });
                 }
-                db.all('SELECT * FROM match_trick_history WHERE match_id = ? AND tick = ?', [matchId, tick], (err, trick_rows) => {
+                db.all('SELECT * FROM match_trick_history WHERE match_id = ?', [matchId], (err, trick_rows) => {
                     if (err) {
                         console.log(err);
                         return res.status(500).json({ message: 'Error fetching trick history!' });
                     }
-                    res.json({
-                        matchTick: tick_row,
-                        scoringHistory: score_row,
-                        attackHistory: attack_rows,
-                        trickHistory: trick_rows,
-                        behindRealTime: behindRealTime
+                    db.all('SELECT * FROM match_action_history WHERE match_id = ?', [matchId], (err, action_rows) => {
+                        if (err) {
+                            console.log(err);
+                            return res.status(500).json({ message: 'Error fetching action history!' });
+                        }
+                        res.json({
+                            matchTicks: tick_rows,
+                            scoringHistory: score_rows,
+                            attackHistory: attack_rows,
+                            trickHistory: trick_rows,
+                            actionHistory: action_rows,
+                            matchCreatedAt: matchCreatedAt
+                        });
                     });
                 });
             });
@@ -94,7 +91,7 @@ router.get('/match/players', (req, res) => {
     console.log("Getting players for match id:", req.query.matchId);
     const { matchId } = req.query;
     let query = `
-        SELECT name, team_id, title, players.id, offensive_role, defensive_role, description
+        SELECT name, team_id, title, players.id, offensive_role, defensive_role, description, offensive_target_id, defensive_target_id
         FROM players, player_history, quirks
         WHERE players.id = player_history.player_id AND players.quirk = quirks.id
         AND match_id = ${matchId}

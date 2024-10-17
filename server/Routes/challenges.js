@@ -231,7 +231,7 @@ router.post('/challenges/:id/remove-players', (req, res) => {
 router.post('/challenges/:id/add-actions', (req, res) => {
     console.log("Add actions")
     const { id } = req.params;
-    const { teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets } = req.body;
+    const { teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties } = req.body;
     console.log("Req body players: ", req.body.players)
     db.get('SELECT challenger_team_id, challenged_team_id FROM challenges WHERE id = ?', [id], (err, row) => {
         if (err) {
@@ -274,8 +274,8 @@ router.post('/challenges/:id/add-actions', (req, res) => {
                 console.log("Challengeid: ", id, "TeamId: ", teamId, "Player: ", player, "OffenseActions: ", offenseActions[i], "OffenseTargets: ", offenseTargets[i], "DefenseActions: ", defenseActions[i], "DefenseTargets: ", defenseTargets[i]);
                 return new Promise((resolve, reject) => {
                     db.run(
-                        'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ? WHERE challenge_id = ? AND player_id = ?',
-                        [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], id, player],
+                        'UPDATE challenge_players SET offense_action = ?, defense_action = ?, offense_target_id = ?, defense_target_id = ?, offense_property = ?, defense_property = ? WHERE challenge_id = ? AND player_id = ?',
+                        [offenseActions[i], defenseActions[i], offenseTargets[i], defenseTargets[i], offenseProperties[i], defenseProperties[i], id, player],
                         function (err) {
                             if (err) {
                                 console.error(err);
@@ -426,6 +426,7 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
             players.push(player);
         });
     })).then(() => {
+        players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
         players.forEach(player => {
             player.quirk.challengeStatModification(players, player);
         });
@@ -479,10 +480,10 @@ function runMatch(challengeId) {
             }
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
-                const { player_id, offense_action, defense_action, offense_target_id, defense_target_id } = row;
+                const { player_id, offense_action, defense_action, offense_target_id, defense_target_id, offense_property, defense_property } = row;
                 const player = new Player();
                 await player.load(player_id);
-                player.setPriorities(offense_action, defense_action, offense_target_id, defense_target_id);
+                player.setPriorities(offense_action, defense_action, offense_target_id, defense_target_id, offense_property, defense_property);
                 if(row.team_id == challenger_team_id) {
                     challengerTeam.addPlayer(player);
                 } else {

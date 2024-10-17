@@ -8,7 +8,7 @@ export class Bully extends Quirk {
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
 
-    tickEffect(player, match) {
+    static tickEffect(player, match) {
         if (match.offenseTeam.players.includes(player) && player.offensePriority === "Advance") {
             match.defenseTeam.players.forEach(defender => {
                 if (defender.defensePriority === "Defend_Advance") {

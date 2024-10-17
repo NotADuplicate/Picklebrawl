@@ -1,22 +1,13 @@
 import { Quirk } from './quirk.js';
 
 export class WeakestLink extends Quirk {
+    static powerModifier = -7;
     static likelihood = 2;
     static title = "Weakest Link";
-    static description = ("All of your stats are set to double the lowest of that stat on your team");
+    static description = ("Each of your stats are added with the lowest of that stat on your team");
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 5;
-
-    static playerStatGenerationChanges(player, power) {
-        player.finesse = 0;
-        player.strength = 0;
-        player.trickiness = 0;
-        player.focus = 0;
-        player.height = 0;
-        player.bulk = 0;
-        return;
-    }
 
     static startGameEffect(match, player) {
         let lowestFinesse = 5;
@@ -27,8 +18,8 @@ export class WeakestLink extends Quirk {
         let lowestBulk = 5;
         if(player in match.homeTeam.players) {
             // Compare to home team players
-            for(const otherPlayer of match.homeTeam.players) {
-                if(otherPlayer !== player) {
+            for(const otherPlayer of match.players) {
+                if(otherPlayer !== player && otherPlayer.team == player.team) {
                     lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
                     lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
                     lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
@@ -38,25 +29,12 @@ export class WeakestLink extends Quirk {
                 }
             }
         }
-        else {
-            // Compare to away team players
-            for(const otherPlayer of match.awayTeam.players) {
-                if(otherPlayer.name < player.name) {
-                    lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
-                    lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
-                    lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
-                    lowestFocus = Math.min(lowestFocus, otherPlayer.focus);
-                    lowestHeight = Math.min(lowestHeight, otherPlayer.height);
-                    lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
-                }
-            }
-        }
-        player.baseFiness = lowestFinesse * 2;
-        player.baseStrength = lowestStrength * 2;
-        player.baseTrickiness = lowestTrickiness * 2;
-        player.baseFocus = lowestFocus * 2;
-        player.baseHeight = lowestHeight * 2;
-        player.baseBulk = lowestBulk * 2;
+        player.baseFiness += lowestFinesse;
+        player.baseStrength += lowestStrength;
+        player.baseTrickiness += lowestTrickiness;
+        player.baseFocus += lowestFocus;
+        player.baseHeight += lowestHeight;
+        player.baseBulk += lowestBulk;
     }
 
     static challengeStatModification(players, player) {
@@ -77,12 +55,12 @@ export class WeakestLink extends Quirk {
                 lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
             }
         }
-        player.finesse = lowestFinesse * 2;
-        player.strength = lowestStrength * 2;
-        player.trickiness = lowestTrickiness * 2;
-        player.focus = lowestFocus * 2;
-        player.height = lowestHeight * 2;
-        player.bulk = lowestBulk * 2;
+        player.finesse += lowestFinesse;
+        player.strength += lowestStrength;
+        player.trickiness += lowestTrickiness;
+        player.focus += lowestFocus;
+        player.height += lowestHeight;
+        player.bulk += lowestBulk;
         return true;
     }
 }

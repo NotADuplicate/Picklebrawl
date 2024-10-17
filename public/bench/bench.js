@@ -16,7 +16,7 @@ let offensePriorities = {
     Attack: "Target enemy",
     Protect: "Target teammate",
     Assist: "Target teammate",
-    Score: "Target neither",
+    Score: "Target distance",
     Rest: "Target neither"
 };
 
@@ -451,6 +451,8 @@ function lockActions() {
     let defenseActions = [];
     let offenseTargets = [];
     let defenseTargets = [];
+    let offenseProperties = [];
+    let defenseProperties = [];
     yourTeamPlayers.forEach(player => {
         if (player.dataset.location === 'bench') {
             playerIds.push(player.dataset.playerId);
@@ -461,8 +463,22 @@ function lockActions() {
             const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
             offenseActions.push(offensePrioritySelect.value);
             defenseActions.push(defensePrioritySelect.value);
-            offenseTargets.push(offenseTargetSelect.value);
-            defenseTargets.push(defenseTargetSelect.value);
+            if (offenseTargetSelect.value === 'Property') {
+                offenseProperties.push(offenseTargetSelect.textContent);
+                offenseTargets.push(null);
+            }
+            else {
+                offenseProperties.push(null);
+                offenseTargets.push(offenseTargetSelect.value);
+            }
+            if (typeof defenseTargetSelect.value === 'Property') {
+                defenseProperties.push(defenseTargetSelect.textContent);
+                defenseTargets.push(null);
+            }
+            else {
+                defenseProperties.push(null);
+                defenseTargets.push(defenseTargetSelect.value);
+            }
         }
     });
     const teamId = myTeamId;
@@ -472,7 +488,7 @@ function lockActions() {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets })
+        body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties})
     })
         .then(response => response.json())
         .then(data => {
@@ -704,7 +720,17 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
     if (targetType === 'neither') {
         console.log("Target neither");
         targetMenu.style.display = 'none';
-    } else {
+    } else if(targetType === 'distance') {
+        targetMenu.style.display = 'block';
+        const distances = ['Close', 'Medium', 'Far', 'Half Court'];
+        distances.forEach(distance => {
+            const option = document.createElement('option');
+            option.value = "Property";
+            option.textContent = distance;
+            targetSelect.appendChild(option);
+        });
+    }
+    else {
         targetMenu.style.display = 'block';
         let targetPlayers = [];
         if(targetType === 'either') {
@@ -712,7 +738,6 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         }
         else if(targetType === 'teammate') {
             targetPlayers = document.querySelectorAll('.your-team .player[data-location="bench"]')
-            
         }
         else if(targetType === 'enemy') {
             targetPlayers = document.querySelectorAll('.other-team .player[data-location="bench"]');
@@ -725,6 +750,10 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
             option.textContent = playerName;
             targetSelect.appendChild(option);
         });
+        const option = document.createElement('option');
+        option.value = "Any";
+        option.textContent = "Any";
+        targetSelect.appendChild(option);
     }
 }
 

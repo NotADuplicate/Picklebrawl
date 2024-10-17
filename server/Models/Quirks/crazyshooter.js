@@ -6,15 +6,16 @@ export class CrazyShooter extends Quirk {
     static likelihood = 1;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
-    static SHOT_CHANCE = 0.05;
+    static SHOT_CHANCE = 0.1;
     static FINESSE_BONUS = 3;
 
-    tickEffect(player, match) {
-        if (match.offenseTeam.players.includes(player) && Math.random() < SHOT_CHANCE) {
-            if(match.turnedOver == false) {
-                player.finesse += FINESSE_BONUS;
+    static tickEffect(player, match) {
+        if (match.offenseTeam.players.includes(player) && Math.random() < this.SHOT_CHANCE) {
+            if(match.turnedover == false) {
+                console.log("Crazy Shooter Shot \n\n");
+                player.finesse += this.FINESSE_BONUS;
                 match.shoot(player);
-                player.finesse -= FINESSE_BONUS;
+                player.finesse -= this.FINESSE_BONUS;
             }
         }
     }

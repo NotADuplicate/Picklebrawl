@@ -25,4 +25,24 @@ export class QuirkGenerator {
         }
         return null;
     }
+
+    static pickRandomQuirk(draft = false) {
+        const quirkKeys = Object.keys(quirks);
+        const filteredQuirkKeys = quirkKeys.filter(key => (!draft && quirks[key].APPEARS_IN_GENERATION) || (draft && quirks[key].APPEARS_IN_DRAFT));
+        const totalLikelihood = filteredQuirkKeys.reduce((sum, key) => sum + quirks[key].likelihood, 0);
+        
+        let randomValue = Math.random() * totalLikelihood;
+        let cumulativeLikelihood = 0;
+        let selectedQuirkKey;
+
+        filteredQuirkKeys.sort(() => Math.random() - 0.5);
+        for (const key of filteredQuirkKeys) {
+            cumulativeLikelihood += quirks[key].likelihood;
+            if (randomValue < cumulativeLikelihood) {
+                selectedQuirkKey = key;
+                break;
+            }
+        }
+        return selectedQuirkKey;
+    }
 }

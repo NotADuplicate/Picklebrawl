@@ -6,6 +6,8 @@ export class Quirk {
     static POWER_MODIFIER = 0; //changes how stats generate
     static likelihood = 10;
     static START_EFFECT_ORDER = 2;
+    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_DRAFT = true;
 
     // TODO: when should the startGameEffect be called? Maybe the bottom of player.setStats?
     // It might not work there because some stat mods rely on other players to already be created

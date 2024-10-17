@@ -5,7 +5,7 @@ export class Alpha extends Quirk {
     static description = ("The player gets a stat boost if their name is first alphabetically on their team");
     static POWER_MODIFIER = -2;
     static STAT_CHANGE = 2
-    static likelihood = 6
+    static likelihood = 4;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;
@@ -43,7 +43,7 @@ export class Alpha extends Quirk {
         let isAlpha = true;
         // Compare to home team players
         for(const otherPlayer of players) {
-            if(otherPlayer.name < player.name) {
+            if(otherPlayer.name < player.name && otherPlayer.team === player.team) {
                 isAlpha = false;
             }
         }

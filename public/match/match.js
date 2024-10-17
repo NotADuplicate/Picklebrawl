@@ -7,6 +7,9 @@ let gameOver = false;
 let realTime = true;
 let catchUp = false;
 let watchingLive = false; // If the user is watching the game live, cannot get behind
+let consequetiveStalls = 0;
+const TIME_PER_TICK = 1000; // Time in milliseconds per tick
+const TIME_PER_SCORE = 1000; // Time in milliseconds per score
 const teamPositions = {
     home: {
         centeredX: null,
@@ -59,7 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function setupGame(matchId) {
+    console.log("Getting teams");
     await getTeams(matchId);
+    console.log("Getting players");
     await getPlayers(matchId);
     showGame(matchId);
 }
@@ -83,6 +88,8 @@ function getPlayers(matchId) {
                 newPlayerElement.querySelector('.player-defense-action').textContent = player.defensive_role;
                 newPlayerElement.querySelector('.player').setAttribute('data-team', player.team_id == homeTeamId ? 'home' : 'away');
                 newPlayerElement.querySelector('.player').setAttribute('data-player-id', player.id);
+                newPlayerElement.querySelector('.player').setAttribute('data-offense-target', player.offensive_target_id);
+                newPlayerElement.querySelector('.player').setAttribute('data-defense-target', player.defensive_target_id);
                 if (player.team_id == homeTeamId) {
                     newPlayerElement.querySelector('.player-defense-action').style.display = 'none';
                     newPlayerElement.querySelector('.player').classList.add('home-team');
@@ -95,7 +102,9 @@ function getPlayers(matchId) {
                     players[player.id] = awayTeamPlayersElement.lastElementChild;
                 }
             });
-            givePlayerBall(1);
+            const playerIds = Object.keys(players);
+            const randomPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
+            givePlayerBall(randomPlayerId);
             captureTeamPositions();
             resolve();
         })
@@ -138,16 +147,42 @@ function getTeams(matchId) {
 }
 
 async function showGame(matchId) {
-    tick = 1;
-    while(tick <= 101 && !gameOver) {
-        realTime = true;
-        await getMatchTick(matchId, tick);
-        console.log("Finished tick: ", tick);
-        const timerElement = document.getElementById('game-timer');
-        timerElement.textContent = `Tick: ${tick}`;
-        tick++;
-        await wait(700);
-    }
+    fetch('/match/match-ticks?matchId=' + matchId)
+        .then(response => response.json())
+        .then(async data => {
+            console.log('Match ticks:', data);
+            let i = 1;
+            let timeOffset = 0;
+            while(i <= data.matchTicks.length) {
+                const tickData = data.matchTicks[i-1];
+                const tick = tickData.tick;
+                const scoringHistoryForTick = data.scoringHistory.filter(history => history.tick === tick);
+                const trickHistoryForTick = data.trickHistory.filter(history => history.tick === tick);
+                const attackHistoryForTick = data.attackHistory.filter(history => history.tick === tick);
+                const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
+                console.log(tickData)
+                const fullTickData = {
+                    scoringHistory: scoringHistoryForTick[0],
+                    trickHistory: trickHistoryForTick,
+                    attackHistory: attackHistoryForTick, 
+                    matchTick: tickData,
+                    actionHistory: actionHistoryForTick,
+                    time: data.matchCreatedAt + timeOffset 
+                };
+                timeOffset += TIME_PER_TICK;
+                if(scoringHistoryForTick.length > 0) {
+                    timeOffset += 1000//(scoringHistoryForTick.suspense + 1) * TIME_PER_SCORE;
+                }
+                console.log(new Date().getTime());
+                await runMatchTick(fullTickData, tick);
+                await wait(TIME_PER_SCORE);
+                i++;
+            }
+            addBoldTextToTextBox('GAME OVER');
+        })
+        .catch(error => {
+            console.error('Error fetching match ticks:', error);
+        });
 }
 // Function to move the slider icon
 function moveSliderIcon(newPosition) {
@@ -161,41 +196,42 @@ async function changeTeamPossession(team) {
     const sliderIcon = document.querySelector('.slider-icon');
     const homeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') === 'home');
     const awayTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') === 'away');
+    let offenseTeamPlayers = [];
+    let defenseTeamPlayers = [];
     let advancingPlayers = [];
     let defendingPlayers = [];
     if (team === homeTeamId) {
         sliderIcon.style.backgroundColor = 'blue';
-        homeTeamPlayers.forEach(player => {
-            player.querySelector('.player-defense-action').style.display = 'none';
-            player.querySelector('.player-offense-action').style.display = 'block';
-            if(player.querySelector('.player-offense-action').textContent === 'Advance') {
-                advancingPlayers.push(player);
-            }
-        });
-        awayTeamPlayers.forEach(player => {
-            player.querySelector('.player-offense-action').style.display = 'none';
-            player.querySelector('.player-defense-action').style.display = 'block';
-            if(player.querySelector('.player-defense-action').textContent === 'Defend_Advance') {
-                defendingPlayers.push(player);
-            }
-        });
+        offenseTeamPlayers = homeTeamPlayers;
+        defenseTeamPlayers = awayTeamPlayers;
     } else {
         sliderIcon.style.backgroundColor = 'red';
-        homeTeamPlayers.forEach(player => {
-            player.querySelector('.player-offense-action').style.display = 'none';
-            player.querySelector('.player-defense-action').style.display = 'block';
-            if(player.querySelector('.player-defense-action').textContent === 'Defend_Advance') {
-                defendingPlayers.push(player);
-            }
-        });
-        awayTeamPlayers.forEach(player => {
-            player.querySelector('.player-defense-action').style.display = 'none';
-            player.querySelector('.player-offense-action').style.display = 'block';
-            if(player.querySelector('.player-offense-action').textContent === 'Advance') {
-                advancingPlayers.push(player);
-            }
-        });
+        offenseTeamPlayers = awayTeamPlayers;
+        defenseTeamPlayers = homeTeamPlayers;
     }
+
+    offenseTeamPlayers.forEach(player => {
+        player.querySelector('.action-icon').style.display = 'none';
+        player.querySelector('.player-defense-action').style.display = 'none';
+        player.querySelector('.player-offense-action').style.display = 'block';
+        if(player.querySelector('.player-offense-action').textContent === 'Advance') {
+            advancingPlayers.push(player);
+        }
+        else {
+            setActionIcon(player,"offense");
+        }
+    });
+    defenseTeamPlayers.forEach(player => {
+        player.querySelector('.action-icon').style.display = 'none';
+        player.querySelector('.player-offense-action').style.display = 'none';
+        player.querySelector('.player-defense-action').style.display = 'block';
+        if(player.querySelector('.player-defense-action').textContent === 'Defend_Advance') {
+            defendingPlayers.push(player);
+        }
+        else {
+            setActionIcon(player,"defense");
+        }
+    });
 
     uncenterAllPlayers();
 
@@ -207,197 +243,220 @@ async function changeTeamPossession(team) {
     });
 }
 
-function getMatchTick(matchId, tick) {
+function runMatchTick(data, tick) {
     console.log("Beginning of get tick")
-    return new Promise((resolve, reject) => {
-    fetch('/match/match-tick?matchId=' + matchId  + '&tick=' + tick)
-            .then(response => response.json())
-            .then(async data => {
-                console.log(data);
-                if(data.message == "Match tick not found") {
-                    console.error("Match tick not found");
-                    return;
-                }
-                if(data.message == "Match tick not reached yet") {
-                    realTime = true;
-                    await new Promise(r => setTimeout(r, 500));
-                    console.log("Getting a new tick")
-                    await getMatchTick(matchId, tick);
-                    resolve();
-                    return;
-                }
-                const nextTickButton = document.getElementById('next-tick-button');
-                const catchUpButton = document.getElementById('catch-up-button');
-                if(data.behindRealTime && !watchingLive) {
-                    nextTickButton.style.display = 'block';
-                    catchUpButton.style.display = 'block';
+    return new Promise(async (resolve, reject) => {
+        console.log(data);
+
+        const nextTickButton = document.getElementById('next-tick-button');
+        const catchUpButton = document.getElementById('catch-up-button');
+        const currentTime = new Date().getTime();
+        console.log(data.time, currentTime);
+        if(data.time < currentTime) {
+            nextTickButton.style.display = 'block';
+            catchUpButton.style.display = 'block';
+            console.log("Showing next tick button");
+        } else {
+            console.log("Hiding next tick button");
+            nextTickButton.style.display = 'none';
+            catchUpButton.style.display = 'none';
+            catchUp = false;
+            watchingLive = true;
+        }
+
+        let position;
+        let scoringTrick = false; //if there was a scoring attempt that involved a trick
+
+        if(data.trickHistory.length > 0) {
+            console.log(data.trickHistory);
+            data.trickHistory.forEach(trick => {
+                const trickerElement = players[trick.tricker_id];
+                const trickedElement = players[trick.tricked_id];
+                if(trick.trick_type === 'Score') {
+                    scoringTrick = true;
                 }
                 else {
-                    console.log("Hiding next tick button");
-                    nextTickButton.style.display = 'none';
-                    catchUpButton.style.display = 'none';
-                    catchUp = false;
-                    watchingLive = true;
-                }
+                    addBoldTextToTextBox(`${trickerElement.querySelector('.player-name').textContent} tricked ${trickedElement.querySelector('.player-name').textContent}!`);
+                    // Rotate the ball icon of the player with possession
+                    const ballIcon = players[trick.tricker_id].querySelector('.ball-icon');
+                    if (ballIcon) {
+                        console.log('Rotating ball icon');
+                    // Reset any previous animations on the ballIcon
+                    gsap.killTweensOf(ballIcon);
 
-                let position;
-                let scoringTrick = false; //if there was a scoring attempt that involved a trick
-
-                if(data.trickHistory) {
-                    console.log(data.trickHistory);
-                    data.trickHistory.forEach(trick => {
-                        const trickerElement = players[trick.tricker_id];
-                        const trickedElement = players[trick.tricked_id];
-                        if(trick.trick_type === 'Score') {
-                            scoringTrick = true;
-                        }
-                        else {
-                            addBoldTextToTextBox(`${trickerElement.querySelector('.player-name').textContent} tricked ${trickedElement.querySelector('.player-name').textContent}!`);
-                            // Rotate the ball icon of the player with possession
-                            const ballIcon = players[trick.tricker_id].querySelector('.ball-icon');
-                            if (ballIcon) {
-                                console.log('Rotating ball icon');
-                            // Reset any previous animations on the ballIcon
-                            gsap.killTweensOf(ballIcon);
-
-                            // Rotate the ball icon using GSAP
-                            gsap.fromTo(
-                                ballIcon,
-                                { rotation: 0 }, // Starting rotation
-                                {
-                                    rotation: 360,      // Ending rotation
-                                    duration: 1,      // Duration in seconds
-                                    ease: 'power1.inOut', // Easing function
-                                    onComplete: () => {
-                                        // Optional: Reset rotation after animation completes
-                                        gsap.set(ballIcon, { rotation: 0 });
-                                    }
-                                }
-                            );
+                    // Rotate the ball icon using GSAP
+                    gsap.fromTo(
+                        ballIcon,
+                        { rotation: 0 }, // Starting rotation
+                        {
+                            rotation: 360,      // Ending rotation
+                            duration: 1,      // Duration in seconds
+                            ease: 'power1.inOut', // Easing function
+                            onComplete: () => {
+                                // Optional: Reset rotation after animation completes
+                                gsap.set(ballIcon, { rotation: 0 });
                             }
                         }
-                    });
-                }
-
-                if(data.attackHistory.length > 0) {
-                    data.attackHistory.forEach(attack => {
-                        const playerElement = players[attack.attacked_player_id];
-                        const healthBar = players[attack.attacked_player_id].querySelector('.health-bar');  
-                        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
-                        const newHealth = Math.max(0, currentHealth - attack.damage_done);
-                        healthBar.style.width = `${newHealth}%`;
-                        if (newHealth < 50) {
-                            healthBar.style.backgroundColor = 'red';
-                        }
-                    });
-                }
-
-                if(data.scoringHistory) { //if a shot was attempted
-                    if (possession != homeTeamId) {
-                        position = data.scoringHistory.range;
-                    } else {
-                        position = 100 - data.scoringHistory.range;
-                    }
-                    moveSliderIcon(position);
-                    uncenterAllPlayers();
-                    toggleHighlight(data.scoringHistory.shooter_id);
-                    toggleCentered(data.scoringHistory.shooter_id);
-                    moveBallIconToPlayer(data.matchTick.player_possession_id);
-                    console.log("Doing visuals")
-                    //givePlayerBall(data.scoringHistory.shooter_id);
-                    
-                    const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
-                    
-                    oppositeTeamPlayers.forEach(player => {
-                        if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
-                            toggleCentered(player.getAttribute('data-player-id'));
-                        }
-                    });
-                    
-                    addBoldTextToTextBox(`Shot attempted by  ${data.scoringHistory.name}`);
-                    if(realTime) {
-                        for(let i = 0.3; i < Math.random()*3*Math.random(); i++) {
-                            await wait(1000+Math.random()*1000);
-                            addBoldTextToTextBox('...');
-                        }
-                        //await wait(1000);
-                        if(scoringTrick) {
-                            addBoldTextToTextBox(`Trick shot!`);
-                            const ballIcon = players[data.scoringHistory.shooter_id].querySelector('.ball-icon');
-                            //console.log(players[data.scoringHistory.shooter_id])
-                            //console.log(ballIcon);
-                            if (ballIcon) {
-                                console.log('Rotating ball icon');
-                                // Reset any previous animations on the ballIcon
-                                gsap.killTweensOf(ballIcon);
-
-                                // Rotate the ball icon using GSAP
-                                gsap.fromTo(
-                                    ballIcon,
-                                    { rotation: 0 }, // Starting rotation
-                                    {
-                                        rotation: 360,      // Ending rotation
-                                        duration: 1,      // Duration in seconds
-                                        ease: 'power1.inOut', // Easing function
-                                        onComplete: () => {
-                                            // Optional: Reset rotation after animation completes
-                                            gsap.set(ballIcon, { rotation: 0 });
-                                        }
-                                    }
-                                );
-                            }
-                        }
-                        await wait(1000);
-                    }
-
-                    toggleHighlight(data.scoringHistory.shooter_id);
-                    uncenterAllPlayers();
-
-                    if(data.scoringHistory.successful_score) {
-                        addBoldTextToTextBox(`GOOAAAAALLLLL`);
-                        const teamScoreElement = document.getElementById('match-score');
-                        let scores = teamScoreElement.textContent.split('-').map(Number);
-                        if (data.scoringHistory.team_id === homeTeamId) {
-                            scores[0]++;
-                        } else {
-                            scores[1]++;
-                        }
-                        teamScoreElement.textContent = scores.join('-');
-
-                    }
-                    else {
-                        addBoldTextToTextBox(`MISSED!`);
+                    );
                     }
                 }
-                else if(!data.matchTick) {
-                    addBoldTextToTextBox(`GAME OVER`);
-                    gameOver = true;
-                }
-                else if(possession != data.matchTick.possession_team_id && possession != null) {
-                    const playerStealing = players[data.matchTick.player_possession_id];
-                    addBoldTextToTextBox(`${playerStealing.querySelector('.player-name').textContent} steals the ball!`);
-                }
-
-                if (data.matchTick.possession_team_id == homeTeamId) {
-                    position = data.matchTick.ball_position;
-                } else {
-                    position = 100 - data.matchTick.ball_position;
-                }
-                moveSliderIcon(position);
-                if(possession != data.matchTick.possession_team_id) {
-                    changeTeamPossession(data.matchTick.possession_team_id);
-                }
-                moveBallIconToPlayer(data.matchTick.player_possession_id);
-                console.log("Ball given")
-                tick++;
-                possession = data.matchTick.possession_team_id;
-                resolve();
-            })
-            .catch(error => {
-                console.error('Error fetching match tick:', error);
-                reject(error);
             });
-        });
+        }
+
+        if(data.attackHistory.length > 0) {
+            data.attackHistory.forEach(attack => {
+                const playerElement = players[attack.attacked_player_id];
+                const healthBar = players[attack.attacked_player_id].querySelector('.health-bar');  
+                const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
+                const newHealth = Math.max(0, currentHealth - attack.damage_done);
+                if(attack.damage_done > 8) {
+                    addNormalTextToTextBox(`${players[attack.attacking_player_id].querySelector('.player-name').textContent} dealt ${attack.damage_done.toFixed(0)} damage to ${playerElement.querySelector('.player-name').textContent}`);
+                }
+                healthBar.style.width = `${newHealth}%`;
+                if (newHealth < 50) {
+                    healthBar.style.backgroundColor = 'red';
+                }
+            });
+        }
+
+        if(data.scoringHistory) { //if a shot was attempted
+            if (possession != homeTeamId) {
+                position = data.scoringHistory.range;
+            } else {
+                position = 100 - data.scoringHistory.range;
+            }
+            moveSliderIcon(position);
+            uncenterAllPlayers();
+            toggleHighlight(data.scoringHistory.shooter_id);
+            toggleCentered(data.scoringHistory.shooter_id);
+            moveBallIconToPlayer(data.matchTick.player_possession_id);
+            console.log("Doing visuals")
+            //givePlayerBall(data.scoringHistory.shooter_id);
+            
+            const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
+            
+            oppositeTeamPlayers.forEach(player => {
+                if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
+                    toggleCentered(player.getAttribute('data-player-id'));
+                }
+            });
+            
+            const shooterElement = players[data.scoringHistory.shooter_id];
+            const shooterPriority = shooterElement.querySelector('.player-offense-action').textContent;
+            if(shooterPriority !== 'Score') { //they decided to shoot randomly
+                addBoldTextToTextBox(`${shooterElement.querySelector('.player-name').textContent} decided to shoot!`);
+                console.log("Shooter priority: ", shooterPriority)
+            }
+            else {
+                addBoldTextToTextBox(`Shot attempted by  ${data.scoringHistory.name}`);
+            }
+            for(let i = 0; i < data.scoringHistory.suspense; i++) {
+                await wait(1000);
+                addBoldTextToTextBox('...');
+            }
+            if(scoringTrick) {
+                addBoldTextToTextBox(`Trick shot!`);
+                const ballIcon = players[data.scoringHistory.shooter_id].querySelector('.ball-icon');
+                //console.log(players[data.scoringHistory.shooter_id])
+                //console.log(ballIcon);
+                if (ballIcon) {
+                    console.log('Rotating ball icon');
+                    // Reset any previous animations on the ballIcon
+                    gsap.killTweensOf(ballIcon);
+
+                    // Rotate the ball icon using GSAP
+                    gsap.fromTo(
+                        ballIcon,
+                        { rotation: 0 }, // Starting rotation
+                        {
+                            rotation: 360,      // Ending rotation
+                            duration: 1,      // Duration in seconds
+                            ease: 'power1.inOut', // Easing function
+                            onComplete: () => {
+                                // Optional: Reset rotation after animation completes
+                                gsap.set(ballIcon, { rotation: 0 });
+                            }
+                        }
+                    );
+                }
+            }
+            await wait(1000);
+
+            toggleHighlight(data.scoringHistory.shooter_id);
+            uncenterAllPlayers();
+
+            if(data.scoringHistory.successful_score) {
+                addBoldTextToTextBox(`GOOAAAAALLLLL`);
+                const teamScoreElement = document.getElementById('match-score');
+                let scores = teamScoreElement.textContent.split('-').map(Number);
+                if (data.scoringHistory.team_id === homeTeamId) {
+                    scores[0]++;
+                } else {
+                    scores[1]++;
+                }
+                teamScoreElement.textContent = scores.join('-');
+
+            }
+            else {
+                addBoldTextToTextBox(`MISSED!`);
+            }
+        }
+        else if(!data.matchTick) {
+            addBoldTextToTextBox(`GAME OVER`);
+            gameOver = true;
+        }
+        else if(possession != data.matchTick.possession_team_id && possession != null) {
+            const playerStealing = players[data.matchTick.player_possession_id];
+            addBoldTextToTextBox(`${playerStealing.querySelector('.player-name').textContent} steals the ball!`);
+        }
+
+        if (data.matchTick.possession_team_id == homeTeamId) {
+            position = data.matchTick.ball_position;
+        } else {
+            position = 100 - data.matchTick.ball_position;
+        }
+
+        if(possession != data.matchTick.possession_team_id) {
+            changeTeamPossession(data.matchTick.possession_team_id);
+            consequetiveStalls = 0;
+        }
+        else { //if no turnover 
+            if(data.actionHistory.length > 0) {
+                data.actionHistory.forEach(action => {
+                    if(action.action !== 'Score') {
+                        const playerElement = players[action.player_id];
+                        addNormalTextToTextBox(`${playerElement.querySelector('.player-name').textContent} decided to ${action.action}`);
+                    }
+                });
+            }
+            if(!data.scoringHistory){
+                const advancement = Math.abs(parseFloat(document.querySelector('.slider-icon').style.left) - position);
+                const playerWithPossession = players[data.matchTick.player_possession_id];
+                const playerName = playerWithPossession.querySelector('.player-name').textContent;
+                if(advancement > 2) {
+                    addNormalTextToTextBox(`${playerName} advanced by ${advancement.toFixed(0)} meters`);
+                    consequetiveStalls = 0;
+                }
+                else if(advancement < 0.5){
+                    addNormalTextToTextBox(`${playerName} unable to advance the ball`);
+                    consequetiveStalls++;
+                    if(consequetiveStalls > 2) {
+                        addBoldTextToTextBox(`${playerName} is LOCKED DOWN!`);
+                    }
+                }
+                else {
+                    consequetiveStalls = 0;
+                }
+            }
+        }
+
+        moveSliderIcon(position);
+        moveBallIconToPlayer(data.matchTick.player_possession_id);
+        console.log("Ball given")
+        tick++;
+        possession = data.matchTick.possession_team_id;
+        resolve();
+    })
 }
 
 // Function to add large bolded text to the text box
@@ -413,7 +472,9 @@ function addBoldTextToTextBox(text) {
 // Function to add normal text to the text box
 function addNormalTextToTextBox(text) {
     const textBox = document.getElementById('match-text-box');
-    textBox.value = `${textBox.value}\n${text}`;
+    const newText = document.createElement('div');
+    newText.textContent = text;
+    textBox.prepend(newText); // Prepend the new text to push old text u
 }
 
 function toggleHighlight(playerId) {
@@ -448,7 +509,6 @@ function givePlayerBall(playerId) {
     const ballIcons = document.querySelectorAll('.ball-icon');
     ballIcons.forEach(icon => {
         const playerElement = icon.parentElement.parentElement.parentElement;
-        //console.log("Playerelement: ", playerElement);
         //console.log(playerElement.getAttribute('data-player-id'));
         if (playerElement.getAttribute('data-player-id') == playerId) {
             icon.style.display = 'block';
@@ -472,9 +532,19 @@ function moveBallIconToPlayer(playerId) {
         }
 
         //console.log(ballIcon);
-        if(ballIcon.parentElement.parentElement.parentElement.getAttribute('data-player-id') == playerId) {
-            console.log("Ball already with player");
-            resolve();
+        if(ballIcon.parentElement.parentElement.parentElement) {
+            if(ballIcon.parentElement.parentElement.parentElement.getAttribute('data-player-id') == playerId) {
+                console.log("Ball already with player");
+                resolve();
+                return;
+            }
+        }
+        else {
+            console.error("Ball icon parent not found");
+            console.log(ballIcon);
+            console.log(ballIcon.parentElement);
+            console.log(ballIcon.parentElement.parentElement);
+            reject("Ball icon parent not found");
             return;
         }
 
@@ -620,6 +690,66 @@ function vwToPx(vw) {
     return window.innerWidth * (vw / 100);
 }
 
+function setActionIcon(player, offense) { //offense is set to either "offense" or "defense"
+    const action = player.querySelector('.player-'+offense+'-action').textContent;
+    if(action === 'Assist' || action === 'Attack' || action === 'Protect' || action === "Rest") {
+        player.querySelector('.action-icon').style.display = 'block';
+        let targetPlayer;
+        if(action !== "Rest") {
+            const targetId = player.getAttribute('data-'+offense+'-target');
+            targetPlayer = players[targetId];
+        }
+        const actionIconContainer = player.querySelector('.action-icon-container');
+        let tooltip;
+        if (actionIconContainer) {
+            tooltip = actionIconContainer.getElementsByClassName('tooltip')[0];
+            if (tooltip) {
+                console.log('Tooltip:', tooltip.textContent);
+            } else {
+                console.error('Tooltip not found in action-icon-container.');
+            }
+        } else {
+            console.error('Action icon container not found.');
+        }
+        if (tooltip) {
+            if(action === "Rest") {
+                tooltip.textContent = "Resting";
+            }
+            else {
+                tooltip.textContent = `${action}ing ${targetPlayer.querySelector('.player-name').textContent}`;
+            }
+        }
+        if(action === 'Assist') {
+            const actionIcon = player.querySelector('.action-icon');
+            console.log("Assist first step");
+            if (actionIcon) {
+                actionIcon.src = '/Resources/assist.png'; // Change the image URL as needed
+            }
+        }
+        else if(action === "Attack") {
+            const actionIcon = player.querySelector('.action-icon');
+            console.log("Attack first step");
+            if (actionIcon) {
+                actionIcon.src = '/Resources/attack.png'; // Change the image URL as needed
+            }
+        }
+        else if(action === "Protect") {
+            const actionIcon = player.querySelector('.action-icon');
+            console.log("Attack first step");
+            if (actionIcon) {
+                actionIcon.src = '/Resources/protect.png'; // Change the image URL as needed
+            }    
+        }
+        else if(action === "Rest") {
+            const actionIcon = player.querySelector('.action-icon');
+            console.log("Resting first step");
+            if (actionIcon) {
+                actionIcon.src = '/Resources/rest.png'; // Change the image URL as needed
+            }
+        }
+    }
+}
+
 async function wait(ms) {
     return new Promise(async (resolve) => {
         while(ms > 0) {
@@ -628,6 +758,7 @@ async function wait(ms) {
                 await new Promise(r => setTimeout(r, 100));
             }
             else {
+                await new Promise(r => setTimeout(r, 25));
                 // Immediately finish all GSAP animations
                 gsap.globalTimeline.progress(1);
             }

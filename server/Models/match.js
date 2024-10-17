@@ -30,12 +30,21 @@ class Match {
     MAX_ADVANCEMENT_PER_TICK = null;
     NET_ADVANCEMENT_MODIFIER = 1.0;
     TURNOVER_CHANCE_INCREASE_PER_TICK = 0.05;
+    RANDOM_PRIORITY_CHANCE = 0.05;
     TURNOVER_CHANCE_MAX = 0.2;
     SHOOTING_DISTANCE_MODIFIER = 0.1;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
     TRICK_CHANCE = 1/3;
     ASSIST_MODIFIER = 1;
     SHOOTING_BONUS = 2;
+
+    RANGE_DICTIONARY = {
+        "Default": 40,
+        "Close": 10,
+        "Medium": 23,
+        "Far": 36,
+        "Half Court": 55
+    }
 
     constructor(homeTeam, awayTeam, weather) {
         console.log("\n\n\n\n\n\n");
@@ -215,12 +224,13 @@ class Match {
         this.possessionTicks++;
         this.gameTicks++;
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
+        this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
         
         for(const player of this.players) {
             player.quirk.tickEffect(player, this);
         }
 
-        this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
+        
 
         this.resetTempStats();
         this.setRandomPriorities(); //randomly change priorities
@@ -252,10 +262,14 @@ class Match {
         const offensePriorityList = ["Assist", "Protect", "Attack", "Advance", "Score"];
         const defensePriorityList = ["Assist", "Protect", "Attack", "Defend_Advance", "Defend_Score"];
         for(const player of this.offenseTeam.players) {
-            if(Math.random() < 0.05 && player.offensePriority == player.savedOffensePriority) {
+            if(Math.random() < this.RANDOM_PRIORITY_CHANCE && player.offensePriority == player.savedOffensePriority) {
                 player.offensePriority = offensePriorityList[Math.floor(Math.random() * offensePriorityList.length)];
                 player.offensePriorityTarget = "Any";
                 //console.log(player.name + " changed priority from " + player.savedOffensePriority + " to " + player.offensePriority);
+                if(player.savedOffensePriority != player.offensePriority) {
+                    db.run(`INSERT INTO match_action_history (tick, match_id, player_id, action) `
+                        + `VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, player.id, player.offensePriority]);
+                }
             }
             else {
                 player.offensePriority = player.savedOffensePriority;
@@ -267,6 +281,10 @@ class Match {
                 player.defensePriority = defensePriorityList[Math.floor(Math.random() * defensePriorityList.length)];
                 player.defensePriorityTarget = "Any";
                 //console.log(player.name + " changed priority from " + player.savedDefensePriority + " to " + player.defensePriority);
+                if(player.savedDefensePriority != player.defensePriority) {
+                    db.run(`INSERT INTO match_action_history (tick, match_id, player_id, action) `
+                        + `VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, player.id, player.offensePriority]);
+                }
             }
             else {
                 player.defensePriority = player.savedDefensePriority;
@@ -319,7 +337,6 @@ class Match {
         // Loop through offense team
         for (const player of this.offenseTeam.players) {
             if (player.offensePriority === priority) {
-                //console.log(player.name + " " + player.offensePriority)
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
@@ -409,6 +426,7 @@ class Match {
     }
 
     doAdvancement() {
+        if(this.turnedover) {return;}
         let advancing = this.weather.advanceEffect(this.offenseTeam, this.defenseTeam, this.position);
         if(advancing == null) {
             // Loop through offense team, calculate amount advanced
@@ -416,8 +434,8 @@ class Match {
             let advanceAmount = 0;
             let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
             let advancingPlayer;
-            let topAdvancer = null;
-            let topAdvancerAmount = 0;
+            let topAdvancer = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
+            let topAdvancerAmount = -1;
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance" && this.turnedover == false) {
                     advancingPlayer = player;
@@ -526,9 +544,9 @@ class Match {
                 }
             }
         } else { //check for trying to score
-            if(this.position >= this.FIELD_LENGTH-this.offenseTeam.scoreRange) {
-                for (const player of this.offenseTeam.players) {
-                    if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.05) { //scorers have 30% chance of attempting a shot
+            for (const player of this.offenseTeam.players) {
+                if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.05) { //scorers have 30% chance of attempting a shot
+                    if(this.position + this.RANGE_DICTIONARY[player.offenseProperty] >= this.FIELD_LENGTH) {
                         this.shoot(player); //shoot
                     }
                 }
@@ -561,10 +579,11 @@ class Match {
         }
         this.shotsAttempted++;
         console.log(shooter.name + " is shooting!");
-        //console.log(shooter.finesse + " + " + shooter.tempFinesse);
+        console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
         if(score == null) { //no weather effect, handle scoring as usual
             let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse)
+            console.log("Shooting: " + shooting);
             //console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend_Score") {
@@ -582,16 +601,20 @@ class Match {
                         );
                     }
                     else {
-                        shooting -= (Math.random() * (player.bulk + player.tempBulk)) / numShooters; //defenders split defense among all the shooters
+                        const defendAmount = (Math.random() * (player.bulk + player.tempBulk)) / Math.max(numShooters,1);
+                        console.log("Defend amount: " + defendAmount);
+                        shooting -= (Math.random() * (player.bulk + player.tempBulk)) / Math.max(numShooters,1); //defenders split defense among all the shooters
                     }
                 }
             }
+            console.log("Shooting after defenders: " + shooting);
             shooting -= (this.FIELD_LENGTH-this.position) * this.SHOOTING_DISTANCE_MODIFIER;
             score = shooting+this.SHOOTING_BONUS > 0; //wanted to make it easier to score bc its influenced by distance and defenders
         }
         const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
-        db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range) `
-            + `VALUES (?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range],
+        const suspense = Math.floor(Math.random() * Math.random() * 4);
+        db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense) `
+            + `VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense],
             function(err) {
                 if (err) {
                     console.error('Error inserting score into scoring_history:', err.message);

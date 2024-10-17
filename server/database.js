@@ -19,7 +19,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // Create tables if they don't exist
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY UNIQUE NOT NULL,
+        username TEXT PRIMARY KEY,
         password TEXT NOT NULL
     )`);
 
@@ -52,7 +52,7 @@ db.serialize(() => {
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS quirks (
-        id INTEGER PRIMARY KEY NOT NULL,
+        id INTEGER PRIMARY KEY,
         title TEXT UNIQUE NOT NULL,
         description TEXT NOT NULL,
         power_modifier INTEGER
@@ -72,9 +72,6 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
         FOREIGN KEY (quirk) REFERENCES quirks(id)
     )`);
-
-    //db.run(`DROP TABLE IF EXISTS challenge_players`);
-    //db.run(`DROP TABLE IF EXISTS challenges`);
 
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,6 +94,8 @@ db.serialize(() => {
         defense_action TEXT,
         offense_target_id INT,
         defense_target_id INT,
+        offense_property TEXT,
+        defense_property TEXT,
         FOREIGN KEY (challenge_id) REFERENCES challenges(id),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (team_id) REFERENCES teams(id)
@@ -104,7 +103,6 @@ db.serialize(() => {
     );`);
 
     // Make a table where each row contains a single historical match
-    //db.run("DROP TABLE IF EXISTS match_history");
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
@@ -172,6 +170,8 @@ db.serialize(() => {
         offensive_target_id INT,
         defensive_role TEXT NOT NULL,
         defensive_target_id INT,
+        offense_action_property TEXT,
+        defense_action_property TEXT,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (offensive_target_id) REFERENCES players(id),
@@ -199,6 +199,7 @@ db.serialize(() => {
         successful_score BOOLEAN NOT NULL,
         team_id INT NOT NULL,
         range INT NOT NULL,
+        suspense INT NOT NULL,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
