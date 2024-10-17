@@ -20,6 +20,7 @@ class Match {
     shotsAttempted = 0;
     players;
     playerWithPossession;
+    blitzerId = null;
 
     // CONSTANTS
     GAME_LENGTH = 100;    // number of ticks to play the game for // TODO: set to 100 when done testing
@@ -498,6 +499,9 @@ class Match {
             // Calculate net advancement
             let netAdvance = 0;
             //console.log("Advance: " + advanceAmount + " Defend: " + defendAmount);
+            if(this.position < this.FIELD_LENGTH / 2) {
+                advanceAmount += 1;
+            }
             if(advanceAmount > defendAmount) {
                 netAdvance = Math.random() * (advanceAmount - defendAmount) * 2 + (advanceAmount - defendAmount);
             } else {
@@ -540,14 +544,24 @@ class Match {
             this.position = this.FIELD_LENGTH;
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance" && !this.turnedover) { //on touchdown, the player who is advancing will try to score
-                    this.shoot(player); //shoot
+                    if(player.offenseProperty === "Blitz") {
+                        this.blitzerId = player.id;
+                        this.offenseTeam.players.forEach((blitzer) => {
+                            if(blitzer!= player) {
+                                this.shoot(blitzer, true);
+                            }
+                        });
+                        this.turnover();
+                        return;
+                    }
+                    this.shoot(player, false); //shoot
                 }
             }
         } else { //check for trying to score
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.05) { //scorers have 30% chance of attempting a shot
                     if(this.position + this.RANGE_DICTIONARY[player.offenseProperty] >= this.FIELD_LENGTH) {
-                        this.shoot(player); //shoot
+                        this.shoot(player, false); //shoot
                     }
                 }
             }
@@ -567,8 +581,11 @@ class Match {
         }
     }
 
-    shoot(shooter) {
+    shoot(shooter, blitz) {
         if(this.turnedover || shooter==null) {return;}
+        if(!blitz) {
+            this.blitzerId = null;
+        }
 
         this.playerWithPossession = shooter;
         let numShooters = 0;
@@ -601,9 +618,12 @@ class Match {
                         );
                     }
                     else {
-                        const defendAmount = (Math.random() * (player.bulk + player.tempBulk)) / Math.max(numShooters,1);
+                        let defendAmount = (Math.random() * (player.bulk + player.tempBulk));
+                        if(!blitz) {
+                            defendAmount /= Math.max(numShooters,1);
+                        } 
                         console.log("Defend amount: " + defendAmount);
-                        shooting -= (Math.random() * (player.bulk + player.tempBulk)) / Math.max(numShooters,1); //defenders split defense among all the shooters
+                        shooting -= defendAmount; //defenders split defense among all the shooters
                     }
                 }
             }
@@ -612,9 +632,12 @@ class Match {
             score = shooting+this.SHOOTING_BONUS > 0; //wanted to make it easier to score bc its influenced by distance and defenders
         }
         const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
-        const suspense = Math.floor(Math.random() * Math.random() * 4);
-        db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense) `
-            + `VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense],
+        let suspense = Math.floor(Math.random() * Math.random() * 4);
+        if(blitz) {
+            suspense = 0;
+        }
+        db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense, blitzer_id) `
+            + `VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense, this.blitzerId],
             function(err) {
                 if (err) {
                     console.error('Error inserting score into scoring_history:', err.message);
@@ -622,14 +645,18 @@ class Match {
             });
         if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
-            this.offenseTeam.score += 1;
+            this.offenseTeam.score += blitz ? 1 : 2;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-            this.position = this.FIELD_LENGTH / 2;
+            if(!blitz) {
+                this.position = this.FIELD_LENGTH / 2;
+            }
         }
         else {
             console.log("Shot missed!\n");
         }
-        this.turnover();
+        if(!blitz) {
+            this.turnover();
+        }
     }
 }
 

@@ -5,7 +5,7 @@ export class Streaky extends Quirk {
     static title = "Streaky";
     static description = ("The player may have either higher or lower stats, recalculated at the start "
     + "of each match");
-    static STAT_CHANGE = 2
+    static STAT_CHANGE = 1
     static CHANCE_FOR_STAT_INCREASE = 0.5
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;

@@ -135,8 +135,8 @@ router.get('/matches', (req, res) => {
             home_team_score, 
             away_team_score,
             (strftime('%s', 'now') - strftime('%s', created_at)) > 101 AS is_over,
-            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score ELSE 0 END) AS home_team_live_score,
-            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score ELSE 0 END) AS away_team_live_score
+            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS home_team_live_score,
+            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS away_team_live_score
         FROM 
             match_history
         JOIN 
@@ -144,7 +144,7 @@ router.get('/matches', (req, res) => {
         JOIN 
             teams AS away_team ON away_team_id = away_team.id
         LEFT JOIN
-            scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick < (strftime('%s', 'now') - strftime('%s', created_at))
+            scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick*2 < (strftime('%s', 'now') - strftime('%s', created_at))
         WHERE 
             match_history.league_id = ${leagueId}
         GROUP BY 

@@ -103,6 +103,7 @@ db.serialize(() => {
     );`);
 
     // Make a table where each row contains a single historical match
+    db.run('DROP TABLE IF EXISTS match_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
@@ -112,7 +113,7 @@ db.serialize(() => {
         home_team_score INT,
         away_team_score INT,
         weather TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '+10 seconds')),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),
         FOREIGN KEY (league_id) REFERENCES leagues(id),
@@ -128,6 +129,7 @@ db.serialize(() => {
     who attempted to score and if they succeeded (can only allow 1 attempt per tick if that's ok),
     maybe in the future implement log of random events or ways quirks interacted
     */
+    db.run('DROP TABLE IF EXISTS match_ticks_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_ticks_history (
         tick INT NOT NULL,
         match_id INT NOT NULL,
@@ -139,6 +141,7 @@ db.serialize(() => {
         FOREIGN KEY (player_possession_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS match_action_history');
    db.run(`CREATE TABLE IF NOT EXISTS match_action_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -149,6 +152,7 @@ db.serialize(() => {
         FOREIGN KEY (player_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS match_trick_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_trick_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -161,6 +165,7 @@ db.serialize(() => {
         FOREIGN KEY (tricked_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS player_history');
     db.run(`CREATE TABLE IF NOT EXISTS player_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -178,6 +183,7 @@ db.serialize(() => {
         FOREIGN KEY (defensive_target_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS attack_history');
     db.run(`CREATE TABLE IF NOT EXISTS attack_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -192,6 +198,7 @@ db.serialize(() => {
         FOREIGN KEY (attacked_player_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS scoring_history');
     db.run(`CREATE TABLE IF NOT EXISTS scoring_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -200,10 +207,12 @@ db.serialize(() => {
         team_id INT NOT NULL,
         range INT NOT NULL,
         suspense INT NOT NULL,
+        blitzer_id INT,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
-        FOREIGN KEY (team_id) REFERENCES teams(id)
+        FOREIGN KEY (team_id) REFERENCES teams(id),
+        FOREIGN KEY (blitzer_id) REFERENCES players(id)
     );`);
 
 });

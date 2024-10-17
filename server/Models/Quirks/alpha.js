@@ -13,20 +13,9 @@ export class Alpha extends Quirk {
     static startGameEffect(match, player) {
         let isAlpha = true;
         // First, figure out which team they're on, so we know who to compare them to
-        if(player in match.homeTeam.players) {
-            // Compare to home team players
-            for(const otherPlayer of match.homeTeam.players) {
-                if(otherPlayer.name < player.name) {
-                    isAlpha = false;
-                }
-            }
-        }
-        else {
-            // Compare to away team players
-            for(const otherPlayer of match.awayTeam.players) {
-                if(otherPlayer.name < player.name) {
-                    isAlpha = false;
-                }
+        for(const otherPlayer of match.players) {
+            if(otherPlayer.name < player.name && otherPlayer.team === player.team) {
+                isAlpha = false;
             }
         }
 

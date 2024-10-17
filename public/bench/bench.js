@@ -12,7 +12,7 @@ let startersLocked = false;
 let actionsLocked = false;
 
 let offensePriorities = {
-    Advance: "Target neither",
+    Advance: "Target finishing",
     Attack: "Target enemy",
     Protect: "Target teammate",
     Assist: "Target teammate",
@@ -463,16 +463,19 @@ function lockActions() {
             const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
             offenseActions.push(offensePrioritySelect.value);
             defenseActions.push(defensePrioritySelect.value);
-            if (offenseTargetSelect.value === 'Property') {
-                offenseProperties.push(offenseTargetSelect.textContent);
+            if (offenseTargetSelect.value.includes('Property')) {
+                const [property, ...rest] = offenseTargetSelect.value.split(' ');
+                offenseProperties.push(rest.join(' '));
                 offenseTargets.push(null);
             }
             else {
+                console.log("Offense target: ", offenseTargetSelect);
                 offenseProperties.push(null);
                 offenseTargets.push(offenseTargetSelect.value);
             }
-            if (typeof defenseTargetSelect.value === 'Property') {
-                defenseProperties.push(defenseTargetSelect.textContent);
+            if (typeof defenseTargetSelect.value.includes('Property')) {
+                const [property, ...rest] = defenseTargetSelect.value.split(' ');
+                defenseProperties.push(rest.join(' '));
                 defenseTargets.push(null);
             }
             else {
@@ -559,6 +562,8 @@ function bothTeamsReady(playerIds, lockButton) {
         }
         lockButton.textContent = 'Lock In Actions';
     }
+
+    applyQuirkStats();
 
     //Add quirk actions
     fetch(`/challenges/quirk-actions`, {
@@ -667,8 +672,10 @@ function applyQuirkStats() {
     const playerElements = document.querySelectorAll('.player');
     const benchPlayers = Array.from(playerElements).filter(playerElement => playerElement.dataset.location === 'bench');
     let ids = [];
+    let teamIds = [];
     benchPlayers.forEach(player => {
         ids.push(player.dataset.playerId);
+        teamIds.push(player.dataset.team);
     });
 
     fetch(`/challenges/${challengeId}/quirk-effects`, {
@@ -720,13 +727,19 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
     if (targetType === 'neither') {
         console.log("Target neither");
         targetMenu.style.display = 'none';
-    } else if(targetType === 'distance') {
+    } else if(targetType === 'distance' || targetType === 'finishing') {
         targetMenu.style.display = 'block';
-        const distances = ['Close', 'Medium', 'Far', 'Half Court'];
-        distances.forEach(distance => {
+        let options = [];
+        if(targetType === 'distance') {
+            options = ['Close', 'Medium', 'Far', 'Half Field'];
+        }
+        else if(targetType === 'finishing') {
+            options = ['Attempt Score', 'Blitz'];
+        }
+        options.forEach(optionText => {
             const option = document.createElement('option');
-            option.value = "Property";
-            option.textContent = distance;
+            option.value = "Property " + optionText;
+            option.textContent = optionText;
             targetSelect.appendChild(option);
         });
     }

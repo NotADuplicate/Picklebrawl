@@ -6,6 +6,7 @@ class Player {
     name;
     id;
     quirkId;
+    team;
 
     bulk = 1;
     finesse = 1;
@@ -78,7 +79,7 @@ class Player {
     }
 
     setHp() {
-        this.maxHp = this.baseBulk + 1;
+        this.maxHp = this.baseBulk + 2;
         this.hp = this.maxHp;
     }
 
@@ -306,6 +307,7 @@ class Player {
                 }
                 if (row) {
                     this.name = row.name;
+                    this.team = row.team_id;
                     this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);
                     resolve(this); // Resolve with the player instance
                 } else {

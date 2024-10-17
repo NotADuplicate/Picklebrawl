@@ -44,7 +44,7 @@ export class Codependent extends Quirk {
 
     static startGameEffect(match, player) {
         for (const otherPlayer of match.players) {
-            if (otherPlayer.quirk instanceof PackAnimal && otherPlayer !== player) {
+            if (otherPlayer.quirk instanceof Codependent && otherPlayer !== player) {
                 return;
             }
         }
@@ -69,7 +69,7 @@ export class Codependent extends Quirk {
     static challengeStatModification(players, player) {
         console.log("Pack Animal challenge stat modification");
         for(const otherPlayer of players) {
-            if(otherPlayer != player && otherPlayer.quirk instanceof PackAnimal) {
+            if(otherPlayer != player && otherPlayer.quirk instanceof Codependent) {
                 return false;
             }
         }

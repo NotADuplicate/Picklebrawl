@@ -3,7 +3,7 @@ import { Quirk } from './quirk.js';
 export class AlphabetCompletionist extends Quirk {
     static title = "Alphabet Completionist";
     static description = ("Stats decrease for each letter not included in the names of each player in the match");
-    static POWER_MODIFIER = 4;
+    static POWER_MODIFIER = 8;
     static BASE_STAT_INCREASE = 2;
     static STAT_DECREASE = 1;
     static likelihood = 3;
@@ -49,7 +49,6 @@ export class AlphabetCompletionist extends Quirk {
 
     static challengeStatModification(players, player) {
         // Make string of all names
-        console.log("HERE\n")
         let allNames = '';
         players.forEach(otherPlayer => {
             allNames = allNames.concat(otherPlayer.name);

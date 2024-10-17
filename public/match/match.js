@@ -4,7 +4,7 @@ let homeTeamName = null;
 let awayTeamName = null;
 let players = {};
 let gameOver = false;
-let realTime = true;
+let skipTick = false;
 let catchUp = false;
 let watchingLive = false; // If the user is watching the game live, cannot get behind
 let consequetiveStalls = 0;
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextTickButton = document.getElementById('next-tick-button');
     nextTickButton.style.display = 'none';
     nextTickButton.addEventListener('click', () => {
-        realTime = false;
+        skipTick = true;
     });
 
     const liveButton = document.getElementById('catch-up-button');
@@ -153,7 +153,14 @@ async function showGame(matchId) {
             console.log('Match ticks:', data);
             let i = 1;
             let timeOffset = 0;
+            const gameTimer = document.getElementById('game-timer');
+            while(data.matchCreatedAt > new Date().getTime()) {
+                watchingLive = true;
+                gameTimer.textContent = 'Game starts in ' + Math.ceil((data.matchCreatedAt - new Date().getTime()) / 1000) + ' seconds';
+                await new Promise(r => setTimeout(r, 200));
+            }
             while(i <= data.matchTicks.length) {
+                skipTick = false;
                 const tickData = data.matchTicks[i-1];
                 const tick = tickData.tick;
                 const scoringHistoryForTick = data.scoringHistory.filter(history => history.tick === tick);
@@ -162,7 +169,7 @@ async function showGame(matchId) {
                 const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
                 console.log(tickData)
                 const fullTickData = {
-                    scoringHistory: scoringHistoryForTick[0],
+                    scoringHistory: scoringHistoryForTick,
                     trickHistory: trickHistoryForTick,
                     attackHistory: attackHistoryForTick, 
                     matchTick: tickData,
@@ -171,11 +178,13 @@ async function showGame(matchId) {
                 };
                 timeOffset += TIME_PER_TICK;
                 if(scoringHistoryForTick.length > 0) {
-                    timeOffset += 1000//(scoringHistoryForTick.suspense + 1) * TIME_PER_SCORE;
+                    scoringHistoryForTick.forEach(score => {
+                        timeOffset += (score.suspense + 1) * TIME_PER_SCORE;
+                    });
                 }
                 console.log(new Date().getTime());
                 await runMatchTick(fullTickData, tick);
-                await wait(TIME_PER_SCORE);
+                await wait(TIME_PER_TICK-100);
                 i++;
             }
             addBoldTextToTextBox('GAME OVER');
@@ -250,9 +259,15 @@ function runMatchTick(data, tick) {
 
         const nextTickButton = document.getElementById('next-tick-button');
         const catchUpButton = document.getElementById('catch-up-button');
+        const gameTimer = document.getElementById('game-timer');
+        gameTimer.textContent = "Tick: " + tick;
         const currentTime = new Date().getTime();
-        console.log(data.time, currentTime);
-        if(data.time < currentTime) {
+        console.log("Times: " , data.time, currentTime);
+        if(data.time > currentTime) {
+            await new Promise(r => setTimeout(r, data.time - currentTime));
+            catchUp = false;
+        }
+        if(data.time < currentTime && !watchingLive) {
             nextTickButton.style.display = 'block';
             catchUpButton.style.display = 'block';
             console.log("Showing next tick button");
@@ -260,22 +275,22 @@ function runMatchTick(data, tick) {
             console.log("Hiding next tick button");
             nextTickButton.style.display = 'none';
             catchUpButton.style.display = 'none';
-            catchUp = false;
             watchingLive = true;
+        }
+        if(!data.matchTick) {
+            addBoldTextToTextBox(`GAME OVER`);
+            gameOver = true;
+            return;
         }
 
         let position;
-        let scoringTrick = false; //if there was a scoring attempt that involved a trick
 
         if(data.trickHistory.length > 0) {
             console.log(data.trickHistory);
             data.trickHistory.forEach(trick => {
                 const trickerElement = players[trick.tricker_id];
                 const trickedElement = players[trick.tricked_id];
-                if(trick.trick_type === 'Score') {
-                    scoringTrick = true;
-                }
-                else {
+                if(trick.trick_type !== 'Score') {
                     addBoldTextToTextBox(`${trickerElement.querySelector('.player-name').textContent} tricked ${trickedElement.querySelector('.player-name').textContent}!`);
                     // Rotate the ball icon of the player with possession
                     const ballIcon = players[trick.tricker_id].querySelector('.ball-icon');
@@ -319,7 +334,7 @@ function runMatchTick(data, tick) {
             });
         }
 
-        if(data.scoringHistory) { //if a shot was attempted
+        if(data.scoringHistory.length > 0) { //if a shot was attempted
             if (possession != homeTeamId) {
                 position = data.scoringHistory.range;
             } else {
@@ -327,83 +342,30 @@ function runMatchTick(data, tick) {
             }
             moveSliderIcon(position);
             uncenterAllPlayers();
-            toggleHighlight(data.scoringHistory.shooter_id);
-            toggleCentered(data.scoringHistory.shooter_id);
-            moveBallIconToPlayer(data.matchTick.player_possession_id);
-            console.log("Doing visuals")
-            //givePlayerBall(data.scoringHistory.shooter_id);
+            let i = 0;
             
             const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
-            
             oppositeTeamPlayers.forEach(player => {
                 if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
                     toggleCentered(player.getAttribute('data-player-id'));
                 }
             });
-            
-            const shooterElement = players[data.scoringHistory.shooter_id];
-            const shooterPriority = shooterElement.querySelector('.player-offense-action').textContent;
-            if(shooterPriority !== 'Score') { //they decided to shoot randomly
-                addBoldTextToTextBox(`${shooterElement.querySelector('.player-name').textContent} decided to shoot!`);
-                console.log("Shooter priority: ", shooterPriority)
-            }
-            else {
-                addBoldTextToTextBox(`Shot attempted by  ${data.scoringHistory.name}`);
-            }
-            for(let i = 0; i < data.scoringHistory.suspense; i++) {
+
+            data.scoringHistory.forEach(score => {
+                toggleCentered(score.shooter_id);
+            });
+            if(data.scoringHistory[0].blitzer_id != null) {
+                toggleHighlight(data.scoringHistory[0].blitzer_id);
+                addBoldTextToTextBox(`${players[data.scoringHistory[0].blitzer_id].querySelector('.player-name').textContent} blitzes!`);
                 await wait(1000);
-                addBoldTextToTextBox('...');
+                toggleHighlight(data.scoringHistory[0].blitzer_id);
             }
-            if(scoringTrick) {
-                addBoldTextToTextBox(`Trick shot!`);
-                const ballIcon = players[data.scoringHistory.shooter_id].querySelector('.ball-icon');
-                //console.log(players[data.scoringHistory.shooter_id])
-                //console.log(ballIcon);
-                if (ballIcon) {
-                    console.log('Rotating ball icon');
-                    // Reset any previous animations on the ballIcon
-                    gsap.killTweensOf(ballIcon);
-
-                    // Rotate the ball icon using GSAP
-                    gsap.fromTo(
-                        ballIcon,
-                        { rotation: 0 }, // Starting rotation
-                        {
-                            rotation: 360,      // Ending rotation
-                            duration: 1,      // Duration in seconds
-                            ease: 'power1.inOut', // Easing function
-                            onComplete: () => {
-                                // Optional: Reset rotation after animation completes
-                                gsap.set(ballIcon, { rotation: 0 });
-                            }
-                        }
-                    );
-                }
+            while(i < data.scoringHistory.length) {
+                const scoringTrick = !!data.trickHistory.find(trick => trick.tricker_id === data.scoringHistory[i].shooter_id && trick.trick_type === 'Score' && trick.tick === tick);
+                await doShooting(data.scoringHistory[i], scoringTrick);
+                i++;
             }
-            await wait(1000);
-
-            toggleHighlight(data.scoringHistory.shooter_id);
             uncenterAllPlayers();
-
-            if(data.scoringHistory.successful_score) {
-                addBoldTextToTextBox(`GOOAAAAALLLLL`);
-                const teamScoreElement = document.getElementById('match-score');
-                let scores = teamScoreElement.textContent.split('-').map(Number);
-                if (data.scoringHistory.team_id === homeTeamId) {
-                    scores[0]++;
-                } else {
-                    scores[1]++;
-                }
-                teamScoreElement.textContent = scores.join('-');
-
-            }
-            else {
-                addBoldTextToTextBox(`MISSED!`);
-            }
-        }
-        else if(!data.matchTick) {
-            addBoldTextToTextBox(`GAME OVER`);
-            gameOver = true;
         }
         else if(possession != data.matchTick.possession_team_id && possession != null) {
             const playerStealing = players[data.matchTick.player_possession_id];
@@ -475,6 +437,81 @@ function addNormalTextToTextBox(text) {
     const newText = document.createElement('div');
     newText.textContent = text;
     textBox.prepend(newText); // Prepend the new text to push old text u
+}
+
+async function doShooting(score, scoringTrick) {
+    return new Promise(async (resolve) => {
+    
+    const shooterId = score.shooter_id;
+    toggleHighlight(shooterId);
+    moveBallIconToPlayer(shooterId);
+
+    const shooterElement = players[shooterId];
+    const shooterPriority = shooterElement.querySelector('.player-offense-action').textContent;
+    if(score.blitzer_id != null) {
+        addBoldTextToTextBox(`${shooterElement.querySelector('.player-name').textContent} shoots`);
+    }
+    else if(shooterPriority !== 'Score') { //they decided to shoot randomly
+        addBoldTextToTextBox(`${shooterElement.querySelector('.player-name').textContent} decided to shoot!`);
+        console.log("Shooter priority: ", shooterPriority)
+    }
+    else {
+        addBoldTextToTextBox(`Shot attempted by  ${score.name}`);
+    }
+    for(let i = 0; i < score; i++) {
+        await wait(TIME_PER_SCORE);
+        addBoldTextToTextBox('...');
+    }
+    if(scoringTrick) {
+        addBoldTextToTextBox(`Trick shot!`);
+        const ballIcon = players[shooterId].querySelector('.ball-icon');
+        if (ballIcon) {
+            console.log('Rotating ball icon');
+            // Reset any previous animations on the ballIcon
+            gsap.killTweensOf(ballIcon);
+
+            // Rotate the ball icon using GSAP
+            gsap.fromTo(
+                ballIcon,
+                { rotation: 0 }, // Starting rotation
+                {
+                    rotation: 360,      // Ending rotation
+                    duration: 1,      // Duration in seconds
+                    ease: 'power1.inOut', // Easing function
+                    onComplete: () => {
+                        // Optional: Reset rotation after animation completes
+                        gsap.set(ballIcon, { rotation: 0 });
+                    }
+                }
+            );
+        }
+    }
+    await wait(TIME_PER_SCORE);
+    toggleHighlight(shooterId);
+    if(score.successful_score) {
+        let scoreWorth = 2;
+        if(score.blitzer_id == null) {
+            addBoldTextToTextBox(`GOOAAAAALLLLL`);
+        }
+        else {
+            addBoldTextToTextBox(`${players[score.shooter_id].querySelector('.player-name').textContent} scores!`);
+            scoreWorth = 1;
+        }
+        const teamScoreElement = document.getElementById('match-score');
+        let scores = teamScoreElement.textContent.split('-').map(Number);
+        if (score.team_id === homeTeamId) {
+            scores[0]+=scoreWorth;
+        } else {
+            scores[1]+=scoreWorth;
+        }
+        teamScoreElement.textContent = scores.join('-');
+
+    }
+    else {
+        addBoldTextToTextBox(`MISSED!`);
+    }
+    resolve();
+    });
 }
 
 function toggleHighlight(playerId) {
@@ -754,11 +791,11 @@ async function wait(ms) {
     return new Promise(async (resolve) => {
         while(ms > 0) {
             ms -= 100;
-            if(realTime && catchUp == false) {
+            if(!skipTick && catchUp == false) {
                 await new Promise(r => setTimeout(r, 100));
             }
             else {
-                await new Promise(r => setTimeout(r, 25));
+                await new Promise(r => setTimeout(r, 5));
                 // Immediately finish all GSAP animations
                 gsap.globalTimeline.progress(1);
             }
