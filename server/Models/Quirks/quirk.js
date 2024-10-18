@@ -4,7 +4,7 @@ export class Quirk {
     static title = "Boring";
     static description = "No quirk";
     static POWER_MODIFIER = 0; //changes how stats generate
-    static likelihood = 10;
+    static likelihood = 7;
     static START_EFFECT_ORDER = 2;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;

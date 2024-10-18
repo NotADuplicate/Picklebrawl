@@ -323,8 +323,8 @@ function runMatchTick(data, tick) {
                 const playerElement = players[attack.attacked_player_id];
                 const healthBar = players[attack.attacked_player_id].querySelector('.health-bar');  
                 const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
-                const newHealth = Math.max(0, currentHealth - attack.damage_done);
-                if(attack.damage_done > 8) {
+                const newHealth = Math.max(0, currentHealth - attack.percent_health_done);
+                if(attack.percent_health_done > 8) {
                     addNormalTextToTextBox(`${players[attack.attacking_player_id].querySelector('.player-name').textContent} dealt ${attack.damage_done.toFixed(0)} damage to ${playerElement.querySelector('.player-name').textContent}`);
                 }
                 healthBar.style.width = `${newHealth}%`;

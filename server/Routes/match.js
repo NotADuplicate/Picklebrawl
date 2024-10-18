@@ -105,4 +105,95 @@ router.get('/match/players', (req, res) => {
     });
 });
 
+router.get('/match/match-stats', (req, res) => {
+    console.log("Getting stats for match id:", req.query.matchId);
+    const { matchId } = req.query;
+    let query = `
+WITH scoring AS (
+    SELECT 
+        shooter_id AS player_id,
+        SUM(successful_score * CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) AS points_scored,
+        SUM(CASE WHEN successful_score AND blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_successful,
+        SUM(CASE WHEN blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_attempted,
+        SUM(CASE WHEN successful_score AND blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_successful,
+        SUM(CASE WHEN blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_attempted
+    FROM scoring_history
+    WHERE match_id = ${matchId}
+    GROUP BY shooter_id
+),
+blitzes AS (
+    SELECT 
+        blitzer_id AS player_id,
+        COUNT(DISTINCT tick) AS blitzes
+    FROM scoring_history
+    WHERE match_id = ${matchId} AND blitzer_id IS NOT NULL
+    GROUP BY blitzer_id
+),
+tricks AS (
+    SELECT 
+        tricker_id AS player_id, 
+        COUNT(*) AS tricks
+    FROM match_trick_history
+    WHERE match_id = ${matchId}
+    GROUP BY tricker_id
+),
+damage AS (
+    SELECT 
+        attacking_player_id AS player_id,
+        SUM(damage_done) AS damage_done
+    FROM attack_history
+    WHERE match_id = ${matchId}
+    GROUP BY attacking_player_id
+),
+advancements AS (
+    SELECT 
+        player_id, 
+        SUM(CASE WHEN type = 'Advance' THEN advancement ELSE 0 END) AS advancements
+    FROM advancement_history
+    WHERE match_id = ${matchId}
+    GROUP BY player_id
+)
+SELECT 
+    p.name,
+    COALESCE(s.field_goals_attempted, 0) AS field_goals_attempted,
+    COALESCE(s.field_goals_successful, 0) AS field_goals_successful,
+    COALESCE(s.blitz_goals_attempted, 0) AS blitz_goals_attempted,
+    COALESCE(s.blitz_goals_successful, 0) AS blitz_goals_successful,
+    p.team_id AS team_id,
+    COALESCE(s.points_scored, 0) AS points_scored,
+    COALESCE(t.tricks, 0) AS tricks,
+    COALESCE(b.blitzes, 0) AS blitzes,
+    COALESCE(a.advancements, 0) AS advancements,
+    COALESCE(d.damage_done, 0) AS damage
+FROM player_history ph
+JOIN players p ON ph.player_id = p.id
+LEFT JOIN scoring s ON ph.player_id = s.player_id
+LEFT JOIN blitzes b ON ph.player_id = b.player_id
+LEFT JOIN tricks t ON ph.player_id = t.player_id
+LEFT JOIN advancements a ON ph.player_id = a.player_id
+LEFT JOIN damage d ON ph.player_id = d.player_id
+WHERE ph.match_id = ${matchId}
+GROUP BY 
+    ph.player_id, 
+    p.name, 
+    p.team_id, 
+    s.points_scored, 
+    s.field_goals_successful,
+    s.field_goals_attempted,
+    s.blitz_goals_successful,
+    s.blitz_goals_attempted,
+    t.tricks, 
+    b.blitzes,
+    a.advancements,
+    d.damage_done
+    `;
+    db.all(query, (err, stats) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Error fetching stats!' });
+        }
+        res.json(stats);
+    });
+});
+
 export default router;

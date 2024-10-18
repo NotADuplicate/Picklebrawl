@@ -50,6 +50,7 @@ class Player {
     hp;
     maxHp;
     ATTACK_MODIFIER = 1;
+    advance;
 
     PLAYER_ASSIST_MODIFIER = 0.75;
 
@@ -93,28 +94,6 @@ class Player {
 
     setPriorities(offense, defense, offenseTarget = null, defenseTarget = null, offenseProperty = null, defenseProperty = null) {
         console.log(offense + " " + offenseTarget); 
-        /*let validOffense = ["Attack", "Advance", "Protect", "Assist", "Score", "Rest"];
-        let validDefense = ["Attack", "Defend_Advance", "Protect", "Assist", "Defend_Score", "Rest"];
-        Object.entries(this.quirk.extraActions()).forEach(([key]) => {
-            validOffense.push(key);
-            validDefense.push(key);
-        });
-        if (validOffense.includes(offense)) {
-            this.offensePriority = offense;
-            this.savedOffensePriority = offense;
-        }
-        else {
-            console.log(offense);
-            throw new Error("Invalid offense priority");
-        }
-        if (validDefense.includes(defense)) {
-            this.defensePriority = defense;
-            this.savedDefensePriority = defense;
-        }
-        else {
-            console.log(defense);
-            throw new Error("Invalid defense priority");
-        }*/
         this.offensePriority = offense;
         this.defensePriority = defense;
         this.offensePriorityTarget = offenseTarget;
@@ -260,8 +239,8 @@ class Player {
             if(finalDamage > 1) {
                 hpDamage = Math.random(0,finalDamage-1)*this.ATTACK_MODIFIER;
                 db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
-                    + `damage_done, permanent_injury) VALUES (?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
-                    this.id, target.id, 100*hpDamage/target.maxHp, false], function(err) {
+                    + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
+                    this.id, target.id, hpDamage*10, false, 100*hpDamage/target.maxHp], function(err) {
                         if (err) {
                             console.error('Error inserting attack into attack_history:', err.message);
                         }
@@ -280,8 +259,8 @@ class Player {
     }
 
     assist(target, modifier) {
-        if(Math.random() < 0.1) {
-            console.log(this.name, " is assisting ", target.name);
+        if(!target) {
+            console.log(this.name, " is assisting null");
         }
         target.tempBulk += modifier * this.PLAYER_ASSIST_MODIFIER * (this.bulk + this.finesse) / 2;
         target.tempFinesse += modifier * this.PLAYER_ASSIST_MODIFIER * this.finesse;

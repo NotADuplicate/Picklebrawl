@@ -191,6 +191,7 @@ db.serialize(() => {
         attacking_player_id INT NOT NULL,
         attacked_player_id INT NOT NULL,
         damage_done FLOAT NOT NULL,
+        percent_health_done FLOAT NOT NULL,
         permanent_injury BOOLEAN NOT NULL,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_history(tick),
@@ -208,6 +209,7 @@ db.serialize(() => {
         range INT NOT NULL,
         suspense INT NOT NULL,
         blitzer_id INT,
+        blocker_id INT,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
@@ -215,6 +217,17 @@ db.serialize(() => {
         FOREIGN KEY (blitzer_id) REFERENCES players(id)
     );`);
 
+    db.run('DROP TABLE IF EXISTS advancement_history');
+    db.run(`CREATE TABLE IF NOT EXISTS advancement_history (
+        match_id INT NOT NULL,
+        tick INT NOT NULL,
+        player_id INT NOT NULL,
+        advancement INT NOT NULL,
+        type TEXT NOT NULL,
+        FOREIGN KEY (match_id) REFERENCES match_history(id),
+        FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
+        FOREIGN KEY (player_id) REFERENCES players(id)
+    );`);
 });
 
 export { db };

@@ -197,6 +197,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     matchActions.appendChild(viewButton);
 
+    if(match.is_over) {
+        const statsButton = document.createElement('button');
+        statsButton.className = 'stats-button';
+        statsButton.innerText = 'View Stats';
+        statsButton.addEventListener('click', () => {
+            window.location.href = `../boxscore/boxscore.html?matchId=${match.id}`;
+        });
+        matchActions.appendChild(statsButton);
+    }
+
     matchCard.appendChild(matchActions);
     matchesContainer.appendChild(matchCard);
             });

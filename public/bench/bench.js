@@ -468,24 +468,39 @@ function lockActions() {
                 offenseProperties.push(rest.join(' '));
                 offenseTargets.push(null);
             }
-            else {
+            else if (offenseTargetSelect.textContent !== '') {
                 console.log("Offense target: ", offenseTargetSelect);
                 offenseProperties.push(null);
                 offenseTargets.push(offenseTargetSelect.value);
             }
-            if (typeof defenseTargetSelect.value.includes('Property')) {
+            else {
+                offenseProperties.push(null);
+                offenseTargets.push(null);
+            }
+            console.log("Defense target: ", defenseTargetSelect);
+            console.log("Defense target value: ", defenseTargetSelect.value);
+            console.log("Defense target text: ", defenseTargetSelect.textContent); 
+            if (defenseTargetSelect.value.includes('Property')) {
+                console.log("Pushing property: ", defenseTargetSelect.value); 
                 const [property, ...rest] = defenseTargetSelect.value.split(' ');
                 defenseProperties.push(rest.join(' '));
                 defenseTargets.push(null);
             }
-            else {
+            else if (defenseTargetSelect.textContent !== '') {
                 defenseProperties.push(null);
                 defenseTargets.push(defenseTargetSelect.value);
+                console.log("Pushing defense value: ", defenseTargetSelect.value);
+            }
+            else {
+                defenseProperties.push(null);
+                defenseTargets.push(null);
+                console.log("Pushing null");
             }
         }
     });
     const teamId = myTeamId;
     const players = playerIds;
+    console.log("Defnese targets: ", defenseTargets);
     fetch(`/challenges/${challengeId}/add-actions`, {
         method: 'POST',
         headers: {
@@ -496,7 +511,7 @@ function lockActions() {
         .then(response => response.json())
         .then(data => {
             console.log('Actions added successfully:', data);
-            checkChallengeFlags();
+            window.location.reload();
         })
         .catch(error => {
             console.error('Error adding players:', error);
@@ -764,7 +779,7 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
             targetSelect.appendChild(option);
         });
         const option = document.createElement('option');
-        option.value = "Any";
+        option.value = "Property Any";
         option.textContent = "Any";
         targetSelect.appendChild(option);
     }
