@@ -62,16 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
         })
-            .then(response => response.json())
-            .then(data => {
-                messageDiv.innerText = data.message;
-                if (data.message === 'League and team created successfully!') {
-                    loadLeagues();
-                }
-            })
-            .catch(error => {
-                messageDiv.innerText = 'Error creating league!';
-            });
+        .then(response => response.json())
+        .then(data => {
+            messageDiv.innerText = data.message;
+            if (data.message === 'League and team created successfully!') {
+                loadLeagues();
+            }
+        })
+        .catch(error => {
+            messageDiv.innerText = 'Error creating league!';
+        });
     }
 
     function joinLeague(leagueName, leaguePassword, teamName) {

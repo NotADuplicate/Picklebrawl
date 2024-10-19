@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(response => response.json())
     .then(data => {
         console.log("Teams: ", data);
-        const team1NameElement = document.getElementsByClassName('team-header-1')[0];
+        const team1NameElement = document.getElementById("team1-button");
         team1NameElement.textContent = data[0].name;
-        const team2NameElement = document.getElementsByClassName('team-header-2')[0];
+        const team2NameElement = document.getElementById("team2-button");
         team2NameElement.textContent = data[1].name;
         let team1Data = [];
         let team2Data = [];
@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(stat);
                 const player = {
                     player: stat.name,
+                    offense: stat.offensive_role,
+                    defense: stat.defensive_role,
+                    offenseTaregt: stat.offensive_target,
+                    defenseTarget: stat.defensive_target,
+                    offenseProperty: stat.offense_action_property,
+                    defenseProperty: stat.defensive_action_property,
                     pointsScored: stat.points_scored,
                     blitzes: stat.blitzes,
                     fieldGoalsMade: stat.field_goals_successful,
@@ -27,8 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     blitzGoalsAttempted: stat.blitz_goals_attempted,
                     tricks: stat.tricks,
                     metersAdvanced: Math.round(stat.advancements),
-                    damage: Math.round(stat.damage*10)/10
+                    damage: Math.round(stat.damage),
+                    pointsBlocked: stat.points_blocked,
+                    steals: stat.steals,
+                    metersDefended: Math.round(stat.defense)
                 }
+                console.log(player)
                 if (stat.team_id === data[0].id) {
                     team1Data.push(player);
                 } else {
@@ -49,15 +59,34 @@ function populateTable(teamData, tbodyId) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${playerData.player}</td>
+            <td>${playerData.offense}</td>
+            <td>${playerData.defense}</td>
             <td>${playerData.pointsScored}</td>
             <td>${playerData.blitzes}</td>
             <td>${playerData.metersAdvanced}</td>
+            <td>${playerData.metersDefended}</td>
             <td>${playerData.blitzGoalsMade} / ${playerData.blitzGoalsAttempted}</td>
             <td>${playerData.fieldGoalsMade} / ${playerData.fieldGoalsAttempted}</td>
             <td>${playerData.damage}</td>
+            <td>${playerData.pointsBlocked}</td>
+            <td>${playerData.steals}</td>
+            <td>${playerData.tricks}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Populate tables with dummy data
+// Function to switch between teams
+function showTeamStats(teamId) {
+    // Hide both teams
+    document.getElementById('team1').style.display = 'none';
+    document.getElementById('team2').style.display = 'none';
+
+    // Remove 'active' class from both buttons
+    document.getElementById('team1-button').classList.remove('active');
+    document.getElementById('team2-button').classList.remove('active');
+
+    // Show selected team and activate the corresponding button
+    document.getElementById(teamId).style.display = 'block';
+    document.getElementById(`${teamId}-button`).classList.add('active');
+}

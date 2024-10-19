@@ -129,6 +129,14 @@ blitzes AS (
     WHERE match_id = ${matchId} AND blitzer_id IS NOT NULL
     GROUP BY blitzer_id
 ),
+blocks AS (
+    SELECT
+        blocker_id AS player_id,
+        SUM(CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) AS points_blocked
+    FROM scoring_history
+    WHERE match_id = ${matchId} AND blocker_id IS NOT NULL
+    GROUP BY blocker_id
+),
 tricks AS (
     SELECT 
         tricker_id AS player_id, 
@@ -148,13 +156,21 @@ damage AS (
 advancements AS (
     SELECT 
         player_id, 
-        SUM(CASE WHEN type = 'Advance' THEN advancement ELSE 0 END) AS advancements
+        SUM(CASE WHEN "type" = 'Advance' THEN advancement ELSE 0 END) AS advancements,
+        SUM(CASE WHEN "type" = 'Steal' THEN 1 ELSE 0 END) AS steals,
+        SUM(CASE WHEN "type" = 'Defend' THEN advancement ELSE 0 END) AS defense
     FROM advancement_history
     WHERE match_id = ${matchId}
     GROUP BY player_id
 )
 SELECT 
     p.name,
+    ph.offensive_role,
+    ph.defensive_role,
+    ph.offense_action_property,
+    ph.defense_action_property,
+    offense_target.name AS offensive_target,
+    defense_target.name AS defensive_target,
     COALESCE(s.field_goals_attempted, 0) AS field_goals_attempted,
     COALESCE(s.field_goals_successful, 0) AS field_goals_successful,
     COALESCE(s.blitz_goals_attempted, 0) AS blitz_goals_attempted,
@@ -164,7 +180,10 @@ SELECT
     COALESCE(t.tricks, 0) AS tricks,
     COALESCE(b.blitzes, 0) AS blitzes,
     COALESCE(a.advancements, 0) AS advancements,
-    COALESCE(d.damage_done, 0) AS damage
+    COALESCE(a.defense, 0) AS defense,
+    COALESCE(d.damage_done, 0) AS damage,
+    COALESCE(bl.points_blocked, 0) AS points_blocked,
+    COALESCE(a.steals, 0) AS steals
 FROM player_history ph
 JOIN players p ON ph.player_id = p.id
 LEFT JOIN scoring s ON ph.player_id = s.player_id
@@ -172,6 +191,9 @@ LEFT JOIN blitzes b ON ph.player_id = b.player_id
 LEFT JOIN tricks t ON ph.player_id = t.player_id
 LEFT JOIN advancements a ON ph.player_id = a.player_id
 LEFT JOIN damage d ON ph.player_id = d.player_id
+LEFT JOIN blocks bl ON ph.player_id = bl.player_id
+LEFT JOIN players offense_target ON ph.offensive_target_id = offense_target.id
+LEFT JOIN players defense_target ON ph.defensive_target_id = defense_target.id
 WHERE ph.match_id = ${matchId}
 GROUP BY 
     ph.player_id, 
@@ -185,7 +207,8 @@ GROUP BY
     t.tricks, 
     b.blitzes,
     a.advancements,
-    d.damage_done
+    d.damage_done,
+    bl.points_blocked
     `;
     db.all(query, (err, stats) => {
         if (err) {

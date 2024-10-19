@@ -12,56 +12,72 @@
         <p>Team Performance Overview</p>
     </header>
 
+    <!-- Team Selection -->
+    <div class="tabs">
+        <div class="tab-button" id="team1-button" onclick="showTeamStats('team1')">Team 1</div>
+        <div class="tab-button" id="team2-button" onclick="showTeamStats('team2')">Team 2</div>
+    </div>
+
     <!-- Main Content -->
     <main>
-        <div id="teams-container">
-            <!-- Team 1 Section -->
-            <div class="team" id="team1">
-                <h2 class="team-header-1">Team 1</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Player</th>
-                            <th>Points Scored</th>
-                            <th>Blitzes</th>
-                            <th>Meters Advanced</th>
-                            <th>Blitz Goals</th>
-                            <th>Field Goals</th>
-                            <th>Damage Done</th>
-                        </tr>
-                    </thead>
-                    <tbody id="team1-body">
-                        <!-- Data will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- Team 1 Section -->
+        <div class="team-content" id="team1">
+            <h2>Team 1 Stats</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Offense Action</th>
+                        <th>Defense Action</th>
+                        <th>Points Scored</th>
+                        <th>Blitzes</th>
+                        <th>Meters Advanced</th>
+                        <th>Meters Defended</th>
+                        <th>Blitz Goals</th>
+                        <th>Field Goals</th>
+                        <th>Damage Done</th>
+                        <th>Points Blocked</th>
+                        <th>Steals</th>
+                        <th>Tricks</th>
+                    </tr>
+                </thead>
+                <tbody id="team1-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
 
-            <!-- Team 2 Section -->
-            <div class="team" id="team2">
-                <h2 class="team-header-2">Team 2</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Player</th>
-                            <th>Points Scored</th>
-                            <th>Blitzes</th>
-                            <th>Meters Advanced</th>
-                            <th>Blitz Goals</th>
-                            <th>Field Goals</th>
-                            <th>Damage Done</th>
-                        </tr>
-                    </thead>
-                    <tbody id="team2-body">
-                        <!-- Data will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
+        <!-- Team 2 Section -->
+        <div class="team-content" id="team2" style="display: none;">
+            <h2>Team 2 Stats</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Offense Action</th>
+                        <th>Defense Action</th>
+                        <th>Points Scored</th>
+                        <th>Blitzes</th>
+                        <th>Meters Advanced</th>
+                        <th>Meters Defended</th>
+                        <th>Blitz Goals</th>
+                        <th>Field Goals</th>
+                        <th>Damage Done</th>
+                        <th>Points Blocked</th>
+                        <th>Steals</th>
+                        <th>Tricks</th>
+                    </tr>
+                </thead>
+                <tbody id="team2-body">
+                    <!-- Data will be inserted here -->
+                </tbody>
+            </table>
         </div>
     </main>
 
     <!-- Footer -->
     <footer>
-        &copy; 2024 Picklebrawl. All rights reserved.
+        &copy; 2023 Sports Stats Inc.
     </footer>
 
     <script src="/boxscore/boxscore.js"></script>

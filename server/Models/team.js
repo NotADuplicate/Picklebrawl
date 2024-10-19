@@ -63,7 +63,7 @@ class Team {
     }
 
     generatePlayers() {
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 10; i++) {
             const player = new Player();
             player.pickRandomQuirk(false);
             player.randomize_stats(Math.floor(Math.random() * 5) + 10);

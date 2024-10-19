@@ -336,9 +336,9 @@ function runMatchTick(data, tick) {
 
         if(data.scoringHistory.length > 0) { //if a shot was attempted
             if (possession != homeTeamId) {
-                position = data.scoringHistory.range;
+                position = data.scoringHistory[0].range;
             } else {
-                position = 100 - data.scoringHistory.range;
+                position = 100 - data.scoringHistory[0].range;
             }
             moveSliderIcon(position);
             uncenterAllPlayers();

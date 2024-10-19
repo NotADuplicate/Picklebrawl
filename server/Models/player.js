@@ -222,8 +222,8 @@ class Player {
     attack(match, target) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
-            const damage = (Math.random() * (this.strength + this.tempStrength));
-            const defense = Math.min(20, (Math.random() * (target.bulk + target.protectBulk)));
+            const damage = (Math.random() * (this.strength + this.tempStrength))*3/4;
+            const defense = Math.min(20, (Math.random() * (target.bulk + target.protectBulk)))/2;
             const finalDamage = damage - defense;
             if (finalDamage < 0) {
                 return;
@@ -251,11 +251,6 @@ class Player {
             target.hp = Math.max(0,target.hp-hpDamage);
 
         }
-        // TODO: implement permanent injury, using INJURY_PERMANENCE_MODIFIER
-        /*if(Math.random() < finalDamage*0.1) {
-            console.log(target.name + " is injured");
-            target.injury = true;
-        }*/
     }
 
     assist(target, modifier) {
