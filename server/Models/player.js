@@ -80,8 +80,8 @@ class Player {
     }
 
     setHp() {
-        this.maxHp = this.baseBulk + 2;
-        this.hp = this.maxHp;
+        this.maxHp = 100;
+        this.hp = 100;
     }
 
     get name() {
@@ -216,15 +216,14 @@ class Player {
             'Lebron', 'James', 'Usmanov', 'Nipp', 'Polio', 'Nixon', 'Obama', 'Biden', 'Usmanov'
         ]);
         return name;
-        //return "John Doe";
     }
 
     attack(match, target) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
-            const damage = (Math.random() * (this.strength + this.tempStrength))*3/4;
-            const defense = Math.min(20, (Math.random() * (target.bulk + target.protectBulk)))/2;
-            const finalDamage = damage - defense;
+            const damage = Math.random() * (this.strength + this.tempStrength);
+            const defense = Math.random() * (target.bulk + target.protectBulk);
+            const finalDamage = (damage - defense);
             if (finalDamage < 0) {
                 return;
             }
@@ -235,21 +234,15 @@ class Player {
             }
             target.tempInjury += finalDamage;
 
-            let hpDamage = 0;
-            if(finalDamage > 1) {
-                hpDamage = Math.random(0,finalDamage-1)*this.ATTACK_MODIFIER;
-                db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
-                    + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
-                    this.id, target.id, hpDamage*10, false, 100*hpDamage/target.maxHp], function(err) {
-                        if (err) {
-                            console.error('Error inserting attack into attack_history:', err.message);
-                        }
-                        console.log("Damage: ", damage, " Defense: ", defense);
-                        console.log("Target max hp: ", target.maxHp, " Hp damage: ", hpDamage);
-                });
-            }
+            const hpDamage = 3*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
+            db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+                + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
+                this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {
+                    if (err) {
+                        console.error('Error inserting attack into attack_history:', err.message);
+                    }
+            });
             target.hp = Math.max(0,target.hp-hpDamage);
-
         }
     }
 

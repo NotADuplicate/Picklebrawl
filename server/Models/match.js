@@ -43,7 +43,8 @@ class Match {
         "Close": 10,
         "Medium": 23,
         "Far": 36,
-        "Half Field": 55
+        "Half Field": 55,
+        "Full Field": 100
     }
 
     constructor(homeTeam, awayTeam, weather) {
@@ -268,7 +269,11 @@ class Match {
         const offensePriorityList = ["Attack", "Advance", "Score"];
         const defensePriorityList = ["Attack", "Defend_Advance", "Defend_Score"];
         for(const player of this.offenseTeam.players) {
-            if(Math.random() < this.RANDOM_PRIORITY_CHANCE && player.offensePriority == player.savedOffensePriority) {
+            if(player.hp < 0.5) {
+                player.offensePriority = "KO";
+                player.offensePriorityTarget = "Any";
+            }
+            else if(Math.random() < this.RANDOM_PRIORITY_CHANCE && player.offensePriority == player.savedOffensePriority) {
                 player.offensePriority = offensePriorityList[Math.floor(Math.random() * offensePriorityList.length)];
                 player.offensePriorityTarget = "Any";
                 //console.log(player.name + " changed priority from " + player.savedOffensePriority + " to " + player.offensePriority);
@@ -283,7 +288,11 @@ class Match {
             }
         }
         for(const player of this.defenseTeam.players) {
-            if(Math.random() < 0.05 && player.defensePriority == player.savedDefensePriority) {
+            if(player.hp < 0.5) {
+                player.defensePriority = "KO";
+                player.defensePriorityTarget = "Any";
+            }
+            else if(Math.random() < 0.05 && player.defensePriority == player.savedDefensePriority) {
                 player.defensePriority = defensePriorityList[Math.floor(Math.random() * defensePriorityList.length)];
                 player.defensePriorityTarget = "Any";
                 //console.log(player.name + " changed priority from " + player.savedDefensePriority + " to " + player.defensePriority);
@@ -642,6 +651,7 @@ class Match {
         console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
         let blocker_id = null;
+        const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
         if(score == null) { //no weather effect, handle scoring as usual
             let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse)
             console.log("Shooting: " + shooting);
@@ -675,10 +685,8 @@ class Match {
                 }
             }
             console.log("Shooting after defenders: " + shooting);
-            shooting -= (this.FIELD_LENGTH-this.position) * this.SHOOTING_DISTANCE_MODIFIER;
-            score = shooting+this.SHOOTING_BONUS > 0; //wanted to make it easier to score bc its influenced by distance and defenders
+            score = shooter.quirk.scoreEffect(shooter, this, shooting, range, this.SHOOTING_BONUS);
         }
-        const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
         let suspense = Math.floor(Math.random() * Math.random() * 4);
         if(blitz) {
             suspense = 0;

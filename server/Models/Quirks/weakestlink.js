@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class WeakestLink extends Quirk {
-    static powerModifier = -9;
+    static powerModifier = -11;
     static likelihood = 2;
     static title = "Weakest Link";
     static description = ("Each of your stats are added with the lowest of that stat on your team");

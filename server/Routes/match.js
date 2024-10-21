@@ -153,6 +153,14 @@ damage AS (
     WHERE match_id = ${matchId}
     GROUP BY attacking_player_id
 ),
+damage_taken AS (
+    SELECT 
+        attacked_player_id AS player_id,
+        SUM(damage_done) AS damage_taken
+    FROM attack_history
+    WHERE match_id = ${matchId}
+    GROUP BY attacked_player_id
+),
 advancements AS (
     SELECT 
         player_id, 
@@ -183,7 +191,8 @@ SELECT
     COALESCE(a.defense, 0) AS defense,
     COALESCE(d.damage_done, 0) AS damage,
     COALESCE(bl.points_blocked, 0) AS points_blocked,
-    COALESCE(a.steals, 0) AS steals
+    COALESCE(a.steals, 0) AS steals,
+    COALESCE(dt.damage_taken, 0) AS damage_taken
 FROM player_history ph
 JOIN players p ON ph.player_id = p.id
 LEFT JOIN scoring s ON ph.player_id = s.player_id
@@ -194,6 +203,7 @@ LEFT JOIN damage d ON ph.player_id = d.player_id
 LEFT JOIN blocks bl ON ph.player_id = bl.player_id
 LEFT JOIN players offense_target ON ph.offensive_target_id = offense_target.id
 LEFT JOIN players defense_target ON ph.defensive_target_id = defense_target.id
+LEFT JOIN damage_taken dt ON ph.player_id = dt.player_id
 WHERE ph.match_id = ${matchId}
 GROUP BY 
     ph.player_id, 

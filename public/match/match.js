@@ -245,10 +245,18 @@ async function changeTeamPossession(team) {
     uncenterAllPlayers();
 
     advancingPlayers.forEach(player => {
-        toggleCentered(player.getAttribute('data-player-id'));
+        const healthBar = player.querySelector('.health-bar');  
+        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
+        if(currentHealth > 0.5) {
+            toggleCentered(player.getAttribute('data-player-id'));
+        }
     });
     defendingPlayers.forEach(player => {
-        toggleCentered(player.getAttribute('data-player-id'));
+        const healthBar = player.querySelector('.health-bar');  
+        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
+        if(currentHealth > 0.5) {
+            toggleCentered(player.getAttribute('data-player-id'));
+        }
     });
 }
 
@@ -331,6 +339,17 @@ function runMatchTick(data, tick) {
                 if (newHealth < 50) {
                     healthBar.style.backgroundColor = 'red';
                 }
+                if(currentHealth > 0.5 && newHealth <= 0.5) {
+                    playerElement.display = 'none';
+                    const actionIcon = playerElement.querySelector('.action-icon');
+                    actionIcon.style.display = 'block';
+                    if (actionIcon) {
+                        actionIcon.src = '/Resources/KO.png'; // Change the image URL as needed
+                    }
+                    addBoldTextToTextBox(`${players[attack.attacking_player_id].querySelector('.player-name').textContent} KNOCKED OUT ${playerElement.querySelector('.player-name').textContent}!`);
+                    playerElement.querySelector('.player-offense-action').textContent = "Knocked out";
+                    playerElement.querySelector('.player-defense-action').textContent = "Knocked out";
+                }
             });
         }
 
@@ -347,7 +366,11 @@ function runMatchTick(data, tick) {
             const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
             oppositeTeamPlayers.forEach(player => {
                 if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
-                    toggleCentered(player.getAttribute('data-player-id'));
+                    const healthBar = player.querySelector('.health-bar');  
+                    const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
+                    if(currentHealth > 0.5) {
+                        toggleCentered(player.getAttribute('data-player-id'));
+                    }
                 }
             });
 
@@ -729,7 +752,19 @@ function vwToPx(vw) {
 
 function setActionIcon(player, offense) { //offense is set to either "offense" or "defense"
     const action = player.querySelector('.player-'+offense+'-action').textContent;
-    if(action === 'Assist' || action === 'Attack' || action === 'Protect' || action === "Rest") {
+
+    if(action === "Knocked out") {
+        const actionIcon = player.querySelector('.action-icon');
+        if (actionIcon) {
+            actionIcon.src = '/Resources/KO.png'; // Change the image URL as needed
+            const actionIconContainer = player.querySelector('.action-icon-container');
+            tooltip = actionIconContainer.getElementsByClassName('tooltip')[0];
+            if (tooltip) {
+                tooltip.textContent = "KO'd";
+            }
+        }
+    }
+    else if(action === 'Assist' || action === 'Attack' || action === 'Protect' || action === "Rest") {
         player.querySelector('.action-icon').style.display = 'block';
         let targetPlayer;
         if(action !== "Rest") {

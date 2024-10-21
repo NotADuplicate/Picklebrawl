@@ -42,8 +42,8 @@ export class Quirk {
         return null;
     }
 
-    static scoreEffect(shooter, offenseTeam, defenseTeam, position) {
-        return null;
+    static scoreEffect(shooter, match, shooting, range, bonus) {
+        return shooting+bonus-(range*match.SHOOTING_DISTANCE_MODIFIER)>0;
     }
 
     static attackEffect(player, target) {

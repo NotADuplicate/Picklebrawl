@@ -12,12 +12,12 @@ let startersLocked = false;
 let actionsLocked = false;
 
 let offensePriorities = {
+    Rest: "Target neither",
     Advance: "Target finishing",
     Attack: "Target enemy",
     Protect: "Target teammate",
     Assist: "Target teammate",
-    Score: "Target distance",
-    Rest: "Target neither"
+    Score: "Target distance"
 };
 
 let defensePriorities = {
@@ -746,7 +746,7 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         targetMenu.style.display = 'block';
         let options = [];
         if(targetType === 'distance') {
-            options = ['Close', 'Medium', 'Far', 'Half Field'];
+            options = ['Close', 'Medium', 'Far', 'Half Field', 'Full Field'];
         }
         else if(targetType === 'finishing') {
             options = ['Attempt Score', 'Blitz'];
