@@ -21,6 +21,9 @@ class Match {
     players;
     playerWithPossession;
     blitzerId = null;
+    minRanges = [];
+    over = false;
+    lastAdvance = 0;
 
     // CONSTANTS
     GAME_LENGTH = 100;    // number of ticks to play the game for // TODO: set to 100 when done testing
@@ -31,18 +34,20 @@ class Match {
     MAX_ADVANCEMENT_PER_TICK = null;
     NET_ADVANCEMENT_MODIFIER = 1.0;
     TURNOVER_CHANCE_INCREASE_PER_TICK = 0.05;
-    RANDOM_PRIORITY_CHANCE = 0.1;
-    TURNOVER_CHANCE_MAX = 0.2;
-    SHOOTING_DISTANCE_MODIFIER = 0.1;
+    RANDOM_PRIORITY_CHANCE = .15;
+    TURNOVER_CHANCE_MAX = 0.25;
+    POSSESSION_TICK_MAX = 4;
+    SHOOTING_DISTANCE_MODIFIER = 0.08;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
     TRICK_CHANCE = 1/3;
     ASSIST_MODIFIER = 1;
-    SHOOTING_BONUS = 2;
+    SHOOTING_BONUS = 1.5;
+    ADVANCEMENT_MULTIPLIER = 1.5;
 
     RANGE_DICTIONARY = {
-        "Close": 10,
-        "Medium": 23,
-        "Far": 36,
+        "Close": 12,
+        "Medium": 28,
+        "Far": 40,
         "Half Field": 55,
         "Full Field": 100
     }
@@ -59,7 +64,7 @@ class Match {
     }
 
     runMatch() {
-        for(let i = 0; i < this.GAME_LENGTH; i++) {
+        while(!this.over) {
             this.tick();
             //await new Promise(r => setTimeout(r, 100));
         }
@@ -169,13 +174,16 @@ class Match {
     }
 
     endGame() {
+        this.over = true;
         console.log("Game over!");
         console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-        //console.log("Possession lengths: " + this.possessionLengths);
+        console.log("Possession lengths: " + this.possessionLengths);
+        console.log("Number of possessions: " + this.possessionLengths.length);
+        console.log("Min ranges: ", this.minRanges)
         //console.log("Average possession length: " + this.possessionLengths.reduce((a, b) => a + b, 0) / this.possessionLengths.length);
-        //console.log("Shots attempted: " + this.shotsAttempted);
-        //console.log("Average " + this.offenseTeam.teamName + " advancement: " + this.homeAdvancements.reduce((a, b) => a + b, 0) / this.homeAdvancements.length);
-        //console.log("Average " + this.defenseTeam.teamName + " advancement: " + this.awayAdvancements.reduce((a, b) => a + b, 0) / this.awayAdvancements.length);
+        console.log("Shots attempted: " + this.shotsAttempted);
+        console.log("Average " + this.offenseTeam.teamName + " advancement: " + this.homeAdvancements.reduce((a, b) => a + b, 0) / this.homeAdvancements.length);
+        console.log("Average " + this.defenseTeam.teamName + " advancement: " + this.awayAdvancements.reduce((a, b) => a + b, 0) / this.awayAdvancements.length);
 
         // Update match_history
         const self = this;
@@ -184,31 +192,6 @@ class Match {
             if (err) {
                 console.error("Error updating scores in match_history:", err.message);
             }
-            function calculateAverageAdvancement(advancements, start, end) {
-                const slice = advancements.slice(start, end);
-                const sum = slice.reduce((a, b) => a + b, 0);
-                return sum / slice.length;
-            }
-
-            const homeAdvancements = [
-                calculateAverageAdvancement(self.homeAdvancements, 0, 12),
-                calculateAverageAdvancement(self.homeAdvancements, 12, 25),
-                calculateAverageAdvancement(self.homeAdvancements, 25, 37),
-                calculateAverageAdvancement(self.homeAdvancements, 37, 50)
-            ];
-
-            const awayAdvancements = [
-                calculateAverageAdvancement(self.awayAdvancements, 0, 12),
-                calculateAverageAdvancement(self.awayAdvancements, 12, 25),
-                calculateAverageAdvancement(self.awayAdvancements, 25, 37),
-                calculateAverageAdvancement(self.awayAdvancements, 37, 50)
-            ];
-
-            console.log(self.homeAdvancements[60])
-            console.log(self.awayAdvancements[60])
-
-            console.log("Home Team Average Advancements (first 25, second 25, third 25, fourth 25):", homeAdvancements);
-            console.log("Away Team Average Advancements (first 25, second 25, third 25, fourth 25):", awayAdvancements);
         });
     }
 
@@ -251,6 +234,14 @@ class Match {
             this.doScoring();
         }
 
+        if(this.playerWithPossession.hp < 0.5) { //possession player is knocked out
+            const healthyPlayer = this.offenseTeam.players.find(player => player.hp > 0.5);
+            if (healthyPlayer) {
+                this.playerWithPossession = healthyPlayer;
+            } else {
+                this.turnover();
+            }
+        }
         db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position, player_possession_id) `
             + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.teamId, this.position, this.playerWithPossession.id],
             function(err) {
@@ -260,8 +251,11 @@ class Match {
             }
         )
 
-       if(this.gameTicks == this.GAME_LENGTH) {
-            this.endGame();
+       if(this.gameTicks >= this.GAME_LENGTH) { //overtime
+            this.FIELD_LENGTH -= 1.5;
+            if((this.turnedover || this.offenseTeam.score > this.defenseTeam.score) && this.offenseTeam.score != this.defenseTeam.score) {
+                this.endGame();
+            }
         }
     }
 
@@ -276,7 +270,7 @@ class Match {
             else if(Math.random() < this.RANDOM_PRIORITY_CHANCE && player.offensePriority == player.savedOffensePriority) {
                 player.offensePriority = offensePriorityList[Math.floor(Math.random() * offensePriorityList.length)];
                 player.offensePriorityTarget = "Any";
-                //console.log(player.name + " changed priority from " + player.savedOffensePriority + " to " + player.offensePriority);
+                console.log(player.name + " changed priority from " + player.savedOffensePriority + " to " + player.offensePriority);
                 if(player.savedOffensePriority != player.offensePriority) {
                     db.run(`INSERT INTO match_action_history (tick, match_id, player_id, action) `
                         + `VALUES (?, ?, ?, ?)`, [this.gameTicks, this.match_id, player.id, player.offensePriority]);
@@ -525,19 +519,19 @@ class Match {
 
             //Comeback mechanic
             if(this.position < this.FIELD_LENGTH / 2) { 
-                advanceAmount += 1+Math.random()*2;
+                advanceAmount += 1+Math.random();
             }
-            advanceAmount += Math.max(6,this.defenseTeam.score -this.offenseTeam.score)/2;
+            advanceAmount += Math.max(6,this.defenseTeam.score -this.offenseTeam.score)/3;
 
             if(advanceAmount > defendAmount) {
                 const randomness = Math.random();
-                netAdvance = randomness * (advanceAmount - defendAmount) * 2 + (advanceAmount - defendAmount)/2;
-                const netDefense = (randomness * advanceAmount * 2 + advanceAmount/2) - netAdvance;
+                netAdvance = randomness * (advanceAmount - defendAmount)*this.ADVANCEMENT_MULTIPLIER + (advanceAmount - defendAmount)/2;
+                const netDefense = (randomness * advanceAmount + advanceAmount/2) * this.ADVANCEMENT_MULTIPLIER - netAdvance;
                 this.savePlayerAdvancement(netAdvance);
                 this.savePlayerDefend(netDefense);
             } else {
                 netAdvance = 0;
-                this.savePlayerDefend(Math.random() * (advanceAmount) * 2 + (advanceAmount)/2);
+                this.savePlayerDefend(Math.random() * (advanceAmount) * this.ADVANCEMENT_MULTIPLIER + (advanceAmount)/2);
             }
             if(this.offenseTeam == this.awayTeam) {this.awayAdvancements.push(netAdvance);}
             else {this.homeAdvancements.push(netAdvance);}
@@ -548,9 +542,10 @@ class Match {
             }
             
             this.position += netAdvance;
+            this.lastAdvance = netAdvance;
 
             // Calculate turnover chance
-            let turnoverChance = (this.possessionTicks * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
+            let turnoverChance = (Math.min(this.possessionTicks, this.POSSESSION_TICK_MAX) * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
                 (defendAmount / (advanceAmount + defendAmount)));
             if (turnoverChance > this.TURNOVER_CHANCE_MAX) {turnoverChance = this.TURNOVER_CHANCE_MAX;}
             
@@ -596,24 +591,46 @@ class Match {
                         return;
                     }
                     this.shoot(player, false); //shoot
+                    return;
                 }
             }
+            const randomShooter = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
+            this.shoot(randomShooter, false);
+            return;
         } else { //check for trying to score
             for (const player of this.offenseTeam.players) {
-                if(player.offensePriority === "Score" && Math.random() > 0.8 - player.finesse * 0.075) { //scorers have 30% chance of attempting a shot
-                    let range;
+                if(player.offensePriority === "Score" && Math.random() > 2.5*Math.max((this.FIELD_LENGTH-this.position)/this.FIELD_LENGTH),0.3) { //scorers have ~30% chance of attempting a shot
+                    let range = 0;
+                    let minRange;
+                    if(player.offenseProperty === "Close") {
+                        minRange = 0;
+                    }
+                    else {
+                        minRange = 10 + this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
+                    }
+                    if(this.gameTicks > this.GAME_LENGTH - 10) { //last second shot
+                        if(this.offenseTeam.score == this.defenseTeam.score - 3) { //have to blitz
+                            minRange = 100;                            
+                        }
+                        else if(this.offenseTeam.score == this.defenseTeam.score - 1) { //have to regular score
+                            minRange = 0;
+                        }
+                    }
                     if (this.RANGE_DICTIONARY.hasOwnProperty(player.offenseProperty)) {
                         range = this.RANGE_DICTIONARY[player.offenseProperty];
-                    } else {
-                        range = 20 + player.finesse * 5;
+                    } else if(Math.random() < 0.1) {
+                        range = 10 + player.finesse * 5 +Math.random() * 20;
                         this.defenseTeam.players.forEach((defender) => {
                             if(defender.defensePriority === "Defend_Score") {
                                 range -= defender.bulk*5;
                             }
                         });
                     }
-                    if(this.position + range >= this.FIELD_LENGTH) {
+                    if(this.position + range >= this.FIELD_LENGTH && 100-this.position >= minRange) { //if player is in range to shoot
                         this.shoot(player, false); //shoot
+                    }
+                    else if(100-this.position <= minRange) {
+                        this.minRanges.push(this.gameTicks);
                     }
                 }
             }
@@ -673,7 +690,7 @@ class Match {
                     }
                     else {
                         let defendAmount = (Math.random() * (player.bulk + player.tempBulk));
-                        if(defendAmount > shooting+2) { //block
+                        if(defendAmount > shooting+this.SHOOTING_BONUS) { //block
                             blocker_id = player.id;
                         }
                         if(!blitz) {
@@ -687,10 +704,24 @@ class Match {
             console.log("Shooting after defenders: " + shooting);
             score = shooter.quirk.scoreEffect(shooter, this, shooting, range, this.SHOOTING_BONUS);
         }
-        let suspense = Math.floor(Math.random() * Math.random() * 4);
+        let suspense = Math.floor(Math.random() * 3);
         if(blitz) {
-            suspense = 0;
+            suspense -= 2;
         }
+        if(Math.abs(this.offenseTeam.score-this.defenseTeam) < 3) {
+            suspense += 1;
+        }
+        if(this.gameTicks < this.GAME_LENGTH/2) {
+            suspense -= 1;
+        }
+        if(Math.abs(this.offenseTeam.score-this.defenseTeam.score) > 5) {
+            suspense -= 1;
+        }
+        if(this.gameTicks > this.GAME_LENGTH - 10 && this.offenseTeam.score <= this.defenseTeam.score && this.defenseTeam.score - this.offenseTeam.score < 3) {
+            suspense += 2;
+            console.log("Game winning shot")
+        }
+        if(suspense < 0) {suspense = 0;}
         db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense, blitzer_id, blocker_id) `
             + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense, this.blitzerId, blocker_id],
             function(err) {
@@ -732,6 +763,7 @@ class Match {
                     function(err) {
                         if (err) {
                             console.error('Error inserting advancement into advancement_history:', err.message);
+                            console.log("Player: ", player.name, "Advance: ", player.advance, "Total Advance: ", totalAdvance, "Net Advance: ", netAdvance);
                         }
                     }
                 );

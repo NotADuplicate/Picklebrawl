@@ -52,6 +52,24 @@ body {
     position: relative;
 }
 
+.goal-icon {
+    position: absolute;
+    top: 100%;
+    width: 100px; /* Adjust the size as needed */
+    height: 80px; /* Adjust the size as needed */
+    transition: transform 0.5s;
+}
+
+.left-goal {
+    left: -4%;
+    transform: translateY(-100%);
+}
+
+.right-goal {
+    right: -4%;
+    transform: scaleX(-1) translateY(-100%); /* Flip the icon horizontally and move it up */
+}
+
 .slider-icon {
     width: 20px;
     height: 20px;
@@ -125,6 +143,22 @@ body {
     background-color: #fff;
     display: flex;
     flex-direction: column-reverse;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
 }
 
 .health-bar-container {

@@ -43,6 +43,7 @@ let prioritiesDescriptions = {
 document.addEventListener('DOMContentLoaded', () => {
     const toggleButtons = document.querySelectorAll('.toggle-button');
     const lockButton = document.getElementById('lock-button');
+    const recommendButton = document.getElementById('reccomend-button');
 
     toggleButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -70,6 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         else if(lockButton.textContent === 'Undo actions') {
             unlockActions();
+        }
+    });
+
+    recommendButton.addEventListener('click', () => {
+        if(recommendButton.textContent === 'Recommend Starters  ') {
+            recommendPlayers(myTeamId);
+        }
+        else if(recommendButton.textContent === 'Recommend Actions') {
+            recommendActions(myTeamId);
         }
     });
 
@@ -576,6 +586,8 @@ function bothTeamsReady(playerIds, lockButton) {
             teamPlayerIds.push(id);
         }
         lockButton.textContent = 'Lock In Actions';
+        const recommendButton = document.getElementById('reccomend-button');
+        recommendButton.textContent = 'Recommend Actions';
     }
 
     applyQuirkStats();
@@ -643,36 +655,7 @@ function getActions(response) {
         for(let i = 0; i < playerActions.length; i++) {
             if(playerActions[i].team_id == myTeamId) {
                 const action = playerActions[i];
-                console.log("Action: ", action);
-                const player = playerDict[action.player_id];
-                console.log("Player: ", player);
-                const priorityDiv = player.querySelector('.priority');
-                const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
-                const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
-                const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
-                const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
-                offensePrioritySelect.value = action.offense_action;
-                defensePrioritySelect.value = action.defense_action;
-                updateTargetMenu(action.offense_action, offensePriorities[action.offense_action].split(' ')[1], offenseTargetSelect.parentElement, offenseTargetSelect);
-                updateTargetMenu(action.defense_action, defensePriorities[action.defense_action].split(' ')[1], defenseTargetSelect.parentElement, defenseTargetSelect);
-                if(action.offense_target_id != "" && action.offense_target_id != null) {
-                    const offenseTargetOption = Array.from(offenseTargetSelect.options).find(option => option.value === action.offense_target_id);
-                    if (offenseTargetOption) {
-                        offenseTargetOption.selected = true;
-                        console.log("Offense target: ", offenseTargetOption.textContent);
-                    }
-                }
-                if(action.defense_target_id != "" && action.defense_target_id != null) {
-                    const defenseTargetOption = Array.from(defenseTargetSelect.options).find(option => option.value === action.defense_target_id);
-                    if (defenseTargetOption) {
-                        defenseTargetOption.selected = true;
-                    }
-                }
-
-                offensePrioritySelect.disabled = true;
-                defensePrioritySelect.disabled = true;
-                offenseTargetSelect.disabled = true;
-                defenseTargetSelect.disabled = true;
+                setAction(action, true);
             }
         }
         const readyDiv = document.getElementById('other-team-ready');
@@ -772,7 +755,6 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         }
         targetPlayers.forEach(targetPlayer => {
             const playerName = targetPlayer.querySelector('.player-name').textContent.trim();
-            console.log(playerName);
             const option = document.createElement('option');
             option.value = targetPlayer.dataset.playerId;
             option.textContent = playerName;
@@ -783,6 +765,78 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         option.textContent = "Any";
         targetSelect.appendChild(option);
     }
+}
+
+function setAction(action, disabled) {
+    console.log("Action: ", action);
+    const player = playerDict[action.player_id];
+    console.log("Player: ", player);
+    const priorityDiv = player.querySelector('.priority');
+    const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+    const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+    const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+    const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+    offensePrioritySelect.value = action.offense_action;
+    defensePrioritySelect.value = action.defense_action;
+    updateTargetMenu(action.offense_action, offensePriorities[action.offense_action].split(' ')[1], offenseTargetSelect.parentElement, offenseTargetSelect);
+    updateTargetMenu(action.defense_action, defensePriorities[action.defense_action].split(' ')[1], defenseTargetSelect.parentElement, defenseTargetSelect);
+    console.log("Target menus");
+    if(action.offense_target_id != "" && action.offense_target_id != null) {
+        const offenseTargetOption = Array.from(offenseTargetSelect.options).find(option => option.value == action.offense_target_id);
+        console.log(offenseTargetOption);
+        if (offenseTargetOption) {
+            offenseTargetOption.selected = true;
+            console.log("Offense target: ", offenseTargetOption.textContent);
+        }
+    }
+    else if(action.offense_property != "" && action.offense_property != null) {
+        console.log("Offense property: ", action.offense_property);
+        const offenseTargetOption = Array.from(offenseTargetSelect.options).find(option => option.value === "Property " + action.offense_property);
+        if (offenseTargetOption) {
+            offenseTargetOption.selected = true;
+            console.log("Offense target: ", offenseTargetOption.textContent);
+        }  
+    }
+    if(action.defense_target_id != "" && action.defense_target_id != null) {
+        const defenseTargetOption = Array.from(defenseTargetSelect.options).find(option => option.value == action.defense_target_id);
+        if (defenseTargetOption) {
+            defenseTargetOption.selected = true;
+        }
+    }
+    else if(action.defense_property != "" && action.defense_property != null) {
+        console.log("Defense property: ", action.defense_property);
+        const defenseTargetOption = Array.from(defenseTargetSelect.options).find(option => option.value === "Property " + action.defense_property);
+        if (defenseTargetOption) {
+            defenseTargetOption.selected = true;
+        }
+    }
+    offensePrioritySelect.disabled = disabled;
+    defensePrioritySelect.disabled = disabled;
+    offenseTargetSelect.disabled = disabled;
+    defenseTargetSelect.disabled = disabled;
+}
+
+function recommendPlayers(teamId) {
+    fetch(`/challenges/${teamId}/recommend-players`)
+    .then(response => response.json())
+    .then(data => {
+        console.log('Recommended players:', data);
+        data.forEach(playerId => {
+            const player = playerDict[playerId];
+            selectPlayer(player);
+        });
+    });
+}
+
+function recommendActions(teamId) {
+    fetch(`/challenges/${teamId}/recommend-actions`)
+    .then(response => response.json())
+    .then(data => {
+        console.log('Recommended actions:', data);
+        data.forEach(action => {
+            setAction(action, false);
+        });
+    });
 }
 
 async function goToMatch(challengeId) {

@@ -8,6 +8,8 @@ let skipTick = false;
 let catchUp = false;
 let watchingLive = false; // If the user is watching the game live, cannot get behind
 let consequetiveStalls = 0;
+let possessionTeam = null;
+let field_length = 100;
 const TIME_PER_TICK = 1000; // Time in milliseconds per tick
 const TIME_PER_SCORE = 1000; // Time in milliseconds per score
 const teamPositions = {
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const liveButton = document.getElementById('catch-up-button');
     liveButton.style.display = 'none';
     liveButton.addEventListener('click', () => {
-        catchUp = true;
+        catchUp = !catchUp;
     });
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -159,7 +161,7 @@ async function showGame(matchId) {
                 gameTimer.textContent = 'Game starts in ' + Math.ceil((data.matchCreatedAt - new Date().getTime()) / 1000) + ' seconds';
                 await new Promise(r => setTimeout(r, 200));
             }
-            while(i <= data.matchTicks.length) {
+            while(i < data.matchTicks.length) {
                 skipTick = false;
                 const tickData = data.matchTicks[i-1];
                 const tick = tickData.tick;
@@ -188,6 +190,7 @@ async function showGame(matchId) {
                 i++;
             }
             addBoldTextToTextBox('GAME OVER');
+            gameTimer.textContent = 'GAME OVER';
         })
         .catch(error => {
             console.error('Error fetching match ticks:', error);
@@ -196,12 +199,12 @@ async function showGame(matchId) {
 // Function to move the slider icon
 function moveSliderIcon(newPosition) {
     const sliderIcon = document.querySelector('.slider-icon');
-    position = newPosition;
+    position = 100*newPosition/field_length;
     sliderIcon.style.left = `${position}%`;
 }
 
 async function changeTeamPossession(team) {
-
+    possessionTeam = team;
     const sliderIcon = document.querySelector('.slider-icon');
     const homeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') === 'home');
     const awayTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') === 'away');
@@ -268,7 +271,24 @@ function runMatchTick(data, tick) {
         const nextTickButton = document.getElementById('next-tick-button');
         const catchUpButton = document.getElementById('catch-up-button');
         const gameTimer = document.getElementById('game-timer');
-        gameTimer.textContent = "Tick: " + tick;
+        if(tick > 100) {
+            const offenseTeamScore = document.getElementById('match-score').textContent.split('-')[possessionTeam === homeTeamId ? 0 : 1];
+            const defenseTeamScore = document.getElementById('match-score').textContent.split('-')[possessionTeam === homeTeamId ? 1 : 0];
+            if(offenseTeamScore === defenseTeamScore) {
+                gameTimer.textContent = "OVERTIME";
+            }
+            else {
+                gameTimer.textContent = "LAST POSSESSION";
+            }
+            field_length -= 1.5;
+            const sliderIcon = document.querySelector('.horizontal-line');
+            sliderIcon.style.width = `${field_length}%`;
+            sliderIcon.style.left = `${(100 - field_length) / 2}%`;
+        }
+        else {
+            gameTimer.textContent = "Tick: " + tick;
+        }
+
         const currentTime = new Date().getTime();
         console.log("Times: " , data.time, currentTime);
         if(data.time > currentTime) {
@@ -288,6 +308,7 @@ function runMatchTick(data, tick) {
         if(!data.matchTick) {
             addBoldTextToTextBox(`GAME OVER`);
             gameOver = true;
+            gameTimer.textContent = "GAME OVER";
             return;
         }
 
@@ -357,7 +378,7 @@ function runMatchTick(data, tick) {
             if (possession != homeTeamId) {
                 position = data.scoringHistory[0].range;
             } else {
-                position = 100 - data.scoringHistory[0].range;
+                position = field_length - data.scoringHistory[0].range;
             }
             moveSliderIcon(position);
             uncenterAllPlayers();
@@ -387,6 +408,7 @@ function runMatchTick(data, tick) {
                 const scoringTrick = !!data.trickHistory.find(trick => trick.tricker_id === data.scoringHistory[i].shooter_id && trick.trick_type === 'Score' && trick.tick === tick);
                 await doShooting(data.scoringHistory[i], scoringTrick);
                 i++;
+                await wait(250);
             }
             uncenterAllPlayers();
         }
@@ -398,7 +420,7 @@ function runMatchTick(data, tick) {
         if (data.matchTick.possession_team_id == homeTeamId) {
             position = data.matchTick.ball_position;
         } else {
-            position = 100 - data.matchTick.ball_position;
+            position = field_length - data.matchTick.ball_position;
         }
 
         if(possession != data.matchTick.possession_team_id) {
@@ -414,11 +436,14 @@ function runMatchTick(data, tick) {
                     }
                 });
             }
-            if(!data.scoringHistory){
+            if(data.scoringHistory.length == 0){
                 const advancement = Math.abs(parseFloat(document.querySelector('.slider-icon').style.left) - position);
                 const playerWithPossession = players[data.matchTick.player_possession_id];
                 const playerName = playerWithPossession.querySelector('.player-name').textContent;
-                if(advancement > 2) {
+                if(advancement > 10) {
+                    addBoldTextToTextBox(`${playerName} advanced by ${advancement.toFixed(0)} meters`);
+                }
+                else if(advancement > 2) {
                     addNormalTextToTextBox(`${playerName} advanced by ${advancement.toFixed(0)} meters`);
                     consequetiveStalls = 0;
                 }
@@ -444,15 +469,45 @@ function runMatchTick(data, tick) {
     })
 }
 
-// Function to add large bolded text to the text box
-function addBoldTextToTextBox(text) {
+// Function to add large bolded text to the text box with optional color and shake effect
+function addBoldTextToTextBox(text, color = 'black', shake = false) {
     const textBox = document.getElementById('match-text-box');
     const newText = document.createElement('div');
-    newText.style.fontWeight = 'bold';
+    newText.style.fontWeight = 'bolder';
     newText.style.fontSize = 'large';
+    newText.style.color = color;
     newText.textContent = text;
     textBox.prepend(newText); // Prepend the new text to push old text up
+
+    if (shake) {
+        newText.classList.add('shake');
+        setTimeout(() => {
+            newText.classList.remove('shake');
+        }, 1000); // Shake for 1 second
+    }
 }
+
+// Add this CSS to your stylesheet for the shake effect
+/*
+.shake {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+*/
 
 // Function to add normal text to the text box
 function addNormalTextToTextBox(text) {
@@ -481,7 +536,7 @@ async function doShooting(score, scoringTrick) {
     else {
         addBoldTextToTextBox(`Shot attempted by  ${score.name}`);
     }
-    for(let i = 0; i < score; i++) {
+    for(let i = 0; i < score.suspense; i++) {
         await wait(TIME_PER_SCORE);
         addBoldTextToTextBox('...');
     }
@@ -514,10 +569,10 @@ async function doShooting(score, scoringTrick) {
     if(score.successful_score) {
         let scoreWorth = 2;
         if(score.blitzer_id == null) {
-            addBoldTextToTextBox(`GOOAAAAALLLLL`);
+            addBoldTextToTextBox(`GOOAAAAALLLLL`, '#3daa34', true);
         }
         else {
-            addBoldTextToTextBox(`${players[score.shooter_id].querySelector('.player-name').textContent} scores!`);
+            addBoldTextToTextBox(`${players[score.shooter_id].querySelector('.player-name').textContent} scores!`, '#3daa34');
             scoreWorth = 1;
         }
         const teamScoreElement = document.getElementById('match-score');
@@ -531,7 +586,12 @@ async function doShooting(score, scoringTrick) {
 
     }
     else {
-        addBoldTextToTextBox(`MISSED!`);
+        if(score.blocker_id != null) {
+            addBoldTextToTextBox(`BLOCKED BY ${players[score.blocker_id].querySelector('.player-name').textContent}`, 'red', true);
+        }
+        else {
+            addBoldTextToTextBox(`MISSED!`, 'red');
+        }
     }
     resolve();
     });
@@ -753,9 +813,13 @@ function vwToPx(vw) {
 function setActionIcon(player, offense) { //offense is set to either "offense" or "defense"
     const action = player.querySelector('.player-'+offense+'-action').textContent;
 
+    console.log("Action of ", player.querySelector('.player-name').textContent,": ", action);
     if(action === "Knocked out") {
+        console.log("KO");
+        player.querySelector('.action-icon').style.display = 'block';
         const actionIcon = player.querySelector('.action-icon');
         if (actionIcon) {
+            console.log("KO first step");
             actionIcon.src = '/Resources/KO.png'; // Change the image URL as needed
             const actionIconContainer = player.querySelector('.action-icon-container');
             tooltip = actionIconContainer.getElementsByClassName('tooltip')[0];

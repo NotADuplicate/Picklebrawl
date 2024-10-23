@@ -67,8 +67,9 @@ db.serialize(() => {
         strength INTEGER NOT NULL,
         trickiness INTEGER NOT NULL,
         focus INTEGER NOT NULL,
-        team_id INTEGER NOT NULL,
+        team_id INTEGER,
         quirk INT NOT NULL,
+        draft_id INT,
         FOREIGN KEY (team_id) REFERENCES teams(id)
         FOREIGN KEY (quirk) REFERENCES quirks(id)
     )`);
@@ -113,7 +114,7 @@ db.serialize(() => {
         home_team_score INT,
         away_team_score INT,
         weather TEXT NOT NULL,
-        created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '+10 seconds')),
+        created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '-100 seconds')),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),
         FOREIGN KEY (league_id) REFERENCES leagues(id),

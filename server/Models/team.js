@@ -38,7 +38,7 @@ class Team {
             // Save players and associate them with the team
             const savePlayer = (player, cb) => {
                 console.log("Saving player : " + player.name);
-                player.save(cb, self.teamId);
+                player.save(cb, self.teamId, false);
             };
 
             for (let i = 0; i < self.players.length; i++) {
@@ -63,10 +63,10 @@ class Team {
     }
 
     generatePlayers() {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 8; i++) {
             const player = new Player();
             player.pickRandomQuirk(false);
-            player.randomize_stats(Math.floor(Math.random() * 5) + 10);
+            player.randomize_stats(Math.floor(Math.random() * 3) + 11);
             this.addPlayer(player);
         }
     }

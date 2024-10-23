@@ -5,10 +5,12 @@ import { fileURLToPath } from 'url';
 import { db } from './database.js';
 import leagueRoutes from './Routes/leagues.js';
 import { QuirkGenerator } from './quirkGenerator.js';
+import { NameGenerator } from './Models/nameGenerator.js';
 import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
 import statsRoutes from './Routes/stats.js';
 import matchRoutes from './Routes/match.js';
+import fs from 'fs';
 
 const app = express();
 const PORT = 9000;
@@ -23,6 +25,22 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 QuirkGenerator.loadQuirks();
+const namesFilePath = path.join(__dirname, './names.json');
+let namesArray = [];
+
+fs.readFile(namesFilePath, 'utf8', (err, data) => {
+    if (err) {
+        console.error('Error reading names file:', err.message);
+        return;
+    }
+    try {
+        let namesJson = JSON.parse(data);
+        NameGenerator.init(namesJson.names);
+    } catch (parseErr) {
+        console.error('Error parsing names file:', parseErr.message);
+    }
+});
+
 
 // Use routers
 app.use('/', leagueRoutes);

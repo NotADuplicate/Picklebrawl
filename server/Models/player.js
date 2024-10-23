@@ -1,6 +1,7 @@
 import {db} from '../database.js';
 import * as quirks from './Quirks/index.js';
 import {QuirkGenerator} from '../quirkGenerator.js';
+import { NameGenerator } from './nameGenerator.js';
 
 class Player {
     name;
@@ -50,7 +51,7 @@ class Player {
     hp;
     maxHp;
     ATTACK_MODIFIER = 1;
-    advance;
+    advance = 0;
 
     PLAYER_ASSIST_MODIFIER = 0.75;
 
@@ -108,10 +109,15 @@ class Player {
         }
     }
 
-    save(callback, teamId) {
-        const self = this;
-        db.run(`INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-            [teamId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId], function(err) {
+    save(callback, otherId, draft) {
+        let query;
+        if(draft) {
+            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        } else {
+            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        }
+        db.run(query, 
+            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return callback(err);
@@ -154,46 +160,10 @@ class Player {
     }
 
     generateName() {
+        let name;
         const sample = arr => arr[Math.floor(Math.random() * arr.length)];
-        let name = [];
-        if (Math.floor(Math.random() * 3) !== 1) {
-            if (name.length === 0) {
-                if (Math.floor(Math.random() * 2) === 1) {
-                    name.push(sample([
-                        'W', 'W', 'R', 'R', 'R', 'T', 'T', 'Y', 'P', 'P', 'P', 'P', 'S', 'S', 'S', 'D',
-                        'D', 'D', 'D', 'D', 'F', 'F', 'G', 'G', 'H', 'J', 'J', 'J', 'J', 'J', 'K', 'L',
-                        'L', 'Z', 'Z', 'X', 'C', 'V', 'B', 'B', 'B', 'B', 'N', 'N', 'M', 'M', 'M', 'M', 'Qu']));
-                } else {
-                    name.push(sample('WTPPPPSDFFGGKZZCCCVBBBB'));
-                    if (['W', 'Z'].includes(name[0])) {
-                        name.push(sample('rh'));
-                    } else if (['T', 'P', 'C', 'B'].includes(name[0])) {
-                        name.push(sample('rhl'));
-                    } else {
-                        name.push(sample('rrl'));
-                    }
-                }
-            }
-        }
-        if (name.length === 0) {
-            name.push(sample([
-                'A', 'A', 'A', 'A', 'A', 'E', 'E', 'E', 'I', 'I', 'I', 'O', 'O', 'O',
-                'U', 'U', 'U', 'Y', 'Ea', 'Ea', 'Ou', 'Io', 'S', 'S', 'S', 'Oi', 'Au'
-            ]));
-        } else {
-            name.push(sample([
-                'a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'i', 'i', 'i', 'o', 'o', 'o',
-                'u', 'u', 'u', 'y', 'ea', 'ea', 'ou', 'io', 'oe'
-            ]));
-        }
-        for (let i = 0; i < sample("000011111112223"); i++) {
-            name.push(sample("wrrrtttppppssdddddggfhjjjkllzcvbbbbnnmmm"));
-            name.push(sample([
-                'a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'i', 'i', 'i', 'o',
-                'o', 'o', 'u', 'u', 'u', 'y', 'ea', 'ea', 'ou', 'io', 'oe'
-            ]));
-        }
-        name = name.join('') + sample("wrrtttyppsdddfghhkllzxcvbbnnnnmmmm");
+        if(Math.random() < 0.7) { name = NameGenerator.generate(); }
+        else { name = NameGenerator.zacNameGeneration(); }
         name += ' ' + sample([
             'Smith', 'Johnson', 'Williams', 'Jones', 'Brown', 'Jones', 'Garcia',
             'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',
@@ -211,7 +181,7 @@ class Player {
             'Mendoza', 'Ruiz', 'Hughes', 'Price', 'Alvarez', 'Castillo', 'Sanders',
             'Patel', 'Myers', 'Long', 'Ross', 'Foster', 'Jimenez', 'Arleth', 'Everhart',
             'Wohl', 'Baker', 'Lane', 'Henderson', 'Cole', 'Funte', 'Paul-Healy', 'Greene',
-            'Philips', name, 'King', 'Jr', 'III', 'IV', 'VI', 'VII', 'Pickle', 'Jordan', 'Diaz',
+            'Philips', name, 'King', 'Jr', 'Pickle', 'Jordan', 'Diaz',
             'Swift', 'Rodrigo', 'Parker', 'Sprow', 'Cox', '', 'Kennedy', 'Charlie', 'Zac', 'Pup',
             'Lebron', 'James', 'Usmanov', 'Nipp', 'Polio', 'Nixon', 'Obama', 'Biden', 'Usmanov'
         ]);
@@ -221,9 +191,9 @@ class Player {
     attack(match, target) {
         if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
-            const damage = Math.random() * (this.strength + this.tempStrength);
+            const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
-            const finalDamage = (damage - defense);
+            const finalDamage = (damage - defense)+0.25;
             if (finalDamage < 0) {
                 return;
             }
@@ -234,7 +204,7 @@ class Player {
             }
             target.tempInjury += finalDamage;
 
-            const hpDamage = 3*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
+            const hpDamage = 2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {
