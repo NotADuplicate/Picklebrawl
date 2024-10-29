@@ -161,7 +161,7 @@ async function showGame(matchId) {
                 gameTimer.textContent = 'Game starts in ' + Math.ceil((data.matchCreatedAt - new Date().getTime()) / 1000) + ' seconds';
                 await new Promise(r => setTimeout(r, 200));
             }
-            while(i < data.matchTicks.length) {
+            while(i <= data.matchTicks.length) {
                 skipTick = false;
                 const tickData = data.matchTicks[i-1];
                 const tick = tickData.tick;
@@ -169,7 +169,7 @@ async function showGame(matchId) {
                 const trickHistoryForTick = data.trickHistory.filter(history => history.tick === tick);
                 const attackHistoryForTick = data.attackHistory.filter(history => history.tick === tick);
                 const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
-                console.log(tickData)
+                console.log(i)
                 const fullTickData = {
                     scoringHistory: scoringHistoryForTick,
                     trickHistory: trickHistoryForTick,
@@ -184,7 +184,7 @@ async function showGame(matchId) {
                         timeOffset += (score.suspense + 1) * TIME_PER_SCORE;
                     });
                 }
-                console.log(new Date().getTime());
+                //console.log(new Date().getTime());
                 await runMatchTick(fullTickData, tick);
                 await wait(TIME_PER_TICK-100);
                 i++;
@@ -264,9 +264,9 @@ async function changeTeamPossession(team) {
 }
 
 function runMatchTick(data, tick) {
-    console.log("Beginning of get tick")
+    //console.log("Beginning of get tick")
     return new Promise(async (resolve, reject) => {
-        console.log(data);
+        console.log("New tick: ", data);
 
         const nextTickButton = document.getElementById('next-tick-button');
         const catchUpButton = document.getElementById('catch-up-button');
@@ -290,7 +290,7 @@ function runMatchTick(data, tick) {
         }
 
         const currentTime = new Date().getTime();
-        console.log("Times: " , data.time, currentTime);
+        //console.log("Times: " , data.time, currentTime);
         if(data.time > currentTime) {
             await new Promise(r => setTimeout(r, data.time - currentTime));
             catchUp = false;
@@ -298,9 +298,9 @@ function runMatchTick(data, tick) {
         if(data.time < currentTime && !watchingLive) {
             nextTickButton.style.display = 'block';
             catchUpButton.style.display = 'block';
-            console.log("Showing next tick button");
+            //console.log("Showing next tick button");
         } else {
-            console.log("Hiding next tick button");
+            //console.log("Hiding next tick button");
             nextTickButton.style.display = 'none';
             catchUpButton.style.display = 'none';
             watchingLive = true;
@@ -315,7 +315,7 @@ function runMatchTick(data, tick) {
         let position;
 
         if(data.trickHistory.length > 0) {
-            console.log(data.trickHistory);
+            //console.log(data.trickHistory);
             data.trickHistory.forEach(trick => {
                 const trickerElement = players[trick.tricker_id];
                 const trickedElement = players[trick.tricked_id];
@@ -324,7 +324,6 @@ function runMatchTick(data, tick) {
                     // Rotate the ball icon of the player with possession
                     const ballIcon = players[trick.tricker_id].querySelector('.ball-icon');
                     if (ballIcon) {
-                        console.log('Rotating ball icon');
                     // Reset any previous animations on the ballIcon
                     gsap.killTweensOf(ballIcon);
 
@@ -462,7 +461,6 @@ function runMatchTick(data, tick) {
 
         moveSliderIcon(position);
         moveBallIconToPlayer(data.matchTick.player_possession_id);
-        console.log("Ball given")
         tick++;
         possession = data.matchTick.possession_team_id;
         resolve();
@@ -531,7 +529,6 @@ async function doShooting(score, scoringTrick) {
     }
     else if(shooterPriority !== 'Score') { //they decided to shoot randomly
         addBoldTextToTextBox(`${shooterElement.querySelector('.player-name').textContent} decided to shoot!`);
-        console.log("Shooter priority: ", shooterPriority)
     }
     else {
         addBoldTextToTextBox(`Shot attempted by  ${score.name}`);
@@ -544,7 +541,6 @@ async function doShooting(score, scoringTrick) {
         addBoldTextToTextBox(`Trick shot!`);
         const ballIcon = players[shooterId].querySelector('.ball-icon');
         if (ballIcon) {
-            console.log('Rotating ball icon');
             // Reset any previous animations on the ballIcon
             gsap.killTweensOf(ballIcon);
 
@@ -625,14 +621,11 @@ function uncenterAllPlayers() {
 }
 
 function givePlayerBall(playerId) {
-    console.log("Giving player ball:", playerId);
     const ballIcons = document.querySelectorAll('.ball-icon');
     ballIcons.forEach(icon => {
         const playerElement = icon.parentElement.parentElement.parentElement;
-        //console.log(playerElement.getAttribute('data-player-id'));
         if (playerElement.getAttribute('data-player-id') == playerId) {
             icon.style.display = 'block';
-            console.log("Ball given to player");
         } else {
             icon.style.display = 'none';
         }
@@ -641,7 +634,6 @@ function givePlayerBall(playerId) {
 
 function moveBallIconToPlayer(playerId) {
     return new Promise((resolve, reject) => {
-        console.log('Moving ball icon to player:', playerId);
 
         // Find the current ball icon
         const ballIcon = document.querySelector('.ball-icon:not([style*="display: none"])');
@@ -654,7 +646,6 @@ function moveBallIconToPlayer(playerId) {
         //console.log(ballIcon);
         if(ballIcon.parentElement.parentElement.parentElement) {
             if(ballIcon.parentElement.parentElement.parentElement.getAttribute('data-player-id') == playerId) {
-                console.log("Ball already with player");
                 resolve();
                 return;
             }
@@ -815,11 +806,9 @@ function setActionIcon(player, offense) { //offense is set to either "offense" o
 
     console.log("Action of ", player.querySelector('.player-name').textContent,": ", action);
     if(action === "Knocked out") {
-        console.log("KO");
         player.querySelector('.action-icon').style.display = 'block';
         const actionIcon = player.querySelector('.action-icon');
         if (actionIcon) {
-            console.log("KO first step");
             actionIcon.src = '/Resources/KO.png'; // Change the image URL as needed
             const actionIconContainer = player.querySelector('.action-icon-container');
             tooltip = actionIconContainer.getElementsByClassName('tooltip')[0];
@@ -839,11 +828,6 @@ function setActionIcon(player, offense) { //offense is set to either "offense" o
         let tooltip;
         if (actionIconContainer) {
             tooltip = actionIconContainer.getElementsByClassName('tooltip')[0];
-            if (tooltip) {
-                console.log('Tooltip:', tooltip.textContent);
-            } else {
-                console.error('Tooltip not found in action-icon-container.');
-            }
         } else {
             console.error('Action icon container not found.');
         }
@@ -851,34 +835,33 @@ function setActionIcon(player, offense) { //offense is set to either "offense" o
             if(action === "Rest") {
                 tooltip.textContent = "Resting";
             }
-            else {
+            else if(targetPlayer){
                 tooltip.textContent = `${action}ing ${targetPlayer.querySelector('.player-name').textContent}`;
+            }
+            else {
+                tooltip.textContent = `${action}ing randomly`;
             }
         }
         if(action === 'Assist') {
             const actionIcon = player.querySelector('.action-icon');
-            console.log("Assist first step");
             if (actionIcon) {
                 actionIcon.src = '/Resources/assist.png'; // Change the image URL as needed
             }
         }
         else if(action === "Attack") {
             const actionIcon = player.querySelector('.action-icon');
-            console.log("Attack first step");
             if (actionIcon) {
                 actionIcon.src = '/Resources/attack.png'; // Change the image URL as needed
             }
         }
         else if(action === "Protect") {
             const actionIcon = player.querySelector('.action-icon');
-            console.log("Attack first step");
             if (actionIcon) {
                 actionIcon.src = '/Resources/protect.png'; // Change the image URL as needed
             }    
         }
         else if(action === "Rest") {
             const actionIcon = player.querySelector('.action-icon');
-            console.log("Resting first step");
             if (actionIcon) {
                 actionIcon.src = '/Resources/rest.png'; // Change the image URL as needed
             }

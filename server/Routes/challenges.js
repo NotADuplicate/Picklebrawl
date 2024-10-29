@@ -618,4 +618,5 @@ function runMatch(challengeId) {
         })
     })
 }
+//runMatch(1);
 export default router;

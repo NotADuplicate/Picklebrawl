@@ -8,6 +8,8 @@ class Player {
     id;
     quirkId;
     team;
+    power;
+    range = 0;
 
     bulk = 1;
     finesse = 1;
@@ -48,10 +50,14 @@ class Player {
     injury = false;
     quirk = null;
 
-    hp;
-    maxHp;
+    hp = 100;
+    maxHp = 100;
     ATTACK_MODIFIER = 1;
     advance = 0;
+    assisters = 0;
+    lastShotTick = -5;
+    knockedOut = false;
+    breakAwayChance = 0.04;
 
     PLAYER_ASSIST_MODIFIER = 0.75;
 
@@ -78,11 +84,6 @@ class Player {
         const quirkClass = quirks[quirkKeys[quirkId]];
         this.quirk = quirkClass;
         console.log("Set stats of player ", this.name);
-    }
-
-    setHp() {
-        this.maxHp = 100;
-        this.hp = 100;
     }
 
     get name() {
@@ -112,12 +113,12 @@ class Player {
     save(callback, otherId, draft) {
         let query;
         if(draft) {
-            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, trickiness, focus, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         } else {
-            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         }
         db.run(query, 
-            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId], function(err) {
+            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId, this.power], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return callback(err);
@@ -128,9 +129,7 @@ class Player {
 
     pickRandomQuirk(draft = false) {
         const quirkKeys = Object.keys(quirks);
-
         const selectedQuirkKey = QuirkGenerator.pickRandomQuirk(draft);
-    
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
         this.quirk = quirkClass;
@@ -138,7 +137,17 @@ class Player {
         this.quirk.nameGenerationChanges(this);
     }
 
+    pickSetQuirk(quirkClass) {
+        const quirkKeys = Object.keys(quirks);
+        const selectedQuirkKey = quirkClass;
+        this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
+        this.quirk = quirks[selectedQuirkKey];
+        console.log("Picked quirk: ", quirkClass.title);
+        this.quirk.nameGenerationChanges(this);
+    }
+
     randomize_stats(power) {
+        this.power = power;
         power += this.quirk.POWER_MODIFIER;
         //return; // Disable randomization for now
         const totalPoints = power + this.quirk.POWER_MODIFIER;
@@ -162,9 +171,9 @@ class Player {
     generateName() {
         let name;
         const sample = arr => arr[Math.floor(Math.random() * arr.length)];
-        if(Math.random() < 0.7) { name = NameGenerator.generate(); }
+        if(Math.random() < 0.6) { name = NameGenerator.generate(); }
         else { name = NameGenerator.zacNameGeneration(); }
-        name += ' ' + sample([
+        let lastName = sample([
             'Smith', 'Johnson', 'Williams', 'Jones', 'Brown', 'Jones', 'Garcia',
             'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',
             'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore',
@@ -181,10 +190,17 @@ class Player {
             'Mendoza', 'Ruiz', 'Hughes', 'Price', 'Alvarez', 'Castillo', 'Sanders',
             'Patel', 'Myers', 'Long', 'Ross', 'Foster', 'Jimenez', 'Arleth', 'Everhart',
             'Wohl', 'Baker', 'Lane', 'Henderson', 'Cole', 'Funte', 'Paul-Healy', 'Greene',
-            'Philips', name, 'King', 'Jr', 'Pickle', 'Jordan', 'Diaz',
-            'Swift', 'Rodrigo', 'Parker', 'Sprow', 'Cox', '', 'Kennedy', 'Charlie', 'Zac', 'Pup',
+            'Philips', 'King', 'Jr', 'Pickle', 'Jordan', 'Diaz',
+            'Swift', 'Rodrigo', 'Parker', 'Sprow', 'Cox', '', 'Kennedy', 'Charles', 'Zac', 'Pup',
             'Lebron', 'James', 'Usmanov', 'Nipp', 'Polio', 'Nixon', 'Obama', 'Biden', 'Usmanov'
         ]);
+        if(name.length > 2 && name.length < 7 && Math.random() < 0.05) {
+            lastName = name;
+        }
+        else if(name.length >= 7 && Math.random() < 0.1) {
+            lastName = '';
+        }
+        name = name + ' ' + lastName;
         return name;
     }
 
@@ -213,6 +229,9 @@ class Player {
                     }
             });
             target.hp = Math.max(0,target.hp-hpDamage);
+            if(target.hp == 0) {
+                target.knockout(match);
+            }
         }
     }
 
@@ -224,10 +243,18 @@ class Player {
         target.tempFinesse += modifier * this.PLAYER_ASSIST_MODIFIER * this.finesse;
         target.tempHeight += modifier * this.PLAYER_ASSIST_MODIFIER * (this.height + this.finesse) / 2;
         target.tempStrength += modifier * this.PLAYER_ASSIST_MODIFIER * (this.strength + this.finesse) / 2;
+        target.tempBulk = Math.min(this.bulk, target.tempBulk);
+        target.tempFinesse = Math.min(this.finesse, target.tempFinesse);
+        target.tempHeight = Math.min(this.height, target.tempHeight);
+        target.tempStrength = Math.min(this.strength, target.tempStrength);
 
         //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
         target.tempTrickiness = Math.min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
         target.tempFocus = Math.max(this.focus, target.tempFocus); 
+    }
+
+    knockout(match) {
+        this.knockedOut = true;
     }
 
     protect(target) {

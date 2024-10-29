@@ -293,3 +293,54 @@ function timeAgo(date) {
         return (new Date(date).toLocaleDateString());
     }
 }
+
+
+// Existing code...
+
+// Function to add a draft as a current event
+function addDraftEvent() {
+    const currentEventsContainer = document.getElementById('current-events-container');
+
+    // Create the event card
+    const eventCard = document.createElement('div');
+    eventCard.classList.add('event-card');
+
+    // Event info
+    const eventInfo = document.createElement('div');
+    eventInfo.classList.add('event-info');
+
+    const eventTitle = document.createElement('p');
+    eventTitle.classList.add('event-title');
+    eventTitle.textContent = 'Player Draft';
+
+    const eventDescription = document.createElement('p');
+    eventDescription.classList.add('event-description');
+    eventDescription.textContent = 'A new player draft is now available. Click below to participate.';
+
+    eventInfo.appendChild(eventTitle);
+    eventInfo.appendChild(eventDescription);
+
+    // Event actions
+    const eventActions = document.createElement('div');
+    eventActions.classList.add('event-actions');
+
+    const viewDraftButton = document.createElement('button');
+    viewDraftButton.classList.add('view-draft-button');
+    viewDraftButton.textContent = 'View Draft';
+    viewDraftButton.onclick = function() {
+        // Redirect to the draft page
+        window.location.href = '/draft/draft.html?draftId=1';
+    };
+
+    eventActions.appendChild(viewDraftButton);
+
+    // Assemble the event card
+    eventCard.appendChild(eventInfo);
+    eventCard.appendChild(eventActions);
+
+    // Add the event card to the current events container
+    currentEventsContainer.appendChild(eventCard);
+}
+
+// Call the function to add the draft event
+addDraftEvent();

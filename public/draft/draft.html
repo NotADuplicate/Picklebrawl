@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player Draft</title>
+    <link rel="stylesheet" href="draft.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Player Draft</h1>
+        <p>Choose your players wisely!</p>
+    </header>
+
+    <!-- Sort Options -->
+    <div class="sort-options">
+        <label for="sort-select">Sort by:</label>
+        <select id="sort-select" onchange="sortPlayers()">
+            <option value="bulk">Bulk</option>
+            <option value="focus">Focus</option>
+            <option value="trickiness">Trickiness</option>
+            <option value="height">Height</option>
+            <option value="strength">Strength</option>
+            <option value="finesse">Finesse</option>
+        </select>
+    </div>
+
+    <!-- Player List -->
+    <main>
+        <div id="player-list">
+            <!-- Players will be dynamically added here -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2023 Player Draft Inc.
+    </footer>
+
+    <script src="draft.js"></script>
+</body>
+</html>

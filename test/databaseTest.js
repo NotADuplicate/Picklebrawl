@@ -10,24 +10,29 @@ import { assert } from 'chai';
 
 // Assume that 2 teams have been added with ids 1 and 2 respectively
 // Can't get load team to work
-let team1 = new Team("A", "Rachel", 1, null, false)
-let team2 = new Team("B", "Charlie", 2, null, false)
-team1.load(1)
-team2.load(2)
-console.log("Team objects created")
-console.log("Team1 name: " + team1.teamName)
-assert(team1.teamName != "A")
-assert(team2.teamName != "B")
+const namesFilePath = path.join(__dirname, './names.json');
+let namesArray = [];
 
-let weatherObj = new weather.Windy()
-console.log("Weather object created")
-let match = new Match(team1, team2, weatherObj)
-console.log("Match object created")
+fs.readFile(namesFilePath, 'utf8', (err, data) => {
+    if (err) {
+        console.error('Error reading names file:', err.message);
+        return;
+    }
+    try {
+        let namesJson = JSON.parse(data);
+        NameGenerator.init(namesJson.names);
+    } catch (parseErr) {
+        console.error('Error parsing names file:', parseErr.message);
+    }
+});
 
-// Run a match between them
-for(let i = 0; i < 4; i++) {
-    match.tick()
-    console.log("Tick: " + toString(i))
+let player = new Player();
+const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+const playerName = player.generateName();
+const lettersInName = alphabet.filter(letter => playerName.toLowerCase().includes(letter));
+console.log(`Letters in player name: ${lettersInName.join(', ')}`);
+/*for(i = 0; i < 8; i++) {
+    player.generateName();
+
 }
-
-// Remember to delete database.sqlite at the end
+// Remember to delete database.sqlite at the end*/

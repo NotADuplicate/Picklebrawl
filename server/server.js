@@ -10,6 +10,7 @@ import teamRoutes from './Routes/teams.js';
 import challengesRoutes from './Routes/challenges.js';
 import statsRoutes from './Routes/stats.js';
 import matchRoutes from './Routes/match.js';
+import draftRoutes from './Routes/draft.js';
 import fs from 'fs';
 
 const app = express();
@@ -41,13 +42,13 @@ fs.readFile(namesFilePath, 'utf8', (err, data) => {
     }
 });
 
-
 // Use routers
 app.use('/', leagueRoutes);
 app.use('/', teamRoutes);
 app.use('/', challengesRoutes);
 app.use('/', statsRoutes);
 app.use('/', matchRoutes);
+app.use('/', draftRoutes);
 
 // Serve login.html as the default page
 app.get('/', (req, res) => {

@@ -1,12 +1,12 @@
 import { Quirk } from './quirk.js';
 
 export class Codependent extends Quirk {
-    static POWER_MODIFIER = 4;
+    static POWER_MODIFIER = 5;
     static title = "Codependent";
     static description = ("Sets your highest stat(s) to 1 unless someone else has this quirk");
     static likelihood = 5;
     static APPEARS_IN_GENERATION = false;
-    static APPEARS_IN_DRAFT = true;
+    static APPEARS_IN_DRAFT = false;
 
     //Since this quirk decreases your highest stat, the generation should prevent having multiple stats tied for highest
     static playerStatGenerationChanges(player, power) {

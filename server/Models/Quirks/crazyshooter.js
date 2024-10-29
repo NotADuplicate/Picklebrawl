@@ -6,7 +6,7 @@ export class CrazyShooter extends Quirk {
     static likelihood = 1;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
-    static SHOT_CHANCE = 0.1;
+    static SHOT_CHANCE = 0.15;
     static FINESSE_BONUS = 4;
 
     static tickEffect(player, match) {

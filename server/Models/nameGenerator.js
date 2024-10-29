@@ -212,5 +212,6 @@ export class NameGenerator{
             ]));
         }
         name = name.join('') + sample("wrrtttyppsdddfghhkllzxcvbbnnnnmmmm");
+        return(name);
     }
 }

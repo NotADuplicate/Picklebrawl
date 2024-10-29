@@ -67,6 +67,7 @@ db.serialize(() => {
         strength INTEGER NOT NULL,
         trickiness INTEGER NOT NULL,
         focus INTEGER NOT NULL,
+        power INTEGER NOT NULL, 
         team_id INTEGER,
         quirk INT NOT NULL,
         draft_id INT,
@@ -228,6 +229,12 @@ db.serialize(() => {
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (player_id) REFERENCES players(id)
+    );`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS drafts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        league_id INTEGER NOT NULL,
+        FOREIGN KEY (league_id) REFERENCES leagues(id)
     );`);
 });
 

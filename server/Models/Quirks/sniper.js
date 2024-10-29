@@ -10,6 +10,12 @@ export class Sniper extends Quirk {
     static START_EFFECT_ORDER = 3;
 
     static scoreEffect(shooter, match, shooting, range, bonus) {
-        return shooting+bonus-(range*match.SHOOTING_DISTANCE_MODIFIER/2)>0;
+        if(Math.random() < 0.1 - (0.01 * shooter.finesse)) { //there is always at least a smmall chance of missing of making
+            return false;
+        }
+        if(Math.random < (0.015 * shooter.finesse)) {
+            return true;
+        }
+        return shooting+bonus-(range*match.SHOOTING_DISTANCE_LINEAR + match.SHOOTING_DISTANCE_EXPONENTIAL*(range**2))/2>0;
     }
 }

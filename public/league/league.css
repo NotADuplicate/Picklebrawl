@@ -191,6 +191,17 @@ section h2 {
     gap: 10px;
 }
 
+/* Current Events Section (New) */
+#current-events-section {
+    flex: 1 1 36%;
+    margin-right: 2%;
+}
+
+#current-events-container {
+    display: flex;
+    flex-direction: column;
+}
+
 /* Button Styles */
 button {
     padding: 10px 15px;

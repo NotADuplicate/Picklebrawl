@@ -43,7 +43,13 @@ export class Quirk {
     }
 
     static scoreEffect(shooter, match, shooting, range, bonus) {
-        return shooting+bonus-(range*match.SHOOTING_DISTANCE_MODIFIER)>0;
+        if(Math.random() < 0.1 - (0.01 * shooter.finesse)) { //there is always at least a smmall chance of missing of making
+            return false;
+        }
+        if(Math.random < (0.015 * shooter.finesse)) {
+            return true;
+        }
+        return shooting+bonus-(range*match.SHOOTING_DISTANCE_LINEAR + match.SHOOTING_DISTANCE_EXPONENTIAL*(range**2))>0;
     }
 
     static attackEffect(player, target) {

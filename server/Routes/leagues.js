@@ -1,6 +1,7 @@
 import { Team } from '../Models/team.js';
 import express from 'express';
 import { db } from '../database.js';
+import { Draft } from '../Models/draft.js';
 
 const router = express.Router();
 
@@ -120,6 +121,8 @@ router.post('/start-league', (req, res) => {
             }
             res.json({ message: 'League started successfully!' });
         });
+        const draft = new Draft(league.id);
+        draft.generatePlayers(1);
     });
 });
 
