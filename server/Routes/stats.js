@@ -12,13 +12,14 @@ router.get('/game-stats', (req, res) => {
     let query = `
         SELECT home_team_id, away_team_id, home_team_score, away_team_score
         FROM match_history
-        WHERE home_team_id = {teamId}
-        OR away_team_id = {team_Id}
+        WHERE home_team_id = ${teamId}
+        OR away_team_id = ${teamId}
     `;
     let params = [];
 
     db.each(query, params, (err, rows) => {
         if (err) {
+            console.log('Error:', err)
             return res.status(500).json({ message: 'Error fetching games for game stats!' });
         }
         res.json(rows)
