@@ -22,10 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(leagues => {
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
         if (league) {
-            //const listItem = document.createElement('li');
+            localStorage.setItem("leagueId", league.id);
             leagueFounderElement.textContent = league.founder;
             // Disable the start league button if the league has already started or if the logged-in user is not the founder
             if (league.started || loggedInUser !== league.founder) {
+                console.log("League unstartable")
+                startLeagueButton.display = "none";
                 startLeagueButton.disabled = true;
                 startLeagueButton.textContent = league.hasStarted ? 'League Started' : 'Start League';
             } else {
@@ -256,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startLeague(leagueName) {
+        console.log("Starting league")
         fetch('/start-league', {
             method: 'POST',
             headers: {

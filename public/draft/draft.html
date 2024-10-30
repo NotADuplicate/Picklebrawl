@@ -12,29 +12,46 @@
         <p>Choose your players wisely!</p>
     </header>
 
-    <!-- Sort Options -->
-    <div class="sort-options">
-        <label for="sort-select">Sort by:</label>
-        <select id="sort-select" onchange="sortPlayers()">
-            <option value="bulk">Bulk</option>
-            <option value="focus">Focus</option>
-            <option value="trickiness">Trickiness</option>
-            <option value="height">Height</option>
-            <option value="strength">Strength</option>
-            <option value="finesse">Finesse</option>
-        </select>
-    </div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Player List and Sort Options -->
+        <div class="left-panel">
+            <!-- Sort Options -->
+            <div class="sort-options">
+                <label for="sort-select">Sort by:</label>
+                <select id="sort-select" onchange="sortPlayers()">
+                    <option value="bulk">Bulk</option>
+                    <option value="focus">Focus</option>
+                    <option value="trickiness">Trickiness</option>
+                    <option value="height">Height</option>
+                    <option value="strength">Strength</option>
+                    <option value="finesse">Finesse</option>
+                </select>
+            </div>
 
-    <!-- Player List -->
-    <main>
-        <div id="player-list">
-            <!-- Players will be dynamically added here -->
+            <!-- Player List -->
+            <main>
+                <div id="player-list">
+                    <!-- Players will be dynamically added here -->
+                </div>
+            </main>
         </div>
-    </main>
+
+        <!-- Draft Order Panel -->
+        <div class="right-panel">
+            <h2>Draft Order</h2>
+            <ol id="draft-order-list">
+                <!-- Teams will be dynamically added here -->
+            </ol>
+            <div id="user-position">
+                <!-- User's position will be displayed here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
-        &copy; 2023 Player Draft Inc.
+        &copy; 2024 Player Draft Inc.
     </footer>
 
     <script src="draft.js"></script>

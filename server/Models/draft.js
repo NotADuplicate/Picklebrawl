@@ -1,19 +1,28 @@
 import { Player } from './player.js';
 import { Codependent } from './Quirks/codependent.js';
+import { db } from '../database.js';
 export class Draft {
     players = [];
     draftId;
     leagueId;
     constructor(leagueId) {
+        console.log("Starting draft")
         this.leagueId = leagueId;
         const self = this;
-        db.run(`INSERT INTO drafts (league_id) VALUES (?)`, [leagueId], function(err) {
+        db.run(`INSERT INTO drafts (league_id, currently_drafting_team_id) VALUES (?, (SELECT MIN(id) FROM teams WHERE league_id = ?))`, [leagueId, leagueId], function(err) {
             if (err) {
                 console.log(err);
                 return;
             }
             self.draftId = this.lastID;
-            generatePlayers(3);
+            db.get('SELECT COUNT(*) as teamCount FROM teams WHERE league_id = ?', [leagueId], function(err, row) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                const numTeams = row.teamCount;
+                self.generatePlayers(numTeams);
+            });
         });
     }
 

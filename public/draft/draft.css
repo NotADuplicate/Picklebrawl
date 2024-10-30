@@ -7,7 +7,6 @@ body {
     color: #333;
 }
 
-/* Header */
 header {
     background-color: #2c3e50;
     color: #fff;
@@ -25,22 +24,64 @@ header p {
     margin-top: 10px;
 }
 
+/* Main Content Layout */
+.main-content {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.left-panel {
+    flex: 3;
+    margin-right: 20px;
+}
+
+.right-panel {
+    flex: 1;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.right-panel h2 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+#draft-order-list {
+    list-style-type: decimal;
+    padding-left: 20px;
+}
+
+#draft-order-list li {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.current-team {
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+#user-position {
+    margin-top: 20px;
+    font-size: 16px;
+    background-color: #ecf0f1;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
 /* Sort Options */
 .sort-options {
-    text-align: center;
-    margin: 20px 0;
+    margin-bottom: 20px;
 }
 
 .sort-options select {
     padding: 8px;
     font-size: 16px;
-}
-
-/* Main Content */
-main {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 0 20px;
 }
 
 /* Player Card */
@@ -66,13 +107,14 @@ main {
 
 .player-stats {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     margin-top: 10px;
 }
 
 .player-stats span {
     font-size: 14px;
     margin-right: 10px;
+    margin-bottom: 5px;
 }
 
 .draft-button {
@@ -90,9 +132,26 @@ main {
     background-color: #c0392b;
 }
 
+/* Footer */
+footer {
+    background-color: #2c3e50;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+}
+
 /* Responsive Design */
-@media screen and (min-width: 768px) {
-    .player-stats {
-        justify-content: start;
+@media screen and (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .left-panel,
+    .right-panel {
+        margin-right: 0;
+    }
+
+    .right-panel {
+        margin-top: 20px;
     }
 }

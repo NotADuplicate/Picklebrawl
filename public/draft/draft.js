@@ -1,14 +1,34 @@
 let draftPlayers = [];
 
+let teams =[];
+
+let draftId;
+
+// Current draft position
+let currentDraftIndex = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const draftId = urlParams.get('draftId');
-    fetch(`/draft/players?draftId=${draftId}`)
+    draftId = urlParams.get('draftId');
+    const leagueId = localStorage.getItem('leagueId');
+
+    // Fetch and display teams
+    fetch(`/teams?leagueId=${1}`)
     .then(response => response.json())
-    .then(players => {
-        console.log(players);
-        draftPlayers = players;
-        displayPlayers(players);
+    .then(teamsInfo => {
+        teams = teamsInfo;
+        displayDraftOrder();
+
+        fetch(`/draft/players?draftId=${draftId}`)
+        .then(response => response.json())
+        .then(res => {
+            const players = res.prospects;
+            currentDraftIndex = res.turn % teams.length;
+            console.log(res);
+            console.log(players);
+            draftPlayers = players;
+            displayPlayers(players);
+        });
     });
 });
 
@@ -24,17 +44,24 @@ function displayPlayers(playerList) {
         playerCard.innerHTML = `
             <div class="player-info">
                 <h2>${player.name}</h2>
+                <h2>${player.title}<h2>
                 <div class="player-stats">
                     <span><strong>Bulk:</strong> ${player.bulk}</span>
                     <span><strong>Focus:</strong> ${player.focus}</span>
                     <span><strong>Trickiness:</strong> ${player.trickiness}</span>
-                    <span><strong>Height:</strong> ${player.height} ft</span>
+                    <span><strong>Height:</strong> ${player.height}</span>
                     <span><strong>Strength:</strong> ${player.strength}</span>
                     <span><strong>Finesse:</strong> ${player.finesse}</span>
                 </div>
             </div>
-            <button class="draft-button" onclick="draftPlayer('${player.name}')">Draft</button>
         `;
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        const currentTeam = teams[currentDraftIndex];
+        console.log(teams, currentDraftIndex)
+    
+        if (currentTeam.owner == loggedInUser) {
+            playerCard.innerHTML += `<button class="draft-button" onclick="draftPlayer('${player.id}')">Draft</button>`
+        }
         playerCard.dataset.id = player.id;
         playerCard.dataset.power = player.power;
 
@@ -43,8 +70,29 @@ function displayPlayers(playerList) {
 }
 
 // Function to draft a player
-function draftPlayer(playerName) {
-    alert(`You have drafted ${playerName}!`);
+function draftPlayer(playerId) {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    const currentTeam = teams[currentDraftIndex];
+
+    if (currentTeam.owner !== loggedInUser) {
+        alert("It's not your turn to draft!");
+        return;
+    }
+    console.log("Player id: ", playerId)
+    const user = localStorage.getItem('loggedInUser');
+    fetch(`/draft/player`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playerId, user, draftId })
+    })
+    .then(response => response.json())
+    .then(res => {
+        if(res.message = 'Player updated successfully!') {
+            location.reload();
+        }
+    });
 }
 
 // Function to sort players by selected attribute
@@ -54,5 +102,29 @@ function sortPlayers() {
     displayPlayers(draftPlayers);
 }
 
-// Initial display
-//displayPlayers(players);
+function displayDraftOrder() {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    const draftOrderList = document.getElementById('draft-order-list');
+    draftOrderList.innerHTML = ''; // Clear existing content
+
+    teams.forEach((team, index) => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `<strong>${team.name}</strong><br><small>${team.owner}</small>`;
+
+        if (index === currentDraftIndex) {
+            listItem.classList.add('current-team');
+            listItem.innerHTML += ' (Currently Drafting)';
+        }
+
+        if (team.owner === loggedInUser) {
+            listItem.innerHTML += ' (Your Team)';
+        }
+
+        draftOrderList.appendChild(listItem);
+    });
+
+    // Display user's position in the queue
+    const userPositionElement = document.getElementById('user-position');
+    const positionInQueue = (teams.length + currentDraftIndex - teams.findIndex(team => team.owner === loggedInUser)) % teams.length;
+    userPositionElement.textContent = `Your team is ${positionInQueue === 0 ? 'currently drafting!' : 'drafting in ' + positionInQueue + ' turn(s)'}.`;
+}

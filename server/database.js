@@ -73,6 +73,7 @@ db.serialize(() => {
         draft_id INT,
         FOREIGN KEY (team_id) REFERENCES teams(id)
         FOREIGN KEY (quirk) REFERENCES quirks(id)
+        FOREIGN KEY (draft_id) REFERENCES drafts(id)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
@@ -115,7 +116,7 @@ db.serialize(() => {
         home_team_score INT,
         away_team_score INT,
         weather TEXT NOT NULL,
-        created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '-100 seconds')),
+        created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '+20 seconds')),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),
         FOREIGN KEY (league_id) REFERENCES leagues(id),
@@ -234,7 +235,11 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS drafts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INTEGER NOT NULL,
+        turn INT NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        currently_drafting_team_id INT,
         FOREIGN KEY (league_id) REFERENCES leagues(id)
+        FOREIGN KEY (currently_drafting_team_id) REFERENCES teams(id)
     );`);
 });
 

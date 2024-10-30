@@ -105,6 +105,7 @@ router.get('/leagues', (req, res) => {
 });
 
 router.post('/start-league', (req, res) => {
+    console.log("Starting league")
     const { leagueName, username } = req.body;
     db.get(`SELECT * FROM leagues WHERE name = ?`, [leagueName], (err, league) => {
         if (err || !league) {
