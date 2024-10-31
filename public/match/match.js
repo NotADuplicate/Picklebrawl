@@ -169,6 +169,7 @@ async function showGame(matchId) {
                 const trickHistoryForTick = data.trickHistory.filter(history => history.tick === tick);
                 const attackHistoryForTick = data.attackHistory.filter(history => history.tick === tick);
                 const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
+                const breakawayHistoryForTick = data.breakawayHistory.filter(history => history.tick === tick);
                 console.log(i)
                 const fullTickData = {
                     scoringHistory: scoringHistoryForTick,
@@ -176,6 +177,7 @@ async function showGame(matchId) {
                     attackHistory: attackHistoryForTick, 
                     matchTick: tickData,
                     actionHistory: actionHistoryForTick,
+                    breakawayHistory: breakawayHistoryForTick,
                     time: data.matchCreatedAt + timeOffset 
                 };
                 timeOffset += TIME_PER_TICK;
@@ -315,7 +317,6 @@ function runMatchTick(data, tick) {
         let position;
 
         if(data.trickHistory.length > 0) {
-            //console.log(data.trickHistory);
             data.trickHistory.forEach(trick => {
                 const trickerElement = players[trick.tricker_id];
                 const trickedElement = players[trick.tricked_id];
@@ -414,6 +415,10 @@ function runMatchTick(data, tick) {
         else if(possession != data.matchTick.possession_team_id && possession != null) {
             const playerStealing = players[data.matchTick.player_possession_id];
             addBoldTextToTextBox(`${playerStealing.querySelector('.player-name').textContent} steals the ball!`);
+        }
+        else if(data.breakawayHistory.length > 0) { //show breakaway
+            const playerBreakingaway = players[data.breakawayHistory[0].player_id];
+            addBoldTextToTextBox(`${playerBreakingaway.querySelector('.player-name').textContent} got past the defense!`);
         }
 
         if (data.matchTick.possession_team_id == homeTeamId) {

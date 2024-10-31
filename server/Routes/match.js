@@ -53,14 +53,21 @@ router.get('/match/match-ticks', (req, res) => {
                             console.log(err);
                             return res.status(500).json({ message: 'Error fetching action history!' });
                         }
-                        res.json({
-                            matchTicks: tick_rows,
-                            scoringHistory: score_rows,
-                            attackHistory: attack_rows,
-                            trickHistory: trick_rows,
-                            actionHistory: action_rows,
-                            matchCreatedAt: matchCreatedAt
-                        });
+                        db.all(`SELECT * FROM advancement_history WHERE "type" = 'Breakaway' AND match_id = ?`, [matchId], (err, breakaways) => {
+                            if(err) {
+                                console.log(err);
+                                return res.status(500).json({ message: 'Error fetching breakaway history!' });
+                            }
+                            res.json({
+                                matchTicks: tick_rows,
+                                scoringHistory: score_rows,
+                                attackHistory: attack_rows,
+                                trickHistory: trick_rows,
+                                actionHistory: action_rows,
+                                breakawayHistory: breakaways,
+                                matchCreatedAt: matchCreatedAt
+                            });
+                        })
                     });
                 });
             });

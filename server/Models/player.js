@@ -255,6 +255,28 @@ class Player {
 
     knockout(match) {
         this.knockedOut = true;
+        // Remove player from match players list
+        const playerIndex = match.players.indexOf(this);
+        if (playerIndex > -1) {
+            match.players.splice(playerIndex, 1);
+        }
+
+        // Remove player from offense team if present
+        const offenseIndex = match.offenseTeam.players.indexOf(this);
+        if (offenseIndex > -1) {
+            match.offenseTeam.players.splice(offenseIndex, 1);
+        }
+
+        // Remove player from defense team if present
+        const defenseIndex = match.defenseTeam.players.indexOf(this);
+        if (defenseIndex > -1) {
+            match.defenseTeam.players.splice(defenseIndex, 1);
+        }
+
+        // Check if any team is empty and end the game if so
+        if (match.offenseTeam.players.length === 0 || match.defenseTeam.players.length === 0) {
+            match.endGame();
+        }
     }
 
     protect(target) {

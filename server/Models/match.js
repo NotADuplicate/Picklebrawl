@@ -240,8 +240,8 @@ class Match {
             this.doScoring();
         }
 
-        if(this.playerWithPossession.hp < 0.5) { //possession player is knocked out
-            const healthyPlayer = this.offenseTeam.players.find(player => player.hp > 0.5);
+        if(this.playerWithPossession.knockedOut) { //possession player is knocked out
+            const healthyPlayer = this.offenseTeam.players.find(player => !player.knockedOut);
             if (healthyPlayer) {
                 this.playerWithPossession = healthyPlayer;
             } else {
@@ -269,7 +269,7 @@ class Match {
         const offensePriorityList = ["Attack", "Advance", "Score"];
         const defensePriorityList = ["Attack", "Defend_Advance", "Defend_Score"];
         for(const player of this.offenseTeam.players) {
-            if(player.hp < 0.5) {
+            if(player.knockedOut) {
                 player.offensePriority = "KO";
                 player.offensePriorityTarget = "Any";
             }
@@ -287,7 +287,7 @@ class Match {
             }
         }
         for(const player of this.defenseTeam.players) {
-            if(player.hp < 0.5) {
+            if(player.knockedOut) {
                 player.defensePriority = "KO";
                 player.defensePriorityTarget = "Any";
             }
@@ -362,7 +362,7 @@ class Match {
                             }
                             break;
                         case "Attack":
-                            if(typeof player.offensePriorityTarget == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.hp < 0.1) {
+                            if(typeof player.offensePriorityTarget == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.knockedOut) {
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else if(player.offensePriorityTarget == "Any") {
@@ -578,6 +578,9 @@ class Match {
                         }
                     );
                 }
+                for (const possibleShooter of this.offenseTeam.players) {
+                    possibleShooter.range += 5; //if the ball is being stolen then start shooting from further
+                }
                 this.turnover();
             }
         }
@@ -651,9 +654,6 @@ class Match {
                             console.log("Shot Breakaway: ", this.breakAway);
                             this.shoot(player, false); //shoot
                         }
-                    }
-                    else if (this.position + range < this.FIELD_LENGTH) { //if not in range, then increase range
-                        player.range += 3;
                     }
                 }
             }

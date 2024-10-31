@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
+            getDraft(league.id);
             getMatches(league.id);
             // Fetch and display teams
             fetch(`/teams?leagueId=${league.id}`)
@@ -219,6 +220,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getDraft(leagueId) {
+        fetch(`/league/drafts?leagueId=${leagueId}`)
+        .then(response => response.json())
+        .then(draft => {
+            if(draft) {
+                console.log("Draft: ", draft)
+                addDraftEvent(draft.id);
+            }
+        });
+    }
+
     backButton.addEventListener('click', () => {
         window.location.href = `../home/home.html`;
     });
@@ -301,7 +313,7 @@ function timeAgo(date) {
 // Existing code...
 
 // Function to add a draft as a current event
-function addDraftEvent() {
+function addDraftEvent(draftId) {
     const currentEventsContainer = document.getElementById('current-events-container');
 
     // Create the event card
@@ -332,7 +344,7 @@ function addDraftEvent() {
     viewDraftButton.textContent = 'View Draft';
     viewDraftButton.onclick = function() {
         // Redirect to the draft page
-        window.location.href = '/draft/draft.html?draftId=1';
+        window.location.href = `/draft/draft.html?draftId=${draftId}`;
     };
 
     eventActions.appendChild(viewDraftButton);
@@ -344,6 +356,3 @@ function addDraftEvent() {
     // Add the event card to the current events container
     currentEventsContainer.appendChild(eventCard);
 }
-
-// Call the function to add the draft event
-addDraftEvent();

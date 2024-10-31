@@ -123,7 +123,6 @@ router.post('/start-league', (req, res) => {
             res.json({ message: 'League started successfully!' });
         });
         const draft = new Draft(league.id);
-        draft.generatePlayers(1);
     });
 });
 
@@ -163,6 +162,24 @@ router.get('/matches', (req, res) => {
             return res.status(500).json({ message: 'Error fetching matches!' });
         }
         res.json(matches);
+    });
+});
+
+router.get('/league/drafts', (req, res) => {
+    const { leagueId } = req.query;
+    console.log("Checking for active draft in league id:", leagueId);
+
+    db.get(`SELECT * FROM drafts WHERE league_id = ? AND active = 1`, [leagueId], (err, draft) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Error checking for active draft!' });
+        }
+
+        if (!draft) {
+            return res.status(404).json({ message: 'No active draft found for this league!' });
+        }
+
+        res.json(draft);
     });
 });
 
