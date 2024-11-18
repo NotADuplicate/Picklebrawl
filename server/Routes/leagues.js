@@ -2,34 +2,37 @@ import { Team } from '../Models/team.js';
 import express from 'express';
 import { db } from '../database.js';
 import { Draft } from '../Models/draft.js';
+import { authenticator } from '../Models/authenticator.js';
 
 const router = express.Router();
 
 console.log('Loading leagues routes');
 
-const insertTeam = (teamName, leagueId, owner, callback) => {
-    console.log('Inserting team:', teamName, leagueId, owner);
+const insertTeam = (teamName, leagueId, owner_id, callback) => {
+    console.log('Inserting team:', teamName, leagueId, owner_id);
     const team = new Team();
-    team.setInfo(teamName, owner, leagueId);
+    team.setInfo(teamName, owner_id, leagueId);
     team.save(callback);
 };
 
-router.post('/create-league', (req, res) => {
-    const { leagueName, leaguePassword, username, teamName } = req.body;
-    console.log('Creating league:', leagueName, leaguePassword, username, teamName);
+router.post('/create-league', authenticator.authenticateToken, (req, res) => {
+    const { leagueName, leaguePassword, teamName } = req.body;
+    console.log('Creating league:', leagueName, leaguePassword, teamName);
 
-    db.run(`INSERT INTO leagues (name, password, founder, started) VALUES (?, ?, ?, ?)`, [leagueName, leaguePassword, username, false], function(err) {
+    const founderId = req.userId;
+    console.log('Founder ID:', founderId);
+    db.run(`INSERT INTO leagues (name, password, founder_id, started) VALUES (?, ?, ?, ?)`, [leagueName, leaguePassword, founderId, false], function(err) {
         if (err) {
             return res.status(400).json({ message: 'Error creating league!' });
         }
         const leagueId = this.lastID; 
-        db.run(`INSERT INTO league_users (league_id, username) VALUES (?, ?)`, [leagueId, username], (err) => {
+        db.run(`INSERT INTO league_users (league_id, user_id) VALUES (?, ?)`, [leagueId, founderId], (err) => {
             if (err) {
                 return res.status(400).json({ message: 'Error joining league!' });
             }
             console.log('League ID:', leagueId);
 
-            insertTeam(teamName, leagueId, username, (err) => {
+            insertTeam(teamName, leagueId, founderId, (err) => {
                 if (err) {
                     return res.status(400).json({ message: 'Error creating team!' });
                 }
@@ -39,9 +42,10 @@ router.post('/create-league', (req, res) => {
     });
 });
 
-router.post('/join-league', (req, res) => {
-    const { leagueName, leaguePassword, username, teamName } = req.body;
+router.post('/join-league', authenticator.authenticateToken, (req, res) => {
+    const { leagueName, leaguePassword, teamName } = req.body;
 
+    const joinerId = req.userId;
     db.get(`SELECT * FROM leagues WHERE name = ?`, [leagueName], (err, league) => {
         if (err || !league) {
             return res.status(400).json({ message: 'League does not exist!' });
@@ -52,12 +56,12 @@ router.post('/join-league', (req, res) => {
         }
 
 
-        insertTeam(teamName, league.id, username, (err) => {
+        insertTeam(teamName, league.id, joinerId, (err) => {
             if (err) {
                 console.log("Error creating team: ", err)
                 return res.status(400).json({ message: 'Error creating team!' });
             }
-            db.run(`INSERT INTO league_users (league_id, username) VALUES (?, ?)`, [league.id, username], (err) => {
+            db.run(`INSERT INTO league_users (league_id, user_id) VALUES (?, ?)`, [league.id, joinerId], (err) => {
                 if (err) {
                     console.log(err);
                     return res.status(400).json({ message: 'Error joining league!' });
@@ -68,24 +72,20 @@ router.post('/join-league', (req, res) => {
     });
 });
 
-router.get('/leagues', (req, res) => {
-    const { user, leagueName } = req.query;
-    console.log("Getting leagues with user:", user);
+router.get('/leagues', authenticator.authenticateToken, (req, res) => {
+    const { leagueName } = req.query;
     let query = `
-        SELECT leagues.id, leagues.name AS leagueName, leagues.founder, leagues.started, 
-               GROUP_CONCAT(league_users.username) AS players
+        SELECT leagues.id, leagues.name AS leagueName, leagues.started, username,
+               GROUP_CONCAT(league_users.user_id) AS players
         FROM leagues
         LEFT JOIN league_users ON leagues.id = league_users.league_id
+        JOIN users ON league_users.user_id = users.id
+        WHERE users.id = ${req.userId}
     `;
     let params = [];
 
-    if (user) {
-        query += ' WHERE league_users.username = ?';
-        params.push(user);
-    }
-
     if (leagueName) {
-        query += user ? ' AND leagues.name = ?' : ' WHERE leagues.name = ?';
+        query += ' AND leagues.name = ?';
         params.push(leagueName);
     }
 
@@ -93,6 +93,7 @@ router.get('/leagues', (req, res) => {
 
     db.all(query, params, (err, rows) => {
         if (err) {
+            console.log(err);
             return res.status(500).json({ message: 'Error fetching leagues!' });
         }
         // Transform the players from a comma-separated string to an array
@@ -104,15 +105,15 @@ router.get('/leagues', (req, res) => {
     });
 });
 
-router.post('/start-league', (req, res) => {
+router.post('/start-league', authenticator.authenticateToken, (req, res) => {
     console.log("Starting league")
-    const { leagueName, username } = req.body;
+    const { leagueName } = req.body;
     db.get(`SELECT * FROM leagues WHERE name = ?`, [leagueName], (err, league) => {
         if (err || !league) {
             return res.status(400).json({ message: 'League does not exist!' });
         }
 
-        if (league.founder !== username) {
+        if (league.founder_id != req.userId) {
             return res.status(400).json({ message: 'Only the founder can start the league!' });
         }
 
@@ -176,7 +177,7 @@ router.get('/league/drafts', (req, res) => {
         }
 
         if (!draft) {
-            return res.status(404).json({ message: 'No active draft found for this league!' });
+            return res.json([]);
         }
 
         res.json(draft);

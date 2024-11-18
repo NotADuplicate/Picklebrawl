@@ -8,7 +8,7 @@ export class QuirkGenerator {
         console.log('Loading quirks:', quirkKeys);
         for(let i = 0; i < quirkKeys.length; i++) {
             const quirk = quirks[quirkKeys[i]];
-            db.run(`INSERT INTO quirks (id, title, description) VALUES (?, ?, ?)`, [i, quirk.title, quirk.description], function(err) {
+            db.run(`INSERT INTO quirks (id, title, description, power_modifier) VALUES (?, ?, ?, ?)`, [i, quirk.title, quirk.description, quirk.POWER_MODIFIER], function(err) {
                 if (err) {
                     //console.error('Error inserting quirk:', err.message);
                 }

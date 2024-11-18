@@ -10,14 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const leagueName = urlParams.get('league');
     localStorage.setItem('leagueName', leagueName);
+    const token = localStorage.getItem('token');
     const loggedInUser = localStorage.getItem('loggedInUser');
 
     leagueTitle.textContent = leagueName;
     let challengerIds = {} //associates each challenge button with the challenger and challenged
     let challengedIds = {}
+    let myTeamId = null;
 
     // Fetch and display league details
-    fetch(`/leagues?leagueName=${leagueName}`)
+    fetch(`/leagues?leagueName=${leagueName}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Add the token here
+        }
+        }
+    )
     .then(response => response.json())
     .then(leagues => {
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
@@ -42,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch(`/teams?leagueId=${league.id}`)
             .then(response => response.json())
             .then(teams => {
+                console.log('Teams:', teams);
                 teamsContainer.innerHTML = '';
                 challengeButtons = {};
                 teams.forEach(team => {
@@ -108,9 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch and display challenges
     function getChallenges(challengeButtons) {
-    fetch(`/challenges?teamId=${myTeamId}`)
-        .then(response => response.json())
-        .then(challenges => {
+    fetch(`/challenges?teamId=${myTeamId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}` // Add the token here
+        }
+    })
+    .then(response => response.json())
+    .then(challenges => {
             console.log('Challenges:', challenges);
             challenges.forEach(challenge => {
                 console.log('Chalenge:', challenge.id);
@@ -223,10 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function getDraft(leagueId) {
         fetch(`/league/drafts?leagueId=${leagueId}`)
         .then(response => response.json())
-        .then(draft => {
-            if(draft) {
-                console.log("Draft: ", draft)
-                addDraftEvent(draft.id);
+        .then(drafts => {
+            if(drafts.length > 0) {
+                console.log("Draft: ", drafts[0])
+                addDraftEvent(drafts[0].id);
             }
         });
     }
@@ -243,7 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch(`/challenges`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Add the token here
                 },
                 body: JSON.stringify({ teamId, myTeamId })
             })
@@ -255,8 +270,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (button.innerText === 'Accept Challenge') {
             // Accept challenge
             fetch(`/challenges/${button.value}/accept`, {
-                method: 'POST'
-            })
+                method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
+            }})
             .then(response => response.json())
             .then(data => {
                 const challengeId = button.value;
@@ -274,7 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/start-league', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ leagueName, username: loggedInUser })
         })

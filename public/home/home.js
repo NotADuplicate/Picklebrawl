@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showJoinLeagueButton = document.getElementById('show-join-league');
 
     const loggedInUser = localStorage.getItem('loggedInUser');
+    const token = localStorage.getItem('token');
     if (!loggedInUser) {
         window.location.href = '../login/login.html';
     }
@@ -58,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/create-league', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
         })
@@ -79,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/join-league', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
         })
@@ -98,7 +101,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadLeagues() {
         console.log("Getting leagues");
-        fetch(`/leagues?user=${loggedInUser}`)
+        fetch(`/leagues`, {
+            method: 'GET',
+            headers: {
+            'Authorization': `Bearer ${token}` // Add the token here
+            }
+        })
         .then(response => response.json())
         .then(leagues => {
             console.log("Leagues: ", leagues);

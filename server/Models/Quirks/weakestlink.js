@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class WeakestLink extends Quirk {
-    static powerModifier = -4;
+    static POWER_MODIFIER = -4;
     static likelihood = 2;
     static title = "Weakest Link";
     static description = ("Each of your stats are added with the lowest of that stat on your team");
@@ -10,12 +10,12 @@ export class WeakestLink extends Quirk {
     static START_EFFECT_ORDER = 5;
 
     static playerStatGenerationChanges(player, power) {
-        player.baseFinesse = Math.round(player.baseFinesse / 2);
-        player.baseStrength = Math.round(player.baseStrength / 2);
-        player.baseTrickiness = Math.round(player.baseTrickiness / 2);
-        player.baseFocus = Math.round(player.baseFocus / 2);
-        player.baseHeight = Math.round(player.baseHeight / 2);
-        player.baseBulk = Math.round(player.baseBulk / 2);
+        player.finesse = Math.round(player.finesse / 2);
+        player.strength = Math.round(player.strength / 2);
+        player.trickiness = Math.round(player.trickiness / 2);
+        player.focus = Math.round(player.focus / 2);
+        player.height = Math.round(player.height / 2);
+        player.bulk = Math.round(player.bulk / 2);
     }
 
     static startGameEffect(match, player) {

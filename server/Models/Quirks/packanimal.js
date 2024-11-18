@@ -12,7 +12,7 @@ export class PackAnimal extends Quirk {
     static startGameEffect(match, player) {
         let teammatesWithQuirk = 0;
         for (const otherPlayer of match.players) {
-            if (otherPlayer.quirk instanceof PackAnimal && otherPlayer !== player && otherPlayer.team === player.team) {
+            if (otherPlayer.quirk.title === "Pack Animal"  && otherPlayer !== player && otherPlayer.team === player.team) {
                 teammatesWithQuirk++;
             }
         }
@@ -27,7 +27,7 @@ export class PackAnimal extends Quirk {
     static challengeStatModification(players, player) {
         let teammatesWithQuirk = 0;
         for (const otherPlayer of players) {
-            if (otherPlayer.quirk instanceof PackAnimal && otherPlayer !== player && otherPlayer.team === player.team) {
+            if (otherPlayer.quirk.title === "Pack Animal" && otherPlayer !== player && otherPlayer.team === player.team) {
                 teammatesWithQuirk++;
             }
         }

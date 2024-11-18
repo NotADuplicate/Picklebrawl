@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     draftId = urlParams.get('draftId');
     const leagueId = localStorage.getItem('leagueId');
+    const token = localStorage.getItem('token');
 
     // Fetch and display teams
     fetch(`/teams?leagueId=${1}`)
@@ -83,7 +84,8 @@ function draftPlayer(playerId) {
     fetch(`/draft/player`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ playerId, user, draftId })
     })

@@ -5,6 +5,7 @@ class Team {
     players;
     score;
     teamName;
+    owner_id;
     owner;
     teamId;
     leagueId;
@@ -14,9 +15,9 @@ class Team {
         this.players = [];
     }
 
-    setInfo(teamName, owner, leagueId, generatePlayers = true) {
+    setInfo(teamName, owner_id, leagueId, generatePlayers = true) {
         this.teamName = teamName;
-        this.owner = owner;
+        this.owner_id = owner_id;
         this.leagueId = leagueId;
         console.log("NEW TEAM: " + teamName);
         if (generatePlayers) 
@@ -26,7 +27,7 @@ class Team {
     save(callback) {
         console.log("Saving team");
         const self = this;
-        db.run(`INSERT INTO teams (name, league_id, owner) VALUES (?, ?, ?)`, [this.teamName, this.leagueId, this.owner], function(err) {
+        db.run(`INSERT INTO teams (name, league_id, owner_id) VALUES (?, ?, ?)`, [this.teamName, this.leagueId, this.owner_id], function(err) {
             if (err) {
                 console.log("Error saving team: " + err);
                 return callback(err);
@@ -63,7 +64,7 @@ class Team {
     }
 
     generatePlayers() {
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 18; i++) {
             const player = new Player();
             player.pickRandomQuirk(false);
             player.randomize_stats(Math.floor(Math.random() * 3) + 11);
@@ -73,14 +74,14 @@ class Team {
 
     async load(id) {
         return new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM teams WHERE id = ?`, [id], (err, row) => {
+            db.get(`SELECT * FROM teams, users WHERE users.id = teams.owner_id AND teams.id = ?`, [id], (err, row) => {
                 if (err) {
                     console.log("Error loading team: " + err);
                     reject(err);
                 }
 
                 this.teamName = row.name;
-                this.owner = row.owner;
+                this.owner = row.username;
                 this.leagueId = row.league_id;
                 this.teamId = row.id;
                 console.log("Loaded team: " + this.teamName);

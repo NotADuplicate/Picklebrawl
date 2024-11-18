@@ -19,7 +19,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // Create tables if they don't exist
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL
     )`);
 
@@ -27,28 +28,27 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        founder TEXT NOT NULL,
+        founder_id INT NOT NULL,
         started BOOLEAN NOT NULL,
-        FOREIGN KEY (founder) REFERENCES users(username)
+        FOREIGN KEY (founder_id) REFERENCES users(id)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS teams (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         league_id INTEGER NOT NULL,
-        owner TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
         FOREIGN KEY (league_id) REFERENCES leagues(id),
-        FOREIGN KEY (owner) REFERENCES users(username),
+        FOREIGN KEY (owner_id) REFERENCES users(id),
         UNIQUE(league_id, name),
-        UNIQUE(league_id, owner)
+        UNIQUE(league_id, owner_id)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS league_users (
         league_id INTEGER NOT NULL,
-        username TEXT NOT NULL,
+        user_id TEXT NOT NULL,
         FOREIGN KEY (league_id) REFERENCES leagues(id)
-        FOREIGN KEY (username) REFERENCES users(username)
-        UNIQUE(league_id, username)
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS quirks (

@@ -2,6 +2,7 @@ import { Team } from '../Models/team.js';
 import express from 'express';
 import { db } from '../database.js';
 import { Draft } from '../Models/draft.js';
+import { authenticator } from '../Models/authenticator.js';
 
 const router = express.Router();
 
@@ -29,8 +30,9 @@ router.get('/draft/players', (req, res) => {
     });
 });
 
-router.post('/draft/player', (req, res) => {
-    const { playerId, user, draftId } = req.body;
+router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
+    const { playerId, draftId } = req.body;
+    const user = req.user;
     console.log("", user, " is drafting player: ", playerId)
     db.get(`SELECT teams.id FROM teams 
     JOIN drafts on currently_drafting_team_id = teams.id

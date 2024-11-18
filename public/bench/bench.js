@@ -5,6 +5,7 @@ const challengedId = urlParams.get('challengedId');
 const challengerId = urlParams.get('challengerId');
 const challengeId = urlParams.get('challengeId');
 const leagueName = localStorage.getItem('leagueName');
+const token = localStorage.getItem('token');
 const otherTeamId = (challengedId !== myTeamId) ? challengedId : challengerId;
 const challenger = (challengerId === myTeamId) ? true : false;
 let playerDict = {};
@@ -75,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     recommendButton.addEventListener('click', () => {
-        if(recommendButton.textContent === 'Recommend Starters  ') {
+        console.log("Recommend button clicked");
+        if(recommendButton.textContent === 'Recommend Starters') {
             recommendPlayers(myTeamId);
         }
         else if(recommendButton.textContent === 'Recommend Actions') {
@@ -290,9 +292,15 @@ document.getElementById('backButton').addEventListener('click', function() {
 });
 
 function checkChallengeFlags() {
-    fetch(`/challenges/${challengeId}/players-actions`)
-        .then(response => response.json())
-        .then(response => {
+    fetch(`/challenges/${challengeId}/players-actions`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(response => {
             const lockButton = document.getElementById('lock-button');
             console.log("Challenge players: ", response);
             const playerIds = [];
@@ -321,7 +329,7 @@ function checkChallengeFlags() {
             }
             else if(response.flags.challengerPlayersSet && !challenger || response.flags.challengedPlayersSet && challenger) {
                 const readyDiv = document.getElementById('other-team-ready');
-                readyDiv.textContent = 'READY';
+                readyDiv.textContent = 'STARTERS LOCKED';
                 readyDiv.style.color = 'darkgreen';
             }
         })
@@ -330,11 +338,10 @@ function checkChallengeFlags() {
         });
 }
 
-function lockStarters() {
+async function lockStarters() {
     console.log("Lock starters")
     if(startersLocked == false) {
         const lockButton = document.getElementById('lock-button');
-        lockButton.textContent = 'Undo';
         const yourTeamPlayers = document.querySelectorAll('.your-team .player');
         let starterIds = [];
         yourTeamPlayers.forEach(player => {
@@ -345,12 +352,26 @@ function lockStarters() {
             }
         });
 
+        if(starterIds.length < 4) {
+            const result = await showConfirmModal();
+            if (!result) {
+                yourTeamPlayers.forEach(player => {
+                    if (player.dataset.locked === 'true') {
+                        player.dataset.locked = 'false';
+                        player.classList.remove('locked');
+                    }
+                });
+                return;
+            }
+        }
+        lockButton.textContent = 'Undo';
         const teamId = myTeamId;
         const players = starterIds;
         fetch(`/challenges/${challengeId}/add-players`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ teamId, players })
         })
@@ -387,7 +408,8 @@ function unlockStarters() {
     fetch(`/challenges/${challengeId}/remove-players`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId, players })
     })
@@ -514,7 +536,8 @@ function lockActions() {
     fetch(`/challenges/${challengeId}/add-actions`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties})
     })
@@ -537,7 +560,8 @@ function unlockActions() {
     fetch(`/challenges/${challengeId}/remove-actions`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId })
     })
@@ -596,7 +620,8 @@ function bothTeamsReady(playerIds, lockButton) {
     fetch(`/challenges/quirk-actions`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ ids: teamPlayerIds})
     })
@@ -650,6 +675,7 @@ function getActions(response) {
         console.log("All actions set, starting match");
     }
     else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) { //if your actions are set
+        console.log("My actions are set");
         const playerActions = response.playersActions;
         actionsLocked = true;
         for(let i = 0; i < playerActions.length; i++) {
@@ -658,11 +684,13 @@ function getActions(response) {
                 setAction(action, true);
             }
         }
-        const readyDiv = document.getElementById('other-team-ready');
-        readyDiv.textContent = 'READY';
-        readyDiv.style.color = 'darkgreen';
         const lockButton = document.getElementById('lock-button');
         lockButton.textContent = 'Undo actions';
+    }
+    else if(response.flags.challengerActionsSet && !challenger || response.flags.challengedActionsSet && challenger) {
+        const readyDiv = document.getElementById('other-team-ready');
+        readyDiv.textContent = 'ACTIONS LOCKED';
+        readyDiv.style.color = 'darkgreen';
     }
 }
 
@@ -679,7 +707,8 @@ function applyQuirkStats() {
     fetch(`/challenges/${challengeId}/quirk-effects`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ ids })
     })
@@ -817,10 +846,17 @@ function setAction(action, disabled) {
 }
 
 function recommendPlayers(teamId) {
+    console.log("Recommending")
     fetch(`/challenges/${teamId}/recommend-players`)
     .then(response => response.json())
     .then(data => {
         console.log('Recommended players:', data);
+        const yourTeamPlayers = document.querySelectorAll('.your-team .player');
+        yourTeamPlayers.forEach(player => {
+            if (player.dataset.location === 'bench') {
+                selectPlayer(player);
+            }
+        });
         data.forEach(playerId => {
             const player = playerDict[playerId];
             selectPlayer(player);
@@ -842,4 +878,24 @@ function recommendActions(teamId) {
 async function goToMatch(challengeId) {
     await new Promise(resolve => setTimeout(resolve, 100));
     window.location.href = '../match/match.html?challengeId=' + challengeId;
+}
+
+async function showConfirmModal() {
+    return new Promise((resolve) => {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const yesButton = document.getElementById('yes-button');
+        const noButton = document.getElementById('no-button');
+
+        modalOverlay.style.display = 'block';
+
+        yesButton.onclick = function () {
+            modalOverlay.style.display = 'none';
+            resolve(true);
+        };
+
+        noButton.onclick = function () {
+            modalOverlay.style.display = 'none';
+            resolve(false);
+        };
+    });
 }

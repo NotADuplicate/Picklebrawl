@@ -12,6 +12,8 @@ import statsRoutes from './Routes/stats.js';
 import matchRoutes from './Routes/match.js';
 import draftRoutes from './Routes/draft.js';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
+import { authenticator, SECRET_KEY } from './Models/authenticator.js';
 
 const app = express();
 const PORT = 9000;
@@ -68,7 +70,9 @@ app.post('/create-account', (req, res) => {
             console.error('Error inserting user:', err.message);
             return res.status(400).json({ message: 'Username already exists!' });
         }
-        res.json({ message: 'Account created successfully!' });
+        const token = jwt.sign({ userId: this.lastID }, SECRET_KEY, { expiresIn: '2h' });
+        console.log('User created with id:', this.lastID, " and token:", token);
+        res.json({ message: 'Account created successfully!', token });
     });
 });
 
@@ -88,7 +92,9 @@ app.post('/login', (req, res) => {
         if (!row) {
             return res.status(400).json({ message: 'Invalid username or password!' });
         }
-        res.json({ message: 'Login successful!' });
+
+        const token = jwt.sign({ userId: row.id }, SECRET_KEY, { expiresIn: '2h' });
+        res.json({ message: "Login successful!", token });
     });
 });
 

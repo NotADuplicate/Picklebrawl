@@ -32,7 +32,8 @@ function createAccount(username, password) {
         fetch('/create-account', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ username, password })
         }).then(resolve())
@@ -46,7 +47,8 @@ function createLeague(leagueName, leaguePassword, username, teamName) {
         fetch('/create-league', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
         }).then(resolve({ teamId }))
@@ -59,7 +61,8 @@ function joinLeague(leagueName, leaguePassword, username, teamName) {
         fetch('/join-league', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the token here
             },
             body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
         }).then(resolve({ teamId }))
@@ -82,7 +85,8 @@ function createChallenge() {    // need teamIds
     fetch(`/challenges`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId, myTeamId })
     })
@@ -96,7 +100,8 @@ function addPlayers() {
     fetch(`/challenges/${1}/add-players`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId, players })
     })

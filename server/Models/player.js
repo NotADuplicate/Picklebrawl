@@ -133,7 +133,6 @@ class Player {
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
         this.quirk = quirkClass;
-        console.log("Picked quirk: ", quirkClass.title);
         this.quirk.nameGenerationChanges(this);
     }
 

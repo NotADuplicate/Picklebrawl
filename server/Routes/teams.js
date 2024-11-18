@@ -8,8 +8,10 @@ console.log('Loading leagues routes');
 router.get('/teams', (req, res) => {
     console.log("Getting teams");
     const leagueId = req.query.leagueId;
-    db.all(`SELECT * FROM teams WHERE league_id = ?`, [leagueId], (err, teams) => {
+    db.all(`SELECT teams.id, teams.name, league_id, username AS owner FROM teams
+        LEFT JOIN users on users.id = teams.owner_id WHERE league_id = ?`, [leagueId], (err, teams) => {
         if (err) {
+            console.log("Error fetching teams:", err);
             return res.status(500).json({ message: 'Error fetching teams!' });
         }
         res.json(teams);

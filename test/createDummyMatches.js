@@ -98,7 +98,8 @@ function addPlayers() {
     fetch(`/challenges/${1}/add-players`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Add the token here
         },
         body: JSON.stringify({ teamId, players })
     })

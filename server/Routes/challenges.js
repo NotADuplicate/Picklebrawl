@@ -4,11 +4,12 @@ import express from 'express';
 import { db } from '../database.js';
 import { Player } from '../Models/player.js';
 import { Weather } from '../Models/Weather/weather.js';
+import { authenticator } from '../Models/authenticator.js';
 
 const router = express.Router();
 
 // Fetch all challenges
-router.get('/challenges', (req, res) => {
+router.get('/challenges', authenticator.authenticateToken, (req, res) => {
     console.log('Getting challenges for team: ', req.query.teamId);
     const team_id = req.query.teamId;
     if (!team_id) {
@@ -16,8 +17,8 @@ router.get('/challenges', (req, res) => {
     }
 
     db.all(
-        'SELECT * FROM challenges WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND (status = ? OR status = ?)',
-        [team_id, team_id, 'pending', 'accepted'],
+        'SELECT challenges.id AS id, status, challenger_team_id, challenged_team_id FROM challenges, teams WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND (status = ? OR status = ?) AND (teams.id = ? AND teams.owner_id = ?)',
+        [team_id, team_id, 'pending', 'accepted', team_id, req.userId],
         (err, rows) => {
             console.log("Challenges: ", rows);
             if (err) {
@@ -31,73 +32,115 @@ router.get('/challenges', (req, res) => {
 });
 
 // Create a new challenge
-router.post('/challenges', (req, res) => {
+router.post('/challenges', authenticator.authenticateToken, (req, res) => {
     const { teamId, myTeamId } = req.body;
     console.log('Creating challenge: ', myTeamId, teamId);
-    db.get(
-        'SELECT * FROM challenges WHERE ((challenger_team_id = ? AND challenged_team_id = ?) OR (challenger_team_id = ? AND challenged_team_id = ?)) AND status = ?',
-        [myTeamId, teamId, teamId, myTeamId, 'pending'],
-        (err, row) => {
-            if (err) {
-                console.error(err);
-                res.status(500).json({ error: 'Internal server error' });
-            } else if (row) {
-                res.json({ row });
-            } else {
-                db.run(
-                    'INSERT INTO challenges (challenger_team_id, challenged_team_id) VALUES (?, ?)',
-                    [myTeamId, teamId],
-                    function (err) {
-                        if (err) {
-                            console.error(err);
-                            res.status(500).json({ error: 'Internal server error' });
-                        } else {
-                            res.status(201).json({ id: this.lastID });
-                        }
-                    }
-                );
-            }
+    db.get('SELECT * FROM teams where id = ? AND owner_id = ?', [myTeamId, req.userId], (err, row) => { 
+        if (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Internal server error' });
         }
-    );
+        if (!row) {
+            console.log("Team not found")
+            return res.status(404).json({ error: 'Team not found' });
+        }
+        db.get(
+            'SELECT * FROM challenges WHERE ((challenger_team_id = ? AND challenged_team_id = ?) OR (challenger_team_id = ? AND challenged_team_id = ?)) AND status = ?',
+            [myTeamId, teamId, teamId, myTeamId, 'pending'],
+            (err, row) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({ error: 'Internal server error' });
+                } else if (row) {
+                    res.json({ row });
+                } else {
+                    db.run(
+                        'INSERT INTO challenges (challenger_team_id, challenged_team_id) VALUES (?, ?)',
+                        [myTeamId, teamId],
+                        function (err) {
+                            if (err) {
+                                console.error(err);
+                                res.status(500).json({ error: 'Internal server error' });
+                            } else {
+                                res.status(201).json({ id: this.lastID });
+                            }
+                        }
+                    );
+                }
+            }
+        );
+    });
 });
 
 // Accept a challenge
-router.post('/challenges/:id/accept', (req, res) => {
+router.post('/challenges/:id/accept', authenticator.authenticateToken, (req, res) => {
     const { id } = req.params;
-    db.run(
-        'UPDATE challenges SET status = ? WHERE id = ?',
-        ['accepted', id],
-        function (err) {
-            if (err) {
-                console.error(err);
-                res.status(500).json({ error: 'Internal server error' });
-            } else {
-                res.json({ id });
-            }
+    console.log("Player ", req.userId, " accepting challenge: ", id)
+    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, challenge) => {
+        console.log(err, challenge)
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
-    );
+
+        if (!challenge) {
+            return res.status(404).json({ error: 'Challenge not found' });
+        }
+
+        console.log("Here")
+        db.get('SELECT * FROM teams WHERE id = ? AND owner_id = ?', [challenge.challenged_team_id, req.userId], (err, team) => {
+            console.log("Here")
+            if (err) {
+                console.log(err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            if (!team) {
+                return res.status(404).json({ error: 'Team not found or not authorized' });
+            }
+
+            db.run(
+                'UPDATE challenges SET status = ? WHERE id = ?',
+                ['accepted', id],
+                function (err) {
+                    if (err) {
+                        console.error(err);
+                        res.status(500).json({ error: 'Internal server error' });
+                    } else {
+                        console.log("Here")
+                        res.json({ id });
+                    }
+                }
+            );
+        });
+    });
 });
 
 //Add players to one side of a challenge
-router.post('/challenges/:id/add-players', (req, res) => {
+router.post('/challenges/:id/add-players', authenticator.authenticateToken, (req, res) => {
     console.log("Add players")
     const { id } = req.params;
     const { teamId, players } = req.body;
     console.log("Req body players: ", req.body.players)
+    console.log("Challenge id: ", id)
 
-    db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, row) => {
+    db.get('SELECT * FROM challenges WHERE challenges.id = ?', [id], (err, row) => {
         if (err) {
             console.error('Error fetching row:', err);
+            res.status(500).json({ error: 'Internal server error' });
             return;
         }
         if (!row) {
-            console.error('No row found');
+            console.error('Challenge not found');
+            res.json({ error: 'Challenge not found' });
             return;
         }
 
         // Check which team ID matches
         let columnToUpdate;
+        let teamColumnToCheck;
         if (row.challenger_team_id == teamId) {
+            teamColumnToCheck = 'challenger_team_id';
             columnToUpdate = 'challenger_players_set';
             if(row.challenger_players_set) {
                 console.log("Challenger players already set")
@@ -109,6 +152,7 @@ router.post('/challenges/:id/add-players', (req, res) => {
                 return;
             }
             columnToUpdate = 'challenged_players_set';
+            teamColumnToCheck = 'challenged_team_id';
         } else {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
@@ -118,8 +162,8 @@ router.post('/challenges/:id/add-players', (req, res) => {
         console.log(row)
         console.log("Updating challenges set: ", columnToUpdate)
 
-        const getQuery = `SELECT ${columnToUpdate} FROM challenges WHERE id = ?`;
-        db.get(getQuery, [id], (err, row) => {
+        const getQuery = `SELECT ${columnToUpdate} FROM challenges, teams WHERE challenges.id = ? AND teams.id = ${teamColumnToCheck} AND teams.owner_id = ?`;
+        db.get(getQuery, [id, req.userId], (err, row) => {
             if (err) {
                 console.error('Error fetching row:', err);
                 return;
@@ -157,7 +201,7 @@ router.post('/challenges/:id/add-players', (req, res) => {
     });
 });
 
-router.post('/challenges/:id/remove-players', (req, res) => {
+router.post('/challenges/:id/remove-players', authenticator.authenticateToken, (req, res) => {
     console.log("Remove players")
     const { id } = req.params;
     const { teamId, players } = req.body;
@@ -181,8 +225,10 @@ router.post('/challenges/:id/remove-players', (req, res) => {
         }
         // Check which team ID matches
         let columnToUpdate;
+        let teamColumnToCheck;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_players_set';
+            teamColumnToCheck = 'challenger_team_id';
             if(!row.challenger_players_set) {
                 res.json({ message: 'Players already removed' });
                 console.log("Challenger players already removed")
@@ -190,6 +236,7 @@ router.post('/challenges/:id/remove-players', (req, res) => {
             }
         } else if (row.challenged_team_id == teamId) {
             columnToUpdate = 'challenged_players_set';
+            teamColumnToCheck = 'challenged_team_id';
             if(!row.challenged_players_set) {
                 res.json({ message: 'Players already removed' });
                 console.log("Challenged players already removed")
@@ -199,18 +246,21 @@ router.post('/challenges/:id/remove-players', (req, res) => {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
             console.log('Row:', row);
+            res.status(404).json({ error: 'No matching team ID found' });
             return;
         }
         console.log("Updating challenges set: ", columnToUpdate)
 
         // Update the players set column
-        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
+        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ? AND ${teamColumnToCheck} = (SELECT id FROM teams WHERE id = ${teamColumnToCheck} AND owner_id = ?)`;
 
-        db.run(query, [false, id], function(err) {
-                if (err) {
-                    console.error(err);
-                    res.status(500).json({ error: 'Internal server error' });
-                } else {
+        db.run(query, [false, id, req.userId], function(err) {
+            if (err) {
+                console.error(err);
+                res.status(500).json({ error: 'Internal server error' });
+            } else if (this.changes === 0) {
+                res.status(404).json({ error: 'Invalid request' });
+            } else {
                     db.run(
                         'DELETE FROM challenge_players WHERE challenge_id = ? AND team_id = ?', [id, teamId], function (err) {
                         if (err) {
@@ -228,7 +278,7 @@ router.post('/challenges/:id/remove-players', (req, res) => {
 });
 
 //Add actions to one side of a challenge
-router.post('/challenges/:id/add-actions', (req, res) => {
+router.post('/challenges/:id/add-actions', authenticator.authenticateToken, (req, res) => {
     console.log("Add actions")
     const { id } = req.params;
     const { teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties } = req.body;
@@ -245,21 +295,25 @@ router.post('/challenges/:id/add-actions', (req, res) => {
 
         // Check which team ID matches
         let columnToUpdate;
+        let teamColumnToCheck;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_actions_set';
+            teamColumnToCheck = 'challenger_team_id';
         } else if (row.challenged_team_id == teamId) {
             columnToUpdate = 'challenged_actions_set';
+            teamColumnToCheck = 'challenged_team_id';
         } else {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
             console.log('Row:', row);
+            res.json({ error: 'No matching team ID found' });
             return;
         }
         console.log("Updating challenges set: ", columnToUpdate)
 
-        const getQuery = `SELECT ${columnToUpdate} FROM challenges WHERE id = ?`;
+        const getQuery = `SELECT ${columnToUpdate} FROM challenges, teams WHERE challenges.id = ? AND teams.id = ${teamColumnToCheck} AND teams.owner_id = ?`;
 
-        db.get(getQuery, [id], (err, row) => {
+        db.get(getQuery, [id, req.userId], (err, row) => {
             if (err) {
                 console.error('Error fetching row:', err);
                 return;
@@ -322,7 +376,7 @@ router.post('/challenges/:id/add-actions', (req, res) => {
 });
 
 //Remove actions from one side of a challenge
-router.post('/challenges/:id/remove-actions', (req, res) => {
+router.post('/challenges/:id/remove-actions', authenticator.authenticateToken, (req, res) => {
     console.log("Add actions")
     const { id } = req.params;
     const { teamId } = req.body;
@@ -344,8 +398,10 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
 
         // Check which team ID matches
         let columnToUpdate;
+        let teamColumnToCheck;
         if (row.challenger_team_id == teamId) {
             columnToUpdate = 'challenger_actions_set';
+            teamColumnToCheck = 'challenger_team_id';
             if(!row.challenger_actions_set) {
                 res.json({ message: 'Actions already removed' });
                 console.log("Challenger actions already removed")
@@ -353,6 +409,7 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
             }
         } else if (row.challenged_team_id == teamId) {
             columnToUpdate = 'challenged_actions_set';
+            teamColumnToCheck = 'challenged_team_id';
             if(!row.challenged_actions_set) {
                 res.json({ message: 'Actions already removed' });
                 console.log("Challenged actions already removed")
@@ -362,14 +419,15 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
             console.log('No matching team ID found');
             console.log('Team ID:', teamId);
             console.log('Row:', row);
+            res.json({ error: 'No matching team ID found' });
             return;
         }
         console.log("Updating challenges set: ", columnToUpdate)
 
         // Update the players set column
-        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ?`;
+        const query = `UPDATE challenges SET ${columnToUpdate} = ? WHERE id = ? AND ${teamColumnToCheck} = (SELECT id FROM teams WHERE id = ${teamColumnToCheck} AND owner_id = ?)`;
 
-        db.run(query, [false, id], function(err) {
+        db.run(query, [false, id, req.userId], function(err) {
                 if (err) {
                     console.error(err);
                     res.status(500).json({ error: 'Internal server error' });
@@ -381,8 +439,9 @@ router.post('/challenges/:id/remove-actions', (req, res) => {
     });
 });
 
-router.get('/challenges/:id/players-actions', (req, res) => {
+router.get('/challenges/:id/players-actions', authenticator.authenticateToken, (req, res) => {
     const { id } = req.params;
+    console.log("Getting players actions for challenge: ", id)
 
     db.get('SELECT * FROM challenges WHERE id = ?', [id], (err, challenge) => {
         if (err) {
@@ -395,22 +454,54 @@ router.get('/challenges/:id/players-actions', (req, res) => {
             return res.status(404).json({ error: 'Challenge not found' });
         }
 
-        const { challenger_players_set, challenged_players_set, challenger_actions_set, challenged_actions_set } = challenge;
-
-        const flags = {
-            challengerPlayersSet: challenger_players_set,
-            challengedPlayersSet: challenged_players_set,
-            challengerActionsSet: challenger_actions_set,
-            challengedActionsSet: challenged_actions_set
-        };
-
-        db.all('SELECT * FROM challenge_players WHERE challenge_id = ?', [id], (err, rows) => {
-            if (err) {
+        console.log("Here")
+        //Get which team the user is on
+        db.get('SELECT id FROM teams WHERE (id = ? OR id = ?) AND owner_id = ?', [challenge.challenger_team_id, challenge.challenged_team_id, req.userId], (err, team) => {
+            if(err) {
                 console.error(err);
                 return res.status(500).json({ error: 'Internal server error' });
             }
-            //console.log("Challenge players: ", rows)
-            res.json({ flags, playersActions: rows });
+            if(!team) {
+                console.log("Team not found")
+                return res.status(404).json({ error: 'Team not found' });
+            }
+            console.log("Team: ", team)
+            const teamId = team.id;
+
+            const { challenger_players_set, challenged_players_set, challenger_actions_set, challenged_actions_set } = challenge;
+
+            const flags = {
+                challengerPlayersSet: challenger_players_set,
+                challengedPlayersSet: challenged_players_set,
+                challengerActionsSet: challenger_actions_set,
+                challengedActionsSet: challenged_actions_set
+            };
+            let playersShown = "Self";
+            if(challenger_players_set && challenged_players_set && challenger_actions_set && challenged_actions_set) {
+                playersShown = "All";
+            }
+            else if(challenger_players_set && challenged_players_set) {
+                playersShown = "Players";
+            }
+    
+            let query;
+            if (playersShown === "All") {
+                query = 'SELECT * FROM challenge_players WHERE challenge_id = ?';
+            } else if (playersShown === "Players") {
+                query = `SELECT player_id, team_id, NULL as offense_action, NULL as defense_action, NULL as offense_target_id, NULL as defense_target_id, NULL as offense_property, NULL as defense_property FROM challenge_players WHERE challenge_id = ? AND team_id IS NOT ${teamId}
+                UNION SELECT player_id, team_id, offense_action, defense_action, offense_target_id, defense_target_id, offense_property, defense_property FROM challenge_players WHERE challenge_id = ${id} AND team_id = ${teamId}`;
+            } else {
+                query = `SELECT player_id FROM challenge_players WHERE challenge_id = ? AND team_id = ${teamId}`;
+            }
+
+            db.all(query, [id], (err, rows) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json({ error: 'Internal server error' });
+                }
+                //console.log("Challenge players: ", rows)
+                res.json({ flags, playersActions: rows });
+            });
         });
     });
 });
@@ -618,4 +709,6 @@ function runMatch(challengeId) {
         })
     })
 }
+
+runMatch(1);
 export default router;

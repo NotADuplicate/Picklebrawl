@@ -10,14 +10,6 @@ export class RockSolid extends Quirk {
 
     static playerStatGenerationChanges(player, power) {
         console.log("Rock Solid playerStatGenerationChanges\n");
-        /*const totalPoints = Math.round(power * 1/6);
-        console.log("Player stats: ", player.bulk, player.finesse, player.height, player.strength, player.trickiness, player.focus);
-        const stats = [player.bulk, player.finesse, player.height, player.strength];
-
-        for (let i = 0; i < totalPoints; i++) {
-            stats[Math.floor(Math.random()*stats.length)] += 1;
-        }
-        [player.bulk, player.finesse, player.height, player.strength] = stats;*/
         player.bulk += Math.floor(power / 5);
         player.focus = 0;
         player.trickiness = 0;        

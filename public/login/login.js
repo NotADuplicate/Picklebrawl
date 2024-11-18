@@ -15,27 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.remove('active');
     });
 
-
-    fetch(`/leagues?user=${1}`)
-    .then(response => response.json())
-    .then(leagues => {
-    });
-
     const loggedInUser = localStorage.getItem('loggedInUser');
     const loggedInPassword = localStorage.getItem('loggedInPassword');
     if (loggedInUser && loggedInPassword) {
         login(loggedInUser, loggedInPassword);
     }
-
-    /*showLoginButton.addEventListener('click', () => {
-        loginForm.classList.remove('hidden');
-        createAccountForm.classList.add('hidden');
-    });
-
-    showCreateAccountButton.addEventListener('click', () => {
-        createAccountForm.classList.remove('hidden');
-        loginForm.classList.add('hidden');
-    });*/
 
     document.getElementById('create-account-form').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -64,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if (data.message === 'Account created successfully!') {
+                localStorage.setItem('token', data.token);
+                console.log("Created account: ", data.token);
                 localStorage.setItem('loggedInUser', username);
                 localStorage.setItem('loggedInPassword', password);
                 window.location.href = '../home/home.html';
@@ -87,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if (data.message === 'Login successful!') {
+                localStorage.setItem('token', data.token);
+                console.log("Logged in: ", data.token);
                 localStorage.setItem('loggedInUser', username);
                 localStorage.setItem('loggedInPassword', password);
                 window.location.href = '../home/home.html';

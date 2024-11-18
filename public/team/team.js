@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const teamId = urlParams.get('teamId');
+    const token = localStorage.getItem('token');
 
     // Fetch and display team details
     fetch(`/teams/${teamId}`)
