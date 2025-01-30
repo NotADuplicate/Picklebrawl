@@ -73,14 +73,14 @@ router.post('/join-league', authenticator.authenticateToken, (req, res) => {
 });
 
 router.get('/leagues', authenticator.authenticateToken, (req, res) => {
+    console.log("Getting leagues for user id:", req.userId);
     const { leagueName } = req.query;
     let query = `
-        SELECT leagues.id, leagues.name AS leagueName, leagues.started, username,
-               GROUP_CONCAT(league_users.user_id) AS players
+        SELECT leagues.id, leagues.name AS leagueName, leagues.started, username AS founder
         FROM leagues
         LEFT JOIN league_users ON leagues.id = league_users.league_id
-        JOIN users ON league_users.user_id = users.id
-        WHERE users.id = ${req.userId}
+        LEFT JOIN users ON leagues.founder_id = users.id
+        WHERE league_users.user_id = ${req.userId}
     `;
     let params = [];
 
@@ -96,6 +96,7 @@ router.get('/leagues', authenticator.authenticateToken, (req, res) => {
             console.log(err);
             return res.status(500).json({ message: 'Error fetching leagues!' });
         }
+        console.log("Leagues:", rows);
         // Transform the players from a comma-separated string to an array
         const leagues = rows.map(row => ({
             ...row,

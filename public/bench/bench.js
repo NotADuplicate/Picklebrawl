@@ -1,3 +1,5 @@
+import { fetchData } from "../api.js";
+
 const myTeamId = localStorage.getItem('myTeamId');
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recommendActions(myTeamId);
         }
     });
-
+});
 
 /**
  * Adds a new player to the specified team list.
@@ -226,9 +228,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
 }
 
 // Fetch and display team details
-fetch(`/teams/${myTeamId}`)
-.then(response => response.json())
-.then(team => {
+fetchData(`/teams/${myTeamId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (team) => {
     const teamNameElement = document.getElementById('your-team-name');
     teamNameElement.textContent = team.name;
     const teamDetailsElement = document.getElementById('your-team-owner');
@@ -237,9 +237,7 @@ fetch(`/teams/${myTeamId}`)
     `;
 });
 
-fetch(`/teams/${otherTeamId}`)
-.then(response => response.json())
-.then(team => {
+fetchData(`/teams/${otherTeamId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (team) => {
     const otherTeamNameElement = document.getElementById('other-team-name');
     otherTeamNameElement.textContent = team.name;
     const otherTeamDetailsElement = document.getElementById('other-team-owner');
@@ -248,43 +246,41 @@ fetch(`/teams/${otherTeamId}`)
     `;
 });
 
-fetch(`/teams/${myTeamId}/players`)
-    .then(response => response.json())
-    .then(players => {
-        if (Array.isArray(players)) {
-            players.forEach(player => {
-                addPlayerToTeam('your-team', player.name, {
-                    Blk: player.bulk,
-                    Fin: player.finesse,
-                    Ht: player.height,
-                    Str: player.strength,
-                    Trk: player.trickiness,
-                    Fcs: player.focus
-                }, player.id, player.quirk_title, player.quirk_description);
-            });
-            fetch(`/teams/${otherTeamId}/players`)
-            .then(response => response.json())
-            .then(players => {
-                if (Array.isArray(players)) {
-                    players.forEach(player => {
-                        addPlayerToTeam('other-team', player.name, {
-                            Blk: player.bulk,
-                            Fin: player.finesse,
-                            Ht: player.height,
-                            Str: player.strength,
-                            Trk: player.trickiness,
-                            Fcs: player.focus
-                        }, player.id, player.quirk_title, player.quirk_description);
-                    });
-                    checkChallengeFlags();
-                } else {
-                    throw new Error('Players data is not an array');
-                }
-            })
-        } else {
-            throw new Error('Players data is not an array');
-        }
-    })
+fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
+    if (Array.isArray(players)) {
+        players.forEach(player => {
+            addPlayerToTeam('your-team', player.name, {
+                Blk: player.bulk,
+                Fin: player.finesse,
+                Ht: player.height,
+                Str: player.strength,
+                Trk: player.trickiness,
+                Fcs: player.focus
+            }, player.id, player.quirk_title, player.quirk_description);
+        });
+        fetchData(`/teams/${otherTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
+            if (Array.isArray(players)) {
+                players.forEach(player => {
+                    addPlayerToTeam('other-team', player.name, {
+                        Blk: player.bulk,
+                        Fin: player.finesse,
+                        Ht: player.height,
+                        Str: player.strength,
+                        Trk: player.trickiness,
+                        Fcs: player.focus
+                    }, player.id, player.quirk_title, player.quirk_description);
+                });
+                checkChallengeFlags();
+            } else {
+                console.log('Players data is not an array');
+                throw new Error('Players data is not an array');
+            }
+        });
+    }
+    else {
+        console.log("Players data is not an array");
+        throw new Error('Players data is not an array');
+    }
 });
 
 document.getElementById('backButton').addEventListener('click', function() {
@@ -292,50 +288,43 @@ document.getElementById('backButton').addEventListener('click', function() {
 });
 
 function checkChallengeFlags() {
-    fetch(`/challenges/${challengeId}/players-actions`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+    fetchData(`/challenges/${challengeId}/players-actions`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (response) => {
+        const lockButton = document.getElementById('lock-button');
+        console.log("Challenge players: ", response);
+        const playerIds = [];
+        if (response.playersActions !== null) {
+            response.playersActions.forEach(playerAction => {
+                playerIds.push(playerAction.player_id);
+            });
         }
-    })
-    .then(response => response.json())
-    .then(response => {
-            const lockButton = document.getElementById('lock-button');
-            console.log("Challenge players: ", response);
-            const playerIds = [];
-            if (response.playersActions !== null) {
-                response.playersActions.forEach(playerAction => {
-                    playerIds.push(playerAction.player_id);
-                });
+        if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
+            if(response.flags.challengedActionsSet && response.flags.challengerActionsSet) {
+                console.log("All actions set, starting match");
+                goToMatch(challengeId);
             }
-            if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
-                if(response.flags.challengedActionsSet && response.flags.challengerActionsSet) {
-                    console.log("All actions set, starting match");
-                    goToMatch(challengeId);
-                }
-                bothTeamsReady(playerIds, lockButton);
-                getActions(response);
+            bothTeamsReady(playerIds, lockButton);
+            getActions(response);
+        }
+        else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) { //if your players are set
+            for(let i = 0; i < playerIds.length; i++) {
+                const id = playerIds[i];
+                selectPlayer(playerDict[id]);
+                playerDict[id].dataset.locked = true;
+                playerDict[id].classList.add('locked');
             }
-            else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) { //if your players are set
-                for(let i = 0; i < playerIds.length; i++) {
-                    const id = playerIds[i];
-                    selectPlayer(playerDict[id]);
-                    playerDict[id].dataset.locked = true;
-                    playerDict[id].classList.add('locked');
-                }
-                lockButton.textContent = 'Undo';
-                startersLocked = true;
-            }
-            else if(response.flags.challengerPlayersSet && !challenger || response.flags.challengedPlayersSet && challenger) {
-                const readyDiv = document.getElementById('other-team-ready');
-                readyDiv.textContent = 'STARTERS LOCKED';
-                readyDiv.style.color = 'darkgreen';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching player actions:', error);
-        });
+            lockButton.textContent = 'Undo';
+            startersLocked = true;
+        }
+        else if(response.flags.challengerPlayersSet && !challenger || response.flags.challengedPlayersSet && challenger) {
+            const readyDiv = document.getElementById('other-team-ready');
+            readyDiv.textContent = 'STARTERS LOCKED';
+            readyDiv.style.color = 'darkgreen';
+        }
+    }
+    , (error) => {
+        console.error('Error fetching player actions:', error);
+    }
+    );
 }
 
 async function lockStarters() {
@@ -367,24 +356,13 @@ async function lockStarters() {
         lockButton.textContent = 'Undo';
         const teamId = myTeamId;
         const players = starterIds;
-        fetch(`/challenges/${challengeId}/add-players`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            },
-            body: JSON.stringify({ teamId, players })
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Players added successfully:', data);
-                startersLocked = true;
-                checkChallengeFlags();
-            })
-            .catch(error => {
-                console.error('Error adding players:', error);
-            });
-
+        fetchData(`/challenges/${challengeId}/add-players`, 'POST', { 'Authorization': `Bearer ${token}` }, { teamId, players }, (data) => {
+            console.log('Players added successfully:', data);
+            startersLocked = true;
+            checkChallengeFlags();
+        }, (error) => {
+            console.error('Error adding players:', error);
+        });
     }
 }
 
@@ -405,38 +383,28 @@ function unlockStarters() {
     const teamId = myTeamId;
     const players = starterIds;
 
-    fetch(`/challenges/${challengeId}/remove-players`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ teamId, players })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if(data.message === 'Players already removed') {
-                console.log("Players have already been removed!");
-                return;
+    fetchData(`/challenges/${challengeId}/remove-players`, 'POST', { 'Authorization': `Bearer ${token}` }, { teamId, players }, (data) => {
+        if(data.message === 'Players already removed') {
+            console.log("Players have already been removed!");
+            return;
+        }
+        else if(data.message === 'Players already locked in') {
+            console.log("Actions have already been set!");
+            checkChallengeFlags();
+            return;
+        }
+        console.log('Players removed successfully:', data);
+        yourTeamPlayers.forEach(player => {
+            if (player.dataset.locked === 'true') {
+                player.dataset.locked = 'false';
+                player.classList.remove('locked');
             }
-            else if(data.message === 'Players already locked in') {
-                console.log("Actions have already been set!");
-                checkChallengeFlags();
-                return;
-            }
-            console.log('Players removed successfully:', data);
-            yourTeamPlayers.forEach(player => {
-                if (player.dataset.locked === 'true') {
-                    player.dataset.locked = 'false';
-                    player.classList.remove('locked');
-                }
-            });
-            const lockButton = document.getElementById('lock-button');
-            lockButton.textContent = 'Lock In Starters';
-        })
-        .catch(error => {
-            console.error('Error adding players:', error);
         });
+        const lockButton = document.getElementById('lock-button');
+        lockButton.textContent = 'Lock In Starters';
+    }, (error) => {
+        console.log('Error adding players:', error);
+    });
     }
 }
 
@@ -533,22 +501,14 @@ function lockActions() {
     const teamId = myTeamId;
     const players = playerIds;
     console.log("Defnese targets: ", defenseTargets);
-    fetch(`/challenges/${challengeId}/add-actions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties})
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Actions added successfully:', data);
-            window.location.reload();
-        })
-        .catch(error => {
-            console.error('Error adding players:', error);
-        });
+    fetchData(`/challenges/${challengeId}/add-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, { teamId, players, offenseActions, offenseTargets, defenseActions, defenseTargets, offenseProperties, defenseProperties }, (data) => {
+        console.log('Actions added successfully:', data);
+        actionsLocked = true;
+        const lockButton = document.getElementById('lock-button');
+        lockButton.textContent = 'Undo actions';
+    }, (error) => {
+        console.error('Error adding players:', error);
+    });
     }
 }
 
@@ -557,44 +517,35 @@ function unlockActions() {
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     const teamId = myTeamId;
 
-    fetch(`/challenges/${challengeId}/remove-actions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ teamId })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if(data.message === 'Actions already removed') {
-                console.log("Actions have already been removed!");
-                return;
-            }
-            else if(data.message === 'Actions already locked in') {
-                console.log("Actions have already been set!");
-                checkChallengeFlags();
-                return;
-            }
-            actionsLocked = false;
-            console.log('Actions removed successfully:', data);
-            yourTeamPlayers.forEach(player => {
-                const priorityDiv = player.querySelector('.priority');
-                const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
-                const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
-                const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
-                const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
-                offensePrioritySelect.disabled = false;
-                defensePrioritySelect.disabled = false;
-                offenseTargetSelect.disabled = false;
-                defenseTargetSelect.disabled = false;
+    fetchData(`/challenges/${challengeId}/players-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, {teamId}, (response) => {
+        const playerIds = [];
+        if (response.playersActions !== null) {
+            response.playersActions.forEach(playerAction => {
+                playerIds.push(playerAction.player_id);
             });
+        }
+        if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
+            console.log("All actions set, starting match");
+            goToMatch(challengeId);
+        }
+        else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) { //if your actions are set
+            for(let i = 0; i < playerIds.length; i++) {
+                if(playerIds[i].team_id == myTeamId) {
+                    const action = playerIds[i];
+                    setAction(action, false);
+                }
+            }
             const lockButton = document.getElementById('lock-button');
             lockButton.textContent = 'Lock In Actions';
-        })
-        .catch(error => {
-            console.error('Error removing actions:', error);
-        });
+        }
+        else if(response.flags.challengerActionsSet && !challenger || response.flags.challengedActionsSet && challenger) {
+            const readyDiv = document.getElementById('other-team-ready');
+            readyDiv.textContent = 'ACTIONS LOCKED';
+            readyDiv.style.color = 'darkgreen';
+        }
+    }, (error) => {
+        console.log('Error fetching player actions:', error);
+    });
     }
 }
 
@@ -617,16 +568,7 @@ function bothTeamsReady(playerIds, lockButton) {
     applyQuirkStats();
 
     //Add quirk actions
-    fetch(`/challenges/quirk-actions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ ids: teamPlayerIds})
-    })
-    .then(response => response.json())
-    .then(data => {
+    fetchData(`/challenges/${challengeId}/quirk-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, { ids: teamPlayerIds }, (data) => {
         console.log('Quirk actions added successfully:', data);
         data.forEach(action => {
             console.log(action);
@@ -651,9 +593,8 @@ function bothTeamsReady(playerIds, lockButton) {
                 }
             });
         });
-    })
-    .catch(error => {
-        console.error('Error adding quirk actions:', error);
+    }, (error) => {
+        console.log('Error adding quirk actions:', error);
     });
 
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
@@ -704,16 +645,8 @@ function applyQuirkStats() {
         teamIds.push(player.dataset.team);
     });
 
-    fetch(`/challenges/${challengeId}/quirk-effects`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ ids })
-    })
-    .then(response => response.json())
-    .then(data => {
+    console.log(ids)
+    fetchData(`/challenges/${challengeId}/quirk-effects`, 'POST', { 'Authorization': `Bearer ${token}` }, { ids }, (data) => {
         data.forEach(player => {
             const playerElement = playerDict[player.id];
             const playerStats = {
@@ -736,7 +669,6 @@ function applyQuirkStats() {
                     statElement.style.fontWeight = 'bold';
                     statElement.style.color = 'green';
                 } else if(newStatValue < originalStatValue) {
-                    console.log("Red")
                     statElement.style.fontWeight = 'bold';
                     statElement.style.color = 'red';
                 } else {
@@ -745,6 +677,8 @@ function applyQuirkStats() {
                 }
             });
         });
+    }, (error) => {
+        console.error('Error applying quirk stats:', error);
     });
 }
 
@@ -847,7 +781,22 @@ function setAction(action, disabled) {
 
 function recommendPlayers(teamId) {
     console.log("Recommending")
-    fetch(`/challenges/${teamId}/recommend-players`)
+    fetchData(`/challenges/${teamId}/recommend-players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (data) => {
+        console.log('Recommended players:', data);
+        const yourTeamPlayers = document.querySelectorAll('.your-team .player');
+        yourTeamPlayers.forEach(player => {
+            if (player.dataset.location === 'bench') {
+                selectPlayer(player);
+            }
+        });
+        data.forEach(playerId => {
+            const player = playerDict[playerId];
+            selectPlayer(player);
+        });
+    }, (error) => {
+        console.error('Error recommending players:', error);
+    });
+    /*fetch(`/challenges/${teamId}/recommend-players`)
     .then(response => response.json())
     .then(data => {
         console.log('Recommended players:', data);
@@ -861,18 +810,26 @@ function recommendPlayers(teamId) {
             const player = playerDict[playerId];
             selectPlayer(player);
         });
-    });
+    });*/
 }
 
 function recommendActions(teamId) {
-    fetch(`/challenges/${teamId}/recommend-actions`)
+    fetchData(`/challenges/${teamId}/recommend-actions`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (data) => {
+        console.log('Recommended actions:', data);
+        data.forEach(action => {
+            setAction(action, false);
+        });
+    }, (error) => {
+        console.error('Error recommending actions:', error);
+    });
+    /*fetch(`/challenges/${teamId}/recommend-actions`)
     .then(response => response.json())
     .then(data => {
         console.log('Recommended actions:', data);
         data.forEach(action => {
             setAction(action, false);
         });
-    });
+    });*/
 }
 
 async function goToMatch(challengeId) {

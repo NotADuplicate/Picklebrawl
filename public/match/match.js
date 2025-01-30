@@ -1,3 +1,4 @@
+import { fetchData } from "../api.js";
 let possession = null;
 let homeTeamId = null;
 let homeTeamName = null;
@@ -43,16 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const challengeId = urlParams.get('challengeId');
         if (challengeId) {
             console.log("Challenge ID: ", challengeId);
-            fetch('/match/match-id?challengeId=' + challengeId)
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Match ID: ", data);
-                    matchId = data.id;
-                    setupGame(matchId);
-                })
-                .catch(error => {
-                    console.error('Error fetching matchId from challengeId:', error);
-                });
+            fetchData('/match/match-id?challengeId=' + challengeId, 'GET', {}, null, (data) => {
+                console.log("Match ID: ", data);
+                matchId = data.id;
+                setupGame(matchId);
+            });
             return; // Exit the function to wait for the fetch request
         } else {
             console.error('No matchId or challengeId provided in URL');
@@ -73,55 +69,50 @@ async function setupGame(matchId) {
 
 function getPlayers(matchId) {
     return new Promise((resolve, reject) => {
-    fetch('/match/players?matchId=' + matchId)
-        .then(response => response.json())
-        .then(data => {
-            console.log('Players:', data);
-            const homeTeamPlayersElement = document.getElementsByClassName('home-team-players')[0];
-            const awayTeamPlayersElement = document.getElementsByClassName('away-team-players')[0];
-            const playerTemplate = document.getElementById('player-template').content;
-            data.forEach(player => {
-                const newPlayerElement = playerTemplate.cloneNode(true);
-                newPlayerElement.querySelector('.player-name').textContent = player.name;
-                newPlayerElement.querySelector('.quirk-name').textContent = player.title;
-                newPlayerElement.querySelector('.health-bar').style.width = '100%';
-                newPlayerElement.querySelector('.tooltip').textContent = player.description;
-                newPlayerElement.querySelector('.player-offense-action').textContent = player.offensive_role;
-                newPlayerElement.querySelector('.player-defense-action').textContent = player.defensive_role;
-                newPlayerElement.querySelector('.player').setAttribute('data-team', player.team_id == homeTeamId ? 'home' : 'away');
-                newPlayerElement.querySelector('.player').setAttribute('data-player-id', player.id);
-                newPlayerElement.querySelector('.player').setAttribute('data-offense-target', player.offensive_target_id);
-                newPlayerElement.querySelector('.player').setAttribute('data-defense-target', player.defensive_target_id);
-                if (player.team_id == homeTeamId) {
-                    newPlayerElement.querySelector('.player-defense-action').style.display = 'none';
-                    newPlayerElement.querySelector('.player').classList.add('home-team');
-                    homeTeamPlayersElement.appendChild(newPlayerElement);
-                    players[player.id] = homeTeamPlayersElement.lastElementChild;
-                } else {
-                    newPlayerElement.querySelector('.player-offense-action').style.display = 'none';
-                    newPlayerElement.querySelector('.player').classList.add('away-team');
-                    awayTeamPlayersElement.appendChild(newPlayerElement);
-                    players[player.id] = awayTeamPlayersElement.lastElementChild;
-                }
-            });
-            const playerIds = Object.keys(players);
-            const randomPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
-            givePlayerBall(randomPlayerId);
-            captureTeamPositions();
-            resolve();
-        })
-        .catch(error => {
-            console.error('Error fetching players:', error);
-            reject(error);
+    fetchData('/match/players?matchId=' + matchId, 'GET', {}, null, (data) => {
+        console.log('Players:', data);
+        const homeTeamPlayersElement = document.getElementsByClassName('home-team-players')[0];
+        const awayTeamPlayersElement = document.getElementsByClassName('away-team-players')[0];
+        const playerTemplate = document.getElementById('player-template').content;
+        data.forEach(player => {
+            const newPlayerElement = playerTemplate.cloneNode(true);
+            newPlayerElement.querySelector('.player-name').textContent = player.name;
+            newPlayerElement.querySelector('.quirk-name').textContent = player.title;
+            newPlayerElement.querySelector('.health-bar').style.width = '100%';
+            newPlayerElement.querySelector('.tooltip').textContent = player.description;
+            newPlayerElement.querySelector('.player-offense-action').textContent = player.offensive_role;
+            newPlayerElement.querySelector('.player-defense-action').textContent = player.defensive_role;
+            newPlayerElement.querySelector('.player').setAttribute('data-team', player.team_id == homeTeamId ? 'home' : 'away');
+            newPlayerElement.querySelector('.player').setAttribute('data-player-id', player.id);
+            newPlayerElement.querySelector('.player').setAttribute('data-offense-target', player.offensive_target_id);
+            newPlayerElement.querySelector('.player').setAttribute('data-defense-target', player.defensive_target_id);
+            if (player.team_id == homeTeamId) {
+                newPlayerElement.querySelector('.player-defense-action').style.display = 'none';
+                newPlayerElement.querySelector('.player').classList.add('home-team');
+                homeTeamPlayersElement.appendChild(newPlayerElement);
+                players[player.id] = homeTeamPlayersElement.lastElementChild;
+            } else {
+                newPlayerElement.querySelector('.player-offense-action').style.display = 'none';
+                newPlayerElement.querySelector('.player').classList.add('away-team');
+                awayTeamPlayersElement.appendChild(newPlayerElement);
+                players[player.id] = awayTeamPlayersElement.lastElementChild;
+            }
         });
+        const playerIds = Object.keys(players);
+        const randomPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
+        givePlayerBall(randomPlayerId);
+        captureTeamPositions();
+        resolve();
+    }, (error) => {
+        console.error('Error fetching players:', error);
+        reject(error);
+    });
     });
 }
 
 function getTeams(matchId) {
     return new Promise((resolve, reject) => {
-    fetch('/match/teams?matchId=' + matchId)
-        .then(response => response.json())
-        .then(data => {
+        fetchData('/match/teams?matchId=' + matchId, 'GET', {}, null, (data) => {
             console.log('Teams:', data);
             //possession = homeTeamId;
             const homeTeamElement = document.getElementById('home-team-name');
@@ -149,59 +140,54 @@ function getTeams(matchId) {
 }
 
 async function showGame(matchId) {
-    fetch('/match/match-ticks?matchId=' + matchId)
-        .then(response => response.json())
-        .then(async data => {
-            console.log('Match ticks:', data);
-            let i = 1;
-            let timeOffset = 0;
-            const gameTimer = document.getElementById('game-timer');
-            while(data.matchCreatedAt > new Date().getTime()) {
-                watchingLive = true;
-                gameTimer.textContent = 'Game starts in ' + Math.ceil((data.matchCreatedAt - new Date().getTime()) / 1000) + ' seconds';
-                await new Promise(r => setTimeout(r, 200));
+    await fetchData('/match/match-ticks?matchId=' + matchId, "GET", {}, null, async (data) => {
+        console.log('Match ticks:', data);
+        let i = 1;
+        let timeOffset = 0;
+        const gameTimer = document.getElementById('game-timer');
+        while(data.matchCreatedAt > new Date().getTime()) {
+            watchingLive = true;
+            gameTimer.textContent = 'Game starts in ' + Math.ceil((data.matchCreatedAt - new Date().getTime()) / 1000) + ' seconds';
+            await new Promise(r => setTimeout(r, 200));
+        }
+        while(i <= data.matchTicks.length) {
+            skipTick = false;
+            const tickData = data.matchTicks[i-1];
+            const tick = tickData.tick;
+            const scoringHistoryForTick = data.scoringHistory.filter(history => history.tick === tick);
+            const trickHistoryForTick = data.trickHistory.filter(history => history.tick === tick);
+            const attackHistoryForTick = data.attackHistory.filter(history => history.tick === tick);
+            const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
+            const breakawayHistoryForTick = data.breakawayHistory.filter(history => history.tick === tick);
+            console.log(i)
+            const fullTickData = {
+                scoringHistory: scoringHistoryForTick,
+                trickHistory: trickHistoryForTick,
+                attackHistory: attackHistoryForTick, 
+                matchTick: tickData,
+                actionHistory: actionHistoryForTick,
+                breakawayHistory: breakawayHistoryForTick,
+                time: data.matchCreatedAt + timeOffset 
+            };
+            timeOffset += TIME_PER_TICK;
+            if(scoringHistoryForTick.length > 0) {
+                scoringHistoryForTick.forEach(score => {
+                    timeOffset += (score.suspense + 1) * TIME_PER_SCORE;
+                });
             }
-            while(i <= data.matchTicks.length) {
-                skipTick = false;
-                const tickData = data.matchTicks[i-1];
-                const tick = tickData.tick;
-                const scoringHistoryForTick = data.scoringHistory.filter(history => history.tick === tick);
-                const trickHistoryForTick = data.trickHistory.filter(history => history.tick === tick);
-                const attackHistoryForTick = data.attackHistory.filter(history => history.tick === tick);
-                const actionHistoryForTick = data.actionHistory.filter(history => history.tick === tick);
-                const breakawayHistoryForTick = data.breakawayHistory.filter(history => history.tick === tick);
-                console.log(i)
-                const fullTickData = {
-                    scoringHistory: scoringHistoryForTick,
-                    trickHistory: trickHistoryForTick,
-                    attackHistory: attackHistoryForTick, 
-                    matchTick: tickData,
-                    actionHistory: actionHistoryForTick,
-                    breakawayHistory: breakawayHistoryForTick,
-                    time: data.matchCreatedAt + timeOffset 
-                };
-                timeOffset += TIME_PER_TICK;
-                if(scoringHistoryForTick.length > 0) {
-                    scoringHistoryForTick.forEach(score => {
-                        timeOffset += (score.suspense + 1) * TIME_PER_SCORE;
-                    });
-                }
-                //console.log(new Date().getTime());
-                await runMatchTick(fullTickData, tick);
-                await wait(TIME_PER_TICK-100);
-                i++;
-            }
-            addBoldTextToTextBox('GAME OVER');
-            gameTimer.textContent = 'GAME OVER';
-        })
-        .catch(error => {
-            console.error('Error fetching match ticks:', error);
-        });
+            //console.log(new Date().getTime());
+            await runMatchTick(fullTickData, tick);
+            await wait(TIME_PER_TICK-100);
+            i++;
+        }
+        addBoldTextToTextBox('GAME OVER');
+        gameTimer.textContent = 'GAME OVER';
+    });
 }
 // Function to move the slider icon
 function moveSliderIcon(newPosition) {
     const sliderIcon = document.querySelector('.slider-icon');
-    position = 100*newPosition/field_length;
+    let position = 100*newPosition/field_length;
     sliderIcon.style.left = `${position}%`;
 }
 
@@ -373,7 +359,7 @@ function runMatchTick(data, tick) {
                 }
             });
         }
-
+        console.log("Position 2: ", position);
         if(data.scoringHistory.length > 0) { //if a shot was attempted
             if (possession != homeTeamId) {
                 position = data.scoringHistory[0].range;
@@ -420,13 +406,17 @@ function runMatchTick(data, tick) {
             const playerBreakingaway = players[data.breakawayHistory[0].player_id];
             addBoldTextToTextBox(`${playerBreakingaway.querySelector('.player-name').textContent} got past the defense!`);
         }
+        console.log("Here")
 
         if (data.matchTick.possession_team_id == homeTeamId) {
+            console.log("Home team pos: ", position)
             position = data.matchTick.ball_position;
         } else {
+            console.log("Away team pos: ", field_length - data.matchTick.ball_position)
             position = field_length - data.matchTick.ball_position;
         }
 
+        console.log("Position 3: ", position);
         if(possession != data.matchTick.possession_team_id) {
             changeTeamPossession(data.matchTick.possession_team_id);
             consequetiveStalls = 0;
@@ -464,6 +454,7 @@ function runMatchTick(data, tick) {
             }
         }
 
+        console.log("Position 4: ", position);
         moveSliderIcon(position);
         moveBallIconToPlayer(data.matchTick.player_possession_id);
         tick++;

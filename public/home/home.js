@@ -1,3 +1,4 @@
+import { fetchData } from "../api.js";
 document.addEventListener('DOMContentLoaded', () => {
     const messageDiv = document.getElementById('message');
     const leaguesList = document.getElementById('leagues-list');
@@ -9,11 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loggedInUser = localStorage.getItem('loggedInUser');
     const token = localStorage.getItem('token');
-    if (!loggedInUser) {
+    if (!loggedInUser || !token) {
         window.location.href = '../login/login.html';
     }
 
-    messageDiv.innerText = `Welcome back, ${loggedInUser}!`;
+    messageDiv.innerText = `Hello, ${loggedInUser}!`;
 
     showCreateLeagueButton.addEventListener('click', () => {
         createLeagueForm.classList.toggle('active');
@@ -56,59 +57,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function createLeague(leagueName, leaguePassword, teamName) {
         const username = localStorage.getItem('loggedInUser');
         console.log("Creating league: ", leagueName, leaguePassword, username, teamName);
-        fetch('/create-league', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            },
-            body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
-        })
-        .then(response => response.json())
-        .then(data => {
+        fetchData('/create-league', 'POST', { 'Authorization': `Bearer ${token}` }, { leagueName, leaguePassword, username, teamName }, (data) => {
+            console.log("Data: ", data);
             messageDiv.innerText = data.message;
             if (data.message === 'League and team created successfully!') {
                 loadLeagues();
             }
-        })
-        .catch(error => {
+        }, (error) => {
             messageDiv.innerText = 'Error creating league!';
+            console.log("Error: ", error);
         });
     }
 
     function joinLeague(leagueName, leaguePassword, teamName) {
         const username = localStorage.getItem('loggedInUser');
-        fetch('/join-league', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            },
-            body: JSON.stringify({ leagueName, leaguePassword, username, teamName })
-        })
-            .then(response => response.json())
-            .then(data => {
-                messageDiv.innerText = data.message;
-                if (data.message === 'Joined league and created team successfully!') {
-                    loadLeagues();
-                }
-            })
-            .catch(error => {
-                messageDiv.innerText = 'Error joining league!';
-            });
+        fetchData('/join-league', 'POST', { 'Authorization': `Bearer ${token}` }, { leagueName, leaguePassword, username, teamName }, (data) => {
+            messageDiv.innerText = data.message;
+            if (data.message === 'Joined league and created team successfully!') {
+                loadLeagues();
+            }
+        }, (error) => {
+            messageDiv.innerText = 'Error joining league!';
+            console.log("Error: ", error);
+        });
     }
 
 
     function loadLeagues() {
         console.log("Getting leagues");
-        fetch(`/leagues`, {
-            method: 'GET',
-            headers: {
-            'Authorization': `Bearer ${token}` // Add the token here
-            }
-        })
-        .then(response => response.json())
-        .then(leagues => {
+        fetchData('/leagues', 'GET', { 'Authorization': `Bearer ${token}` }, null, (leagues) => {
+            console.log("Token: ", token);
             console.log("Leagues: ", leagues);
             leaguesList.innerHTML = '';
             leagues.forEach(league => {
@@ -139,8 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
                 leaguesList.appendChild(leagueItem);
             });
-        })
-        .catch(error => {
+        }, (error) => {
             console.error('Error fetching leagues:', error);
         });
     }

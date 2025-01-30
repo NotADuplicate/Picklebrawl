@@ -1,3 +1,4 @@
+import { fetchData } from "../api.js";
 document.addEventListener('DOMContentLoaded', () => {
     const messageDiv = document.getElementById('message');
     const leaguesList = document.getElementById('leagues-list');
@@ -19,15 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let myTeamId = null;
 
     // Fetch and display league details
-    fetch(`/leagues?leagueName=${leagueName}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}` // Add the token here
-        }
-        }
-    )
-    .then(response => response.json())
-    .then(leagues => {
+    console.log("Here")
+    fetchData(`/leagues?leagueName=${leagueName}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (leagues) => {
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
         if (league) {
             localStorage.setItem("leagueId", league.id);
@@ -47,12 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
             getDraft(league.id);
             getMatches(league.id);
             // Fetch and display teams
-            fetch(`/teams?leagueId=${league.id}`)
-            .then(response => response.json())
-            .then(teams => {
+            fetchData(`/teams?leagueId=${league.id}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (teams) => {
                 console.log('Teams:', teams);
                 teamsContainer.innerHTML = '';
-                challengeButtons = {};
+                let challengeButtons = {};
                 teams.forEach(team => {
                     if(team.owner == loggedInUser) {
                         myTeamId = team.id;
@@ -95,36 +87,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         teamActions.appendChild(challengeButton);
                         challengeButtons[team.id] = challengeButton;
                     }
-                
+
                     teamCard.appendChild(teamInfo);
                     teamCard.appendChild(teamActions);
                     teamsContainer.appendChild(teamCard);
                 });
                 getChallenges(challengeButtons);
-            })
-            .catch(error => {
+            }, (error) => {
                 console.error('Error fetching teams:', error);
                 messageDiv.innerText = 'Error fetching teams!';
             });
         } else {
             messageDiv.innerText = 'League not found!';
         }
-    })
-    .catch(error => {
+    }
+    , (error) => {
         console.error('Error fetching leagues:', error);
         messageDiv.innerText = 'Error fetching leagues!';
     });
+    console.log("Here2")
 
     // Fetch and display challenges
     function getChallenges(challengeButtons) {
-    fetch(`/challenges?teamId=${myTeamId}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}` // Add the token here
-        }
-    })
-    .then(response => response.json())
-    .then(challenges => {
+        fetchData(`/challenges?teamId=${myTeamId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (challenges) => {
             console.log('Challenges:', challenges);
             challenges.forEach(challenge => {
                 console.log('Chalenge:', challenge.id);
@@ -151,97 +136,94 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
-        })
-        .catch(error => {
+        }, (error) => {
             console.error('Error fetching challenges:', error);
             messageDiv.innerText = 'Error fetching challenges!';
         });
-    }   
+    } 
 
     function getMatches(leagueId) {
         const matchesContainer = document.getElementById('matches-container');
-        fetch(`/matches?leagueId=${leagueId}`)
-        .then(response => response.json())
-        .then(matches => {
+        fetchData(`/matches?leagueId=${leagueId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (matches) => { 
             console.log('Matches:', matches);
             matches.forEach(match => {
                 const matchCard = document.createElement('div');
-    matchCard.className = 'match-card';
+                matchCard.className = 'match-card';
 
-    const matchInfo = document.createElement('div');
-    matchInfo.className = 'match-info';
+                const matchInfo = document.createElement('div');
+                matchInfo.className = 'match-info';
 
-    // Create match teams element
-    const matchTeams = document.createElement('p');
-    matchTeams.className = 'match-teams';
-    matchTeams.textContent = `${match.home_team_name} vs ${match.away_team_name}`;
+                // Create match teams element
+                const matchTeams = document.createElement('p');
+                matchTeams.className = 'match-teams';
+                matchTeams.textContent = `${match.home_team_name} vs ${match.away_team_name}`;
 
-    // Add "Live" indicator if match is in progress
-    if (!match.is_over) {
-        const liveIndicator = document.createElement('span');
-        liveIndicator.className = 'live-indicator';
-        liveIndicator.textContent = 'Live';
-        matchTeams.appendChild(liveIndicator);
-    }
-    matchInfo.appendChild(matchTeams);
+                // Add "Live" indicator if match is in progress
+                if (!match.is_over) {
+                    const liveIndicator = document.createElement('span');
+                    liveIndicator.className = 'live-indicator';
+                    liveIndicator.textContent = 'Live';
+                    matchTeams.appendChild(liveIndicator);
+                }
+                matchInfo.appendChild(matchTeams);
 
-    // Create match score element with spoiler effect
-    const matchScore = document.createElement('p');
-    matchScore.className = 'match-score';
-    matchScore.textContent = `Score: ${match.home_team_live_score} - ${match.away_team_live_score}`;
-    matchInfo.appendChild(matchScore);
+                // Create match score element with spoiler effect
+                const matchScore = document.createElement('p');
+                matchScore.className = 'match-score';
+                matchScore.textContent = `Score: ${match.home_team_live_score} - ${match.away_team_live_score}`;
+                matchInfo.appendChild(matchScore);
 
-    const matchTime = document.createElement('p');
-    matchTime.className = 'match-time';
-    matchTime.textContent = match.is_over ? '' : 'Started ';
-    matchTime.textContent += timeAgo(new Date(match.created_at + ' UTC').getTime());
-    matchInfo.appendChild(matchTime);
+                const matchTime = document.createElement('p');
+                matchTime.className = 'match-time';
+                matchTime.textContent = match.is_over ? '' : 'Started ';
+                matchTime.textContent += timeAgo(new Date(match.created_at + ' UTC').getTime());
+                matchInfo.appendChild(matchTime);
 
-    // Add event listener to reveal score when clicked
-    matchScore.addEventListener('click', function() {
-        this.classList.toggle('revealed');
-    });
+                // Add event listener to reveal score when clicked
+                matchScore.addEventListener('click', function() {
+                    this.classList.toggle('revealed');
+                });
 
-    matchCard.appendChild(matchInfo);
+                matchCard.appendChild(matchInfo);
 
-    const matchActions = document.createElement('div');
-    matchActions.className = 'match-actions';
-    const viewButton = document.createElement('button');
-    viewButton.className = 'view-button';
-    viewButton.innerText =  match.is_over ? 'Watch Replay' : 'Watch Match';
-    viewButton.addEventListener('click', () => {
-        window.location.href = `../match/match.html?matchId=${match.id}`;
-    });
-    matchActions.appendChild(viewButton);
+                const matchActions = document.createElement('div');
+                matchActions.className = 'match-actions';
+                const viewButton = document.createElement('button');
+                viewButton.className = 'view-button';
+                viewButton.innerText =  match.is_over ? 'Watch Replay' : 'Watch Match';
+                viewButton.addEventListener('click', () => {
+                    window.location.href = `../match/match.html?matchId=${match.id}`;
+                });
+                matchActions.appendChild(viewButton);
 
-    if(match.is_over) {
-        const statsButton = document.createElement('button');
-        statsButton.className = 'stats-button';
-        statsButton.innerText = 'View Stats';
-        statsButton.addEventListener('click', () => {
-            window.location.href = `../boxscore/boxscore.html?matchId=${match.id}`;
-        });
-        matchActions.appendChild(statsButton);
-    }
+                if(match.is_over) {
+                    const statsButton = document.createElement('button');
+                    statsButton.className = 'stats-button';
+                    statsButton.innerText = 'View Stats';
+                    statsButton.addEventListener('click', () => {
+                        window.location.href = `../boxscore/boxscore.html?matchId=${match.id}`;
+                    });
+                    matchActions.appendChild(statsButton);
+                }
 
-    matchCard.appendChild(matchActions);
-    matchesContainer.appendChild(matchCard);
+                matchCard.appendChild(matchActions);
+                matchesContainer.appendChild(matchCard);
             });
-        })
-        .catch(error => {
+        }, (error) => {
             console.error('Error fetching matches:', error);
             messageDiv.innerText = 'Error fetching matches!';
         });
     }
 
     function getDraft(leagueId) {
-        fetch(`/league/drafts?leagueId=${leagueId}`)
-        .then(response => response.json())
-        .then(drafts => {
+        fetchData(`/league/drafts?leagueId=${leagueId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (drafts) => {
             if(drafts.length > 0) {
                 console.log("Draft: ", drafts[0])
                 addDraftEvent(drafts[0].id);
             }
+        }, (error) => {
+            console.error('Error fetching drafts:', error);
+            messageDiv.innerText = 'Error fetching drafts!';
         });
     }
 
@@ -254,31 +236,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if(button.innerText === 'Challenge') {
             console.log('Challenging team:', teamId);
             // Send challenge request
-            fetch(`/challenges`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Add the token here
-                },
-                body: JSON.stringify({ teamId, myTeamId })
-            })
-            .then(response => response.json())
-            .then(data => {
+            fetchData(`/challenges`, 'POST', { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, { teamId, myTeamId }, (data) => {
                 button.innerText = 'Pending';
                 button.disabled = true;
+            }, (error) => {
+                console.error('Error challenging team:', error);
+                messageDiv.innerText = 'Error challenging team!';
             });
         } else if (button.innerText === 'Accept Challenge') {
             // Accept challenge
-            fetch(`/challenges/${button.value}/accept`, {
-                method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            }})
-            .then(response => response.json())
-            .then(data => {
+            fetchData(`/challenges/${button.value}/accept`, 'POST', { 'Content-Type': 'application', 'Authorization': `Bearer ${token}` }, null, (data) => {
                 const challengeId = button.value;
                 window.location.href = `../bench/bench.html?challengedId=${challengedIds[challengeId]}&challengerId=${challengerIds[challengeId]}&challengeId=${challengeId}`;
+            }, (error) => {
+                console.error('Error accepting challenge:', error);
+                messageDiv.innerText = 'Error accepting challenge!';
             });
         }
         else if(button.innerText === 'View Challenge') {
@@ -289,22 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startLeague(leagueName) {
         console.log("Starting league")
-        fetch('/start-league', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            },
-            body: JSON.stringify({ leagueName, username: loggedInUser })
-        })
-        .then(response => response.json())
-        .then(data => {
+        fetchData('/start-league', 'POST', { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, { leagueName }, (data) => {
             messageDiv.innerText = data.message;
             if (data.message === 'League started successfully!') {
                 window.location.reload();
             }
-        })
-        .catch(error => {
+        }, (error) => {
+            console.log("Error: ", error);
             messageDiv.innerText = 'Error starting league!';
         });
     }
@@ -327,9 +290,6 @@ function timeAgo(date) {
         return (new Date(date).toLocaleDateString());
     }
 }
-
-
-// Existing code...
 
 // Function to add a draft as a current event
 function addDraftEvent(draftId) {

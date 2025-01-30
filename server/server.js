@@ -22,7 +22,8 @@ const PORT = 9000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(bodyParser.json());
+//app.use(bodyParser.json());
+app.use(express.json());
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));

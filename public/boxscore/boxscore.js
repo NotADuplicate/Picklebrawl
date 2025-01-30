@@ -1,20 +1,20 @@
-// Dummy data for Team 1
+import { fetchData } from "../api.js";
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('matchId');
-    fetch('/match/teams?matchId=' + matchId)
-    .then(response => response.json())
-    .then(data => {
+    fetchData('/match/teams?matchId=' + matchId, 'GET', {}, null, (data) => {
         console.log("Teams: ", data);
         const team1NameElement = document.getElementById("team1-button");
         team1NameElement.textContent = data[0].name;
+        const team2HeaderElement = document.querySelector("#team2 h2");
+        team2HeaderElement.textContent = data[1].name + " stats";
+        const team1HeaderElement = document.querySelector("#team1 h2");
+        team1HeaderElement.textContent = data[0].name + " stats";
         const team2NameElement = document.getElementById("team2-button");
         team2NameElement.textContent = data[1].name;
         let team1Data = [];
         let team2Data = [];
-        fetch('/match/match-stats?matchId=' + matchId)
-        .then(response => response.json())
-        .then(stats => {
+        fetchData('/match/match-stats?matchId=' + matchId, 'GET', {}, null, (stats) => {
             stats.forEach(stat => {
                 console.log(stat);
                 const player = {
@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             populateTable(team1Data, 'team1-body');
             populateTable(team2Data, 'team2-body');
-
         });
     });
 });
@@ -90,3 +89,5 @@ function showTeamStats(teamId) {
     document.getElementById(teamId).style.display = 'block';
     document.getElementById(`${teamId}-button`).classList.add('active');
 }
+
+window.showTeamStats = showTeamStats;

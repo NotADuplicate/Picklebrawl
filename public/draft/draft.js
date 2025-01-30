@@ -1,3 +1,5 @@
+import { fetchData } from "../api.js";
+
 let draftPlayers = [];
 
 let teams =[];
@@ -14,15 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
 
     // Fetch and display teams
-    fetch(`/teams?leagueId=${1}`)
-    .then(response => response.json())
-    .then(teamsInfo => {
+    fetchData(`/teams?leagueId=${1}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (teamsInfo) => {
         teams = teamsInfo;
         displayDraftOrder();
 
-        fetch(`/draft/players?draftId=${draftId}`)
-        .then(response => response.json())
-        .then(res => {
+        fetchData(`/draft/players?draftId=${draftId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (res) => {
             const players = res.prospects;
             currentDraftIndex = res.turn % teams.length;
             console.log(res);
@@ -71,7 +69,7 @@ function displayPlayers(playerList) {
 }
 
 // Function to draft a player
-function draftPlayer(playerId) {
+function draftPlayer(playerId, token) {
     const loggedInUser = localStorage.getItem('loggedInUser');
     const currentTeam = teams[currentDraftIndex];
 
@@ -81,17 +79,8 @@ function draftPlayer(playerId) {
     }
     console.log("Player id: ", playerId)
     const user = localStorage.getItem('loggedInUser');
-    fetch(`/draft/player`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Add the token here
-        },
-        body: JSON.stringify({ playerId, user, draftId })
-    })
-    .then(response => response.json())
-    .then(res => {
-        if(res.message = 'Player updated successfully!') {
+    fetchData(`/draft/player`, 'POST', { 'Authorization': `Bearer ${token}`}, { playerId, user, draftId }, (res) => {
+        if (res.message === 'Player updated successfully!') {
             location.reload();
         }
     });

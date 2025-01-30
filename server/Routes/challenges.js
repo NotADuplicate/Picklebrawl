@@ -508,8 +508,10 @@ router.get('/challenges/:id/players-actions', authenticator.authenticateToken, (
 
 // Get quirk effects for all players in a challenge
 router.post('/challenges/:id/quirk-effects', (req, res) => {
+    console.log("Req: ", req.body)
     const { ids } = req.body;
     let players = [];
+    console.log("Console:", ids)
     Promise.all(ids.map((playerId, index) => {
         const player = new Player();
         return player.load(playerId).then(() => {
@@ -710,5 +712,5 @@ function runMatch(challengeId) {
     })
 }
 
-runMatch(1);
+//runMatch(1);
 export default router;
