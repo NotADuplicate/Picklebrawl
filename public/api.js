@@ -14,7 +14,8 @@ export async function fetchData(route, method = 'GET', headers = {}, body = null
 
         const response = await fetch(route, options);
         if(response.status === 403) {
-            window.location.href = '/login/login.html';
+            //window.location.href = '/login/login.html';
+            console.log(response);
         }
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

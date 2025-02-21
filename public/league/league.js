@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const leagueName = urlParams.get('league');
     localStorage.setItem('leagueName', leagueName);
     const token = localStorage.getItem('token');
+    console.log("Token: ", token);
     const loggedInUser = localStorage.getItem('loggedInUser');
 
     leagueTitle.textContent = leagueName;
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Disable the start league button if the league has already started or if the logged-in user is not the founder
             if (league.started || loggedInUser !== league.founder) {
                 console.log("League unstartable")
-                startLeagueButton.display = "none";
+                startLeagueButton.style.display = "none";
                 startLeagueButton.disabled = true;
                 startLeagueButton.textContent = league.hasStarted ? 'League Started' : 'Start League';
             } else {
@@ -216,9 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getDraft(leagueId) {
+        console.log("Getting draft")
         fetchData(`/league/drafts?leagueId=${leagueId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (drafts) => {
+            console.log("Draft: ", drafts)
             if(drafts.length > 0) {
-                console.log("Draft: ", drafts[0])
+                console.log("Adding draft event")
                 addDraftEvent(drafts[0].id);
             }
         }, (error) => {

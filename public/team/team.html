@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Team Details</title>
     <link rel="stylesheet" href="/team/team.css">
+    <link rel="stylesheet" href="../templates/player.css">
 </head>
 <body>
     <header>
@@ -12,6 +13,16 @@
     </header>
 
     <main>
+        <div id="modal-overlay" class="modal-overlay">
+            <div class="modal">
+                <h2>Are you sure you want to remove this player?</h2>
+                <p>This action cannot be undone</p>
+                <div class="modal-buttons">
+                    <button class="modal-button confirm" id="yes-button">Yes</button>
+                    <button class="modal-button cancel" id="no-button">No</button>
+                </div>
+            </div>
+        </div>
         <section id="team-details-section">
             <!-- You can add team-specific details here if needed -->
         </section>
@@ -26,6 +37,6 @@
         &copy; 2024 Picklebrawl. All rights reserved.
     </footer>
 
-    <script type="module" src="/team/team.js"></script>
+    <script type="module" src="/team/team.js" defer></script>
 </body>
 </html>

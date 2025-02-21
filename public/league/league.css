@@ -39,16 +39,39 @@ header h1 {
 
 main {
     max-width: 1200px;
-    margin: 40px auto;
+    margin: 20px auto;
     padding: 0 20px;
 }
 
 #content {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    max-width: 1200px;
+    margin: 20px auto; /* reduced vertical margins */
+    padding: 0 0px; /* reduced horizontal padding */
 }
 
+/* Update horizontal container to add uniform gaps between sections */
+#horizontal-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    margin-top: 20px;
+    gap: 20px; /* adds gap between matches, current events, and teams */
+}
+
+/* Adjust sections within #horizontal-container */
+#matches-section{
+    flex: 0 0 20%;
+    margin-left: -60px; /* remove previously defined margin if any */
+}
+
+#teams-section {
+    flex: 0 0 40%;
+}
+
+#current-events-section {
+    flex: 0 0 50%;
+    margin-right: 0; /* remove previously defined margin if any */
+}
 section {
     background-color: #fff;
     padding: 30px;
@@ -89,9 +112,6 @@ section h2 {
 }
 
 /* Teams Section */
-#teams-section {
-    flex: 1 1 55%;
-}
 
 #teams-container {
     display: flex;
@@ -130,9 +150,6 @@ section h2 {
 }
 
 /* Matches Section */
-#matches-section {
-    flex: 1 1 40%;
-}
 
 #matches-container {
     display: flex;
@@ -192,11 +209,6 @@ section h2 {
 }
 
 /* Current Events Section (New) */
-#current-events-section {
-    flex: 1 1 36%;
-    margin-right: 2%;
-}
-
 #current-events-container {
     display: flex;
     flex-direction: column;

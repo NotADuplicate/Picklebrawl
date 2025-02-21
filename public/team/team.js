@@ -1,5 +1,6 @@
 import { fetchData } from "../api.js";
-document.addEventListener('DOMContentLoaded', () => {
+let playerCardTemplate;
+document.addEventListener('DOMContentLoaded', async () => {
     const teamNameElement = document.getElementById('team-name');
     const playersContainer = document.getElementById('players-container');
     const backButton = document.getElementById('back-button');
@@ -8,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const teamId = urlParams.get('teamId');
     const token = localStorage.getItem('token');
+
+    const response = await fetch('/templates/player.html');
+    const templateText = await response.text();
+    const templateContainer = document.createElement('div');
+    templateContainer.innerHTML = templateText;
+    document.body.appendChild(templateContainer);
+    playerCardTemplate = document.getElementById('player-card-template').content;
 
     // Fetch and display team details
     fetchData(`/teams/${teamId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (team) => {
@@ -18,44 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         fetchData(`/teams/${teamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
             players.forEach(player => {
-                const playerCard = document.createElement('div');
-                playerCard.className = 'player-card';
+                const playerCard = document.importNode(playerCardTemplate, true);
+
+                playerCard.querySelector('.player-name').textContent = player.name;
+                playerCard.querySelector('.player-bulk').textContent = player.bulk;
+                playerCard.querySelector('.player-finesse').textContent = player.finesse;
+                playerCard.querySelector('.player-height').textContent = player.height;
+                playerCard.querySelector('.player-strength').textContent = player.strength;
+                playerCard.querySelector('.player-trickiness').textContent = player.trickiness;
+                playerCard.querySelector('.player-focus').textContent = player.focus;
+                playerCard.querySelector('.tooltip').textContent = player.quirk_title;
+                playerCard.querySelector('.tooltip').setAttribute('data-tooltip', player.quirk_description);
             
-                const playerName = document.createElement('h3');
-                playerName.textContent = player.name;
-                playerCard.appendChild(playerName);
-            
-                const playerStatsList = document.createElement('ul');
-                playerStatsList.className = 'player-stats';
-            
-                const stats = [
-                    { label: 'Bulk', value: player.bulk },
-                    { label: 'Finesse', value: player.finesse },
-                    { label: 'Height', value: player.height },
-                    { label: 'Strength', value: player.strength },
-                    { label: 'Trickiness', value: player.trickiness },
-                    { label: 'Focus', value: player.focus },
-                ];
-            
-                stats.forEach(stat => {
-                    const statItem = document.createElement('li');
-                    statItem.innerHTML = `<strong>${stat.label}:</strong> ${stat.value}`;
-                    playerStatsList.appendChild(statItem);
-                });
-            
-                playerCard.appendChild(playerStatsList);
-            
-                const playerQuirk = document.createElement('p');
-                playerQuirk.className = 'player-quirk';
-            
-                const quirkTooltip = document.createElement('span');
-                quirkTooltip.className = 'tooltip';
-                quirkTooltip.textContent = player.quirk_title;
-                quirkTooltip.setAttribute('data-tooltip', player.quirk_description);
-            
-                playerQuirk.appendChild(quirkTooltip);
-                playerCard.appendChild(playerQuirk);
-            
+                //Add remove button
+                if(team.owner === localStorage.getItem('loggedInUser')) {
+                    const removeButtonContainer = playerCard.querySelector('.remove-button-container');
+                    removeButtonContainer.innerHTML = `<button class="remove-player-button" onclick="removePlayer('${player.id}')">Fire</button>`;
+                }
                 playersContainer.appendChild(playerCard);
             });
         }, (error) => {
@@ -68,3 +55,38 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.back();
     });
 });
+
+async function removePlayer(playerId) {
+    const token = localStorage.getItem('token');
+    const result = await showConfirmModal();
+    if (result) {
+        fetchData(`/teams/playerDelete/${playerId}`, 'POST', { 'Authorization': `Bearer ${token}` }, null, (response) => {
+            console.log('Player removed:', response);
+        }, (error) => {
+            console.error('Error removing player:', error);
+        });
+        window.location.reload();
+    }
+}
+
+async function showConfirmModal() {
+    return new Promise((resolve) => {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const yesButton = document.getElementById('yes-button');
+        const noButton = document.getElementById('no-button');
+
+        modalOverlay.style.display = 'block';
+
+        yesButton.onclick = function () {
+            modalOverlay.style.display = 'none';
+            resolve(true);
+        };
+
+        noButton.onclick = function () {
+            modalOverlay.style.display = 'none';
+            resolve(false);
+        };
+    });
+}
+
+window.removePlayer = removePlayer;

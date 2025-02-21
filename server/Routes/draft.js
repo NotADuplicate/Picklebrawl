@@ -33,10 +33,11 @@ router.get('/draft/players', (req, res) => {
 router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
     const { playerId, draftId } = req.body;
     const user = req.user;
+
     console.log("", user, " is drafting player: ", playerId)
     db.get(`SELECT teams.id FROM teams 
     JOIN drafts on currently_drafting_team_id = teams.id
-    WHERE teams.owner = ?`, [user], (err, team) => {
+    WHERE teams.owner_id = ?`, [req.userId], (err, team) => {
         console.log(team);
         if (err) {
             console.log("Error finding team: ", err);
@@ -59,28 +60,37 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
                     console.log("Error getting teams: ", err);
                     return res.status(400).json({ message: 'Error getting teams!' });
                 }
-
-                
-                const nextTeamId = teams[nextTurn % teams.length].id;
-                console.log("Teams: ", teams, " Order: ", nextTurn, " Next team:" , nextTeamId);
-
-                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                db.get(`SELECT COUNT(*) as playerCount FROM players WHERE team_id = ?`, [team.id], (err, result) => {
+                    console.log("Player count: ", result.playerCount)
                     if (err) {
-                        console.log("Error updating currently drafting team: ", err);
-                        return res.status(400).json({ message: 'Error updating currently drafting team!' });
+                        console.log("Error counting players: ", err);
+                        return res.status(400).json({ message: 'Error counting players!' });
                     }
-                    console.log("Set the next in drafting order")
+                    if (result.playerCount >= 7) {
+                        console.log("Team is at its max size!")
+                        return res.json({ message: 'Team is at its max size!' });
+                    }
+                    
+                    const nextTeamId = teams[nextTurn % teams.length].id;
+                    console.log("Teams: ", teams, " Order: ", nextTurn, " Next team:" , nextTeamId);
+    
+                    db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                        if (err) {
+                            console.log("Error updating currently drafting team: ", err);
+                            return res.status(400).json({ message: 'Error updating currently drafting team!' });
+                        }
+                        console.log("Set the next in drafting order")
+                        db.run(`UPDATE players SET team_id = ? WHERE id = ?`, [team.id, playerId], (err) => {
+                            if (err) {
+                                console.log("Error updating player: ", err);
+                                return res.status(400).json({ message: 'Error updating player!' });
+                            }
+                            console.log("Updated player ", playerId, " to team ", team.id)
+                            res.json({ message: 'Player updated successfully!' });
+                        });
+                    });
                 });
             });
-        });
-
-        db.run(`UPDATE players SET team_id = ? WHERE id = ?`, [team.id, playerId], (err) => {
-            if (err) {
-                console.log("Error updating player: ", err);
-                return res.status(400).json({ message: 'Error updating player!' });
-            }
-            console.log("Updated player ", playerId, " to team ", team.id)
-            res.json({ message: 'Player updated successfully!' });
         });
     });
 });

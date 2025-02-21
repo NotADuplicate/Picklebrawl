@@ -8,8 +8,9 @@ console.log('Loading leagues routes');
 router.get('/teams', (req, res) => {
     console.log("Getting teams");
     const leagueId = req.query.leagueId;
-    db.all(`SELECT teams.id, teams.name, league_id, username AS owner FROM teams
+    db.all(`SELECT teams.id, leagues.name AS league_name, teams.name, league_id, username AS owner FROM teams
         LEFT JOIN users on users.id = teams.owner_id
+        LEFT JOIN leagues on leagues.id = teams.league_id
         WHERE league_id = ?`, [leagueId], (err, teams) => {
         if (err) {
             console.log("Error fetching teams:", err);
@@ -47,6 +48,18 @@ router.get('/teams/:teamId/players', (req, res) => {
         }
         //console.log("Players:", players);
         res.json(players);
+    });
+});
+
+router.post('/teams/playerDelete/:playerId', (req, res) => {
+    const playerId = req.params.playerId;
+    console.log("Deleting player:", playerId);
+    db.run(`DELETE FROM players WHERE id = ?`, [playerId], (err) => {
+        if (err) {
+            console.log("Error deleting player:", err);
+            return res.status(500).json({ message: 'Error deleting player!' });
+        }
+        res.json({ message: 'Player deleted!' });
     });
 });
 
