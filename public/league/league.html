@@ -25,6 +25,7 @@
                 <!-- Matches Section (Left 25%) -->
                 <section id="matches-section">
                     <h2>Matches</h2>
+                    <button id="toggle-friendly" data-hide-friendly="false">Hide Friendly Matches</button>
                     <div id="matches-container">
                         <!-- Matches will be dynamically added here -->
                     </div>
@@ -32,7 +33,7 @@
 
                 <!-- Current Events Section (Middle 50%) -->
                 <section id="current-events-section">
-                    <h2>Current Events</h2>
+                    <h2>News</h2>
                     <div id="current-events-container">
                         <!-- Current events will be dynamically added here -->
                     </div>
@@ -52,5 +53,18 @@
     </footer>
 
     <script type="module" src="/league/league.js"></script>
+
+    <template id="current-event-template">
+        <div class="current-event">
+            <div class="current-event-header">
+                <h3 class="current-event-title">Event Title</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="current-event-body">
+                <p class="current-event-description">Event Description</p>
+                <button class="current-event-button">View Draft</button>
+            </div>
+        </div>
+    </template>
 </body>
 </html>

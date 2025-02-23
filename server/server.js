@@ -16,7 +16,7 @@ import jwt from 'jsonwebtoken';
 import { authenticator, SECRET_KEY } from './Models/authenticator.js';
 
 const app = express();
-const PORT = 9000;
+const PORT = 6969;
 
 // Convert import.meta.url to __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -45,13 +45,17 @@ fs.readFile(namesFilePath, 'utf8', (err, data) => {
     }
 });
 
+console.log("Loading routes");
 // Use routers
 app.use('/', leagueRoutes);
 app.use('/', teamRoutes);
+console.log("Loading routes");
 app.use('/', challengesRoutes);
 app.use('/', statsRoutes);
 app.use('/', matchRoutes);
+console.log("Loading routes");
 app.use('/', draftRoutes);
+console.log("Loading routes");
 
 // Serve login.html as the default page
 app.get('/', (req, res) => {

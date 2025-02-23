@@ -2,6 +2,7 @@ import { Team } from '../Models/team.js';
 import express from 'express';
 import { db } from '../database.js';
 import { Draft } from '../Models/draft.js';
+import { Season } from '../Models/season.js';
 import { authenticator } from '../Models/authenticator.js';
 
 const router = express.Router();
@@ -124,6 +125,12 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             }
             res.json({ message: 'League started successfully!' });
         });
+        const season = new Season(league.id);
+        season.setMatches(new Date(), (err) => {
+            if (err) {
+                console.log(err);
+            }
+        });
         const draft = new Draft(league.id);
     });
 });
@@ -182,6 +189,23 @@ router.get('/league/drafts', (req, res) => {
         }
 
         res.json(draft);
+    });
+});
+
+router.get('/league/upcoming', (req, res) => {
+    const { leagueId } = req.query;
+    console.log("Getting upcoming matches for league id:", leagueId);
+
+    db.all(`SELECT happening_at, challenger_team_id, challenged_team_id, challenges.id AS challenge_id, challenger.name AS challenger_name, challenged.name AS challenged_name
+        FROM challenges, teams AS challenger, teams AS challenged WHERE challenger_team_id = challenger.id AND challenged_team_id = challenged.id
+        AND  challenges.league_id = ? AND challenges.status = 'upcoming'
+        AND (strftime('%s', happening_at) - strftime('%s', 'now')) > 0`, [leagueId], (err, matches) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: 'Error fetching upcoming matches!' });
+        }
+
+        res.json(matches);
     });
 });
 

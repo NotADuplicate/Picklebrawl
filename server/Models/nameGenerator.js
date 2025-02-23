@@ -12,7 +12,7 @@ export class NameGenerator{
     static init(ar){
         this.startingWords = ar;
         this.seedsLengths = [];
-        console.log("Init Array: ", ar)
+        //console.log("Init Array: ", ar)
         this.seedsAr = ar.slice();
 
         this.probsOb = {};

@@ -85,8 +85,13 @@ db.serialize(() => {
         challenged_players_set BOOLEAN DEFAULT FALSE,
         challenger_actions_set BOOLEAN DEFAULT FALSE,
         challenged_actions_set BOOLEAN DEFAULT FALSE,
+        friendly BOOLEAN DEFAULT TRUE,
+        happening_at DATETIME,
+        league_id INT,
+
         FOREIGN KEY (challenger_team_id) REFERENCES teams(id),
-        FOREIGN KEY (challenged_team_id) REFERENCES teams(id)
+        FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
+        FOREIGN KEY (league_id) REFERENCES leagues(id)
     );`);
 
     db.run(`CREATE TABLE IF NOT EXISTS challenge_players (
@@ -116,6 +121,7 @@ db.serialize(() => {
         home_team_score INT,
         away_team_score INT,
         weather TEXT NOT NULL,
+        type TEXT DEFAULT 'friendly',
         created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '+20 seconds')),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),

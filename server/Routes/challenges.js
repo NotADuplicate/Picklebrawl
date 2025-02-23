@@ -17,7 +17,7 @@ router.get('/challenges', authenticator.authenticateToken, (req, res) => {
     }
 
     db.all(
-        'SELECT challenges.id AS id, status, challenger_team_id, challenged_team_id FROM challenges, teams WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND (status = ? OR status = ?) AND (teams.id = ? AND teams.owner_id = ?)',
+        'SELECT challenges.id AS id, status, challenger_team_id, challenged_team_id FROM challenges, teams WHERE (challenger_team_id = ? OR challenged_team_id = ?) AND (status = ? OR status = ?) AND (teams.id = ? AND teams.owner_id = ?) AND friendly = true',
         [team_id, team_id, 'pending', 'accepted', team_id, req.userId],
         (err, rows) => {
             console.log("Challenges: ", rows);
@@ -55,7 +55,7 @@ router.post('/challenges', authenticator.authenticateToken, (req, res) => {
                     res.json({ row });
                 } else {
                     db.run(
-                        'INSERT INTO challenges (challenger_team_id, challenged_team_id) VALUES (?, ?)',
+                        'INSERT INTO challenges (challenger_team_id, challenged_team_id, friendly) VALUES (?, ?, true)',
                         [myTeamId, teamId],
                         function (err) {
                             if (err) {
@@ -363,7 +363,7 @@ router.post('/challenges/:id/add-actions', authenticator.authenticateToken, (req
                             }
                             console.log("Challenge row after updating actions: ", row);
                             if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set) {
-                                runMatch(row.id);
+                                runMatch(row.id, row.friendly);
                             }
                         });
                     });
@@ -667,8 +667,14 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
     });
 });
 
-function runMatch(challengeId) {
+function runMatch(challengeId, friendly) {
     let id = challengeId;
+
+    if(!friendly) {
+        type = 'league';
+    } else {
+        type = 'friendly';
+    }
     console.log("Running match from challengeId: ", id)
 
     db.run('UPDATE challenges SET status = ? WHERE id = ?', ['completed', id], function(err) {
@@ -706,7 +712,7 @@ function runMatch(challengeId) {
                 }
             }
             const match = new Match(challengerTeam, challengedTeam, new Weather());
-            await match.startGame(challengeId);
+            await match.startGame(challengeId, type);
 
         })
     })
