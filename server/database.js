@@ -38,6 +38,7 @@ db.serialize(() => {
         name TEXT NOT NULL,
         league_id INTEGER NOT NULL,
         owner_id TEXT NOT NULL,
+        in_season BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (league_id) REFERENCES leagues(id),
         FOREIGN KEY (owner_id) REFERENCES users(id),
         UNIQUE(league_id, name),
@@ -247,6 +248,28 @@ db.serialize(() => {
         FOREIGN KEY (league_id) REFERENCES leagues(id)
         FOREIGN KEY (currently_drafting_team_id) REFERENCES teams(id)
     );`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS draft_premoves (
+        draft_id INTEGER NOT NULL,
+        player_id INTEGER NOT NULL,
+        team_id INTEGER NOT NULL,
+        queue_order INT NOT NULL,
+        FOREIGN KEY (draft_id) REFERENCES drafts(id),
+        FOREIGN KEY (player_id) REFERENCES players(id),
+        FOREIGN KEY (team_id) REFERENCES teams(id)
+    );`);
+
+    // Trigger to adjust order values after a row is deleted.
+    db.run(`
+    CREATE TRIGGER IF NOT EXISTS after_delete_draft_premove
+    AFTER DELETE ON draft_premoves
+    FOR EACH ROW
+    BEGIN
+      UPDATE draft_premoves
+      SET queue_order = queue_order - 1
+      WHERE team_id = OLD.team_id AND queue_order > OLD.queue_order;
+    END;
+    `);
 });
 
 export { db };

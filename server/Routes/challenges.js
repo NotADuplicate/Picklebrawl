@@ -669,6 +669,7 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
 
 function runMatch(challengeId, friendly) {
     let id = challengeId;
+    let type;
 
     if(!friendly) {
         type = 'league';

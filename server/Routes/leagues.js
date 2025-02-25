@@ -119,19 +119,30 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             return res.status(400).json({ message: 'Only the founder can start the league!' });
         }
 
+        if(league.started) {
+            return res.status(400).json({ message: 'League already started!' });
+        }
+
         db.run(`UPDATE leagues SET started = ? WHERE id = ?`, [true, league.id], (err) => {
             if (err) {
                 return res.status(400).json({ message: 'Error starting league!' });
             }
             res.json({ message: 'League started successfully!' });
         });
-        const season = new Season(league.id);
-        season.setMatches(new Date(), (err) => {
+
+        db.run(`UPDATE teams SET in_season = ? WHERE league_id = ?`, [true, league.id], (err) => {
             if (err) {
-                console.log(err);
+                console.log('Error updating teams:', err);
             }
+
+            const season = new Season(league.id);
+            season.setMatches(new Date(), (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+            const draft = new Draft(league.id);
         });
-        const draft = new Draft(league.id);
     });
 });
 
@@ -146,6 +157,7 @@ router.get('/matches', (req, res) => {
             away_team.name AS away_team_name, 
             home_team_score, 
             away_team_score,
+            type,
             (strftime('%s', 'now') - strftime('%s', created_at)) > 101 AS is_over,
             SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS home_team_live_score,
             SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS away_team_live_score

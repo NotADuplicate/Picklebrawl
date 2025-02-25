@@ -1,10 +1,12 @@
 import { fetchData } from "../api.js";
 let myTeamId = null;
 let token = null;
+let messageDiv = null;
+let challengerIds = {} //associates each challenge button with the challenger and challenged
+let challengedIds = {}
 
 document.addEventListener('DOMContentLoaded', () => {
-    const messageDiv = document.getElementById('message');
-    const leaguesList = document.getElementById('leagues-list');
+    messageDiv = document.getElementById('message');
     const backButton = document.getElementById('back-button');
     const teamsContainer = document.getElementById('teams-container');
     const leagueTitle = document.getElementById('league-title');
@@ -19,8 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loggedInUser = localStorage.getItem('loggedInUser');
 
     leagueTitle.textContent = leagueName;
-    let challengerIds = {} //associates each challenge button with the challenger and challenged
-    let challengedIds = {}
 
     //Add friendly match toggle
     const toggleBtn = document.getElementById('toggle-friendly');

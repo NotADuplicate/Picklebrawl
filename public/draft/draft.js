@@ -12,7 +12,10 @@ let playerCardTemplate;
 
 let leagueName = "";
 
-// Current draft position
+let turn = 0;
+
+let draftQueue = [];
+
 let currentDraftIndex = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -38,13 +41,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         fetchData(`/draft/players?draftId=${draftId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (res) => {
             const players = res.prospects;
-            currentDraftIndex = res.turn % teams.length;
+            const backwards = Math.floor(res.turn/teams.length) % 2;
+            turn = res.turn;
+            currentDraftIndex = !backwards ? turn % teams.length : teams.length - turn % teams.length - 1;
             displayDraftOrder();
             console.log("Response:", res);
             console.log(players);
             console.log("Teams: ", teams);
             draftPlayers = players;
+            fetchData(`/draft/premoves?draftId=${draftId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (premoves) => {
+                console.log("Premoves: ", premoves);
+                premoves.forEach(premove => {
+                    draftQueue.push(premove.player_id);
+                });
             displayPlayers(players);
+            });
         });
     });
 });
@@ -71,14 +82,18 @@ function displayPlayers(playerList) {
         console.log("Current draft index: ", currentDraftIndex);
         const currentTeam = teams[currentDraftIndex];
     
-        console.log("Current team: ", currentTeam);
+        const draftButtonContainer = playerCard.querySelector('.draft-button-container');
         if (currentTeam.owner == loggedInUser) {
-            const draftButtonContainer = playerCard.querySelector('.draft-button-container');
-            console.log("Draft button container: ", draftButtonContainer);
             draftButtonContainer.innerHTML = `<button class="draft-button" onclick="draftPlayer('${player.id}')">Draft</button>`;
+        } else {
+            const preMoveIndex = draftQueue.indexOf(player.id);
+            if(preMoveIndex === -1) {
+                draftButtonContainer.innerHTML = `<button class="draft-button" onclick="premovePlayer('${player.id}')">Queue Draft</button>`;
+            }
+            else {
+                draftButtonContainer.innerHTML = `<button class="draft-button" onclick="undoPremove('${player.id}')">Draft Queue: ${preMoveIndex+1}</button>`;
+            }
         }
-        //playerCard.dataset.id = 1//player.id;
-        //playerCard.dataset.power = player.power;
 
         playerListElement.appendChild(playerCard);
     });
@@ -102,6 +117,38 @@ function draftPlayer(playerId) {
         }
         else if(res.message === 'Team is at its max size!') {
             alert("Your team is at its max size! Go into your team screen to remove a player before drafting another.");
+        }
+    });
+}
+
+function premovePlayer(playerId) {
+    console.log("Player id: ", playerId)
+    const user = localStorage.getItem('loggedInUser');
+    fetchData(`/draft/premove`, 'POST', { 'Authorization': `Bearer ${token}`}, { playerId, draftId, order: draftQueue.length }, (res) => {
+        console.log("Response: ", res);
+        if (res.message === 'Draft queued successfully!') {
+            console.log("Player added to queue");
+            draftQueue.push(parseInt(playerId, 10));
+            console.log("Queue: ", draftQueue);
+            displayPlayers(draftPlayers);
+        }
+        else if(res.message === 'Team is at its max size!') {
+            alert("Your team is at its max size! Go into your team screen to remove a player before drafting another.");
+        }
+    });
+}
+
+function undoPremove(playerId) {
+    console.log("Player id: ", playerId)
+    const user = localStorage.getItem('loggedInUser');
+    fetchData(`/draft/undo-premove`, 'POST', { 'Authorization': `Bearer ${token}`}, { playerId, draftId, order: draftQueue.length }, (res) => {
+        console.log("Response: ", res);
+        if (res.message === 'Draft removed successfully!') {
+            draftQueue = draftQueue.filter(id => id !== parseInt(playerId, 10));
+            displayPlayers(draftPlayers);
+        }
+        else {
+            alert("Error removing player from queue.");
         }
     });
 }
@@ -142,7 +189,26 @@ function displayDraftOrder() {
 
     // Display user's position in the queue
     const userPositionElement = document.getElementById('user-position');
-    const positionInQueue = (teams.length + currentDraftIndex - teams.findIndex(team => team.owner === loggedInUser)) % teams.length;
+    const backward = Math.floor(turn/teams.length) % 2;
+    const yourIndex = teams.findIndex(team => team.owner === loggedInUser);
+    let positionInQueue;
+    if(backward == 0) {
+        if(yourIndex < currentDraftIndex) {
+            positionInQueue = teams.length - currentDraftIndex + (teams.length-yourIndex) -1;
+        }
+        else {
+            positionInQueue = yourIndex - currentDraftIndex;
+        }
+    }
+    else {
+        if(yourIndex > currentDraftIndex) {
+            positionInQueue = yourIndex + currentDraftIndex + 1;
+        }
+        else {
+            positionInQueue = currentDraftIndex - yourIndex;
+        }
+    }
+
     console.log("Current draft index: ", currentDraftIndex, " , Team index: ", teams.findIndex(team => team.owner === loggedInUser), " , Teams: ", teams);
     userPositionElement.textContent = `Your team is ${positionInQueue === 0 ? 'currently drafting!' : 'drafting in ' + positionInQueue + ' turn(s)'}.`;
 }
@@ -154,3 +220,5 @@ function goToLeague() {
 window.goToLeague = goToLeague;
 window.sortPlayers = sortPlayers;
 window.draftPlayer = draftPlayer;
+window.premovePlayer = premovePlayer;
+window.undoPremove = undoPremove;
