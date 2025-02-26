@@ -52,6 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
         if (league) {
             localStorage.setItem("leagueId", league.id);
+            const calendarButton = document.getElementById('calendar-button');
+            calendarButton.addEventListener('click', () => {
+                window.location.href = `../calendar/calendar.html?leagueId=${league.id}`;
+            });
             leagueFounderElement.textContent = league.founder;
             // Disable the start league button if the league has already started or if the logged-in user is not the founder
             if (league.started || loggedInUser !== league.founder) {

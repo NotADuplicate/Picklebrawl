@@ -119,7 +119,7 @@ router.get('/match/match-stats', (req, res) => {
 WITH scoring AS (
     SELECT 
         shooter_id AS player_id,
-        SUM(successful_score * CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) AS points_scored,
+        SUM(successful_score * points_worth) AS points_scored,
         SUM(CASE WHEN successful_score AND blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_successful,
         SUM(CASE WHEN blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_attempted,
         SUM(CASE WHEN successful_score AND blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_successful,
@@ -139,7 +139,7 @@ blitzes AS (
 blocks AS (
     SELECT
         blocker_id AS player_id,
-        SUM(CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) AS points_blocked
+        SUM(points_worth) AS points_blocked
     FROM scoring_history
     WHERE match_id = ${matchId} AND blocker_id IS NOT NULL
     GROUP BY blocker_id

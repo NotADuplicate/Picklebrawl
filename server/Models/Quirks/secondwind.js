@@ -1,11 +1,26 @@
 import { Quirk } from './quirk.js';
 
 export class SecondWind extends Quirk {
-    static likelihood = 0; //4
-    static POWER_MODIFIER = -2;
-    static STAT_INCREASE = 2;
+    static likelihood = 4;
+    static POWER_MODIFIER = -3;
+    static STAT_BOOST = 2;
     static title = "Second Wind";
-    static description = ("+" + this.STAT_INCREASE + " to all stats after halftime if they played the first half");
+    static description = ("+" + this.STAT_BOOST + " to all stats in the second half of the game.");
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+
+    static halftimeEffect(match, player) {
+        player.bulk += this.STAT_BOOST;
+        player.height += this.STAT_BOOST;
+        player.strength += this.STAT_BOOST;
+        player.finesse += this.STAT_BOOST;
+        player.trickiness += this.STAT_BOOST;
+        player.focus += this.STAT_BOOST;
+        player.baseBulk += this.STAT_BOOST;
+        player.baseHeight += this.STAT_BOOST;
+        player.baseStrength += this.STAT_BOOST;
+        player.baseFinesse += this.STAT_BOOST;
+        player.baseTrickiness += this.STAT_BOOST;
+        player.baseFocus += this.STAT_BOOST;
+    }
 }

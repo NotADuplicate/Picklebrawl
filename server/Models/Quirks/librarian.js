@@ -4,7 +4,7 @@ export class Librarian extends Quirk {
     static POWER_MODIFIER = -1;
     static title = "Librarian";
     static description = ("Can silence players");
-    static likelihood = 2;
+    static likelihood = 0//2;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
 

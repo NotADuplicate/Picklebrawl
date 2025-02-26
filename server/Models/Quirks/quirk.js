@@ -8,6 +8,7 @@ export class Quirk {
     static START_EFFECT_ORDER = 2;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
+    static DAMAGE_TAKEN_MODIFIER = 1;
 
     // TODO: when should the startGameEffect be called? Maybe the bottom of player.setStats?
     // It might not work there because some stat mods rely on other players to already be created
@@ -20,9 +21,10 @@ export class Quirk {
     }
 
     static startGameEffect(match, player) {
-        // Handles match-specific changes in stats
-        // e.g. the -2 to stats if the alphabet completionist only sees 24 letters in a match
-        console.log("No quirk effects\n");
+        return false;
+    }
+
+    static halftimeEffect(match, player) {
         return false;
     }
 

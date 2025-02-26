@@ -3,8 +3,7 @@ import { Quirk } from './quirk.js';
 export class Streaky extends Quirk {
     static likelihood = 6;
     static title = "Streaky";
-    static description = ("The player may have either higher or lower stats, recalculated at the start "
-    + "of each match");
+    static description = ("At the start of the game, has a 50% chance to increase all stats by 1, or decrease all stats by 1.");
     static STAT_CHANGE = 1
     static CHANCE_FOR_STAT_INCREASE = 0.5
     static APPEARS_IN_GENERATION = true;

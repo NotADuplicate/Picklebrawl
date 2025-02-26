@@ -60,6 +60,7 @@ class Player {
     breakAwayChance = 0.04;
 
     PLAYER_ASSIST_MODIFIER = 0.75;
+    PLAYER_SHOOTING_BONUS = 0;
 
     constructor() {
         this.name = this.generateName();
@@ -212,14 +213,9 @@ class Player {
             if (finalDamage < 0) {
                 return;
             }
-            if(finalDamage > 5) {
-                console.log(this.name + " dealt " + finalDamage + " damage to " + target.name);
-                console.log("Strength: " + this.strength + " Temp Strength: " + this.tempStrength);
-                console.log("Bulk: " + target.bulk + " Protect Bulk: " + target.protectBulk);
-            }
             target.tempInjury += finalDamage;
 
-            const hpDamage = 2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
+            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {

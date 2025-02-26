@@ -1,7 +1,8 @@
 import { Quirk } from './quirk.js';
+import {db} from '../../database.js';
 
 export class RockSolid extends Quirk {
-    static likelihood = 3; //3
+    static likelihood = 3;
     static POWER_MODIFIER = -1;
     static title = "Rock Solid";
     static description = ("Cannot be tricked");
@@ -18,5 +19,22 @@ export class RockSolid extends Quirk {
 
     static beTrickedEffect(player, tricker, match) {
         return false;
+    }
+
+    static attackEffect(player, target) {
+        if(target.quirk.title !== "Scissor Sharp") {
+            return null;
+        }
+        
+        db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+            + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
+            player.id, target.id, 100, false, 100], function(err) {
+                if (err) {
+                    console.error('Error inserting attack into attack_history:', err.message);
+                }
+        });
+        target.hp = 0
+        target.knockout(match);
+        return 1;
     }
 }

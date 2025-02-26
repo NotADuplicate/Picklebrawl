@@ -136,7 +136,7 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             }
 
             const season = new Season(league.id);
-            season.setMatches(new Date(), (err) => {
+            season.setMatches(new Date(Date.now() + 24 * 60 * 60 * 1000), (err) => {
                 if (err) {
                     console.log(err);
                 }
@@ -158,9 +158,9 @@ router.get('/matches', (req, res) => {
             home_team_score, 
             away_team_score,
             type,
-            (strftime('%s', 'now') - strftime('%s', created_at)) > 101 AS is_over,
-            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS home_team_live_score,
-            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score * (CASE WHEN blitzer_id IS NULL THEN 2 ELSE 1 END) ELSE 0 END) AS away_team_live_score
+            (strftime('%s', 'now') - strftime('%s', created_at)) > 202 AS is_over,
+            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score * (points_worth) ELSE 0 END) AS home_team_live_score,
+            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score * (points_worth) ELSE 0 END) AS away_team_live_score
         FROM 
             match_history
         JOIN 
@@ -204,14 +204,14 @@ router.get('/league/drafts', (req, res) => {
     });
 });
 
-router.get('/league/upcoming', (req, res) => {
+router.get('/league/upcoming', authenticator.authenticateToken, (req, res) => {
     const { leagueId } = req.query;
     console.log("Getting upcoming matches for league id:", leagueId);
 
-    db.all(`SELECT happening_at, challenger_team_id, challenged_team_id, challenges.id AS challenge_id, challenger.name AS challenger_name, challenged.name AS challenged_name
-        FROM challenges, teams AS challenger, teams AS challenged WHERE challenger_team_id = challenger.id AND challenged_team_id = challenged.id
-        AND  challenges.league_id = ? AND challenges.status = 'upcoming'
-        AND (strftime('%s', happening_at) - strftime('%s', 'now')) > 0`, [leagueId], (err, matches) => {
+    db.all(`SELECT my_team.id AS my_team_id, happening_at, challenger_team_id, challenged_team_id, challenges.id AS challenge_id, challenger.name AS challenger_name, challenged.name AS challenged_name
+        FROM challenges, teams AS challenger, teams AS challenged, teams AS my_team WHERE challenger_team_id = challenger.id AND challenged_team_id = challenged.id
+        AND my_team.owner_id = ? AND challenges.league_id = ? AND challenges.status = 'upcoming'
+        AND (strftime('%s', happening_at) - strftime('%s', 'now')) > 0`, [req.userId, leagueId], (err, matches) => {
         if (err) {
             console.log(err);
             return res.status(500).json({ message: 'Error fetching upcoming matches!' });

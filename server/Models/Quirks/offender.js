@@ -5,7 +5,7 @@ export class Offender extends Quirk {
     static title = "Offender";
     static STAT_INCREASE = 2;
     static description = ("+" + this.STAT_INCREASE + " to all stats while on offense");
-    static likelihood = 5;
+    static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;

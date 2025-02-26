@@ -432,6 +432,9 @@ function selectPlayer(player) {
             player.dataset.location = 'team';
             stats = JSON.parse(player.dataset.stats);
             player.classList.remove('selected');
+            player.style.width = '';       // Reset inline width
+            player.style.display = '';     // Reset inline display
+            player.style.backgroundColor = ''; // Reset inline background-color
             Object.keys(stats).forEach(stat => {
                 const statElement = player.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
                 statElement.textContent = stats[stat];

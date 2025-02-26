@@ -27,7 +27,7 @@ export class Draft {
     }
 
     generatePlayers(numUsers) {
-        const numPlayers = numUsers * 3 + 5;
+        const numPlayers = numUsers * 3 + 3;
         for (let i = 0; i < numPlayers; i++) {
             const player = new Player();
             player.pickRandomQuirk(true);

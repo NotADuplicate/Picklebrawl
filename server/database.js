@@ -220,6 +220,7 @@ db.serialize(() => {
         suspense INT NOT NULL,
         blitzer_id INT,
         blocker_id INT,
+        points_worth INT NOT NULL,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
@@ -268,6 +269,30 @@ db.serialize(() => {
       UPDATE draft_premoves
       SET queue_order = queue_order - 1
       WHERE team_id = OLD.team_id AND queue_order > OLD.queue_order;
+    END;
+    `);
+
+    db.run(`CREATE TABLE IF NOT EXISTS season (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        league_id INTEGER NOT NULL,
+        num INT,
+        start_date DATETIME NOT NULL,
+        end_date DATETIME,
+        FOREIGN KEY (league_id) REFERENCES leagues(id)
+    );`);
+
+    // Trigger: before inserting a new season, if num is not provided,
+    // set it to one more than the current maximum for the same league.
+    db.run(`
+    CREATE TRIGGER IF NOT EXISTS set_season_num
+    BEFORE INSERT ON season
+    FOR EACH ROW
+    WHEN NEW.num IS NULL
+    BEGIN
+      SELECT NEW.num = COALESCE(
+          (SELECT MAX(num) FROM season WHERE league_id = NEW.league_id),
+          0
+      ) + 1;
     END;
     `);
 });
