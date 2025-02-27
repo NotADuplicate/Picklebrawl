@@ -13,6 +13,7 @@ const challenger = (challengerId === myTeamId) ? true : false;
 let playerDict = {};
 let startersLocked = false;
 let actionsLocked = false;
+let friendly = false;
 
 let offensePriorities = {
     Rest: "Target neither",
@@ -297,6 +298,8 @@ function checkChallengeFlags() {
                 playerIds.push(playerAction.player_id);
             });
         }
+        friendly = response.flags.friendly;
+        //If all players set
         if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
             if(response.flags.challengedActionsSet && response.flags.challengerActionsSet) {
                 console.log("All actions set, starting match");
@@ -509,6 +512,7 @@ function lockActions() {
         actionsLocked = true;
         const lockButton = document.getElementById('lock-button');
         lockButton.textContent = 'Undo actions';
+        checkChallengeFlags();
     }, (error) => {
         console.error('Error adding players:', error);
     });

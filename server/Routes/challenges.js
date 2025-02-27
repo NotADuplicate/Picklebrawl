@@ -362,8 +362,9 @@ router.post('/challenges/:id/add-actions', authenticator.authenticateToken, (req
                                 return;
                             }
                             console.log("Challenge row after updating actions: ", row);
-                            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set) {
-                                runMatch(row.id, row.friendly);
+                            //run friendly match if all actions are set
+                            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set && row.friendly) {
+                                runMatch(row.id, row.friendly); 
                             }
                         });
                     });
@@ -468,13 +469,14 @@ router.get('/challenges/:id/players-actions', authenticator.authenticateToken, (
             console.log("Team: ", team)
             const teamId = team.id;
 
-            const { challenger_players_set, challenged_players_set, challenger_actions_set, challenged_actions_set } = challenge;
+            const { challenger_players_set, challenged_players_set, challenger_actions_set, challenged_actions_set, friendly } = challenge;
 
             const flags = {
                 challengerPlayersSet: challenger_players_set,
                 challengedPlayersSet: challenged_players_set,
                 challengerActionsSet: challenger_actions_set,
-                challengedActionsSet: challenged_actions_set
+                challengedActionsSet: challenged_actions_set,
+                friendly: challenge.friendly
             };
             let playersShown = "Self";
             if(challenger_players_set && challenged_players_set && challenger_actions_set && challenged_actions_set) {
@@ -719,5 +721,5 @@ function runMatch(challengeId, friendly) {
     })
 }
 
-//runMatch(1);
+runMatch(1);
 export default router;

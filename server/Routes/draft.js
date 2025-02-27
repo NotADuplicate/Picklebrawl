@@ -193,18 +193,18 @@ function draftQueue(teams, draftId, draftTurn, callback) {
     const backwards = Math.floor(draftTurn/teams.length) % 2;
     const nextTeamIndex = !backwards ? draftTurn % teams.length : teams.length - draftTurn % teams.length - 1;
     const nextTeamId = teams[nextTeamIndex].id;
-    db.get(`SELECT player_id FROM draft_premoves WHERE draft_id = ? AND team_id = ? ORDER BY queue_order ASC`, [draftId, nextTeamId], (err, player) => {
+    db.get(`SELECT player_id FROM draft_premoves WHERE draft_id = ? AND team_id = ? ORDER BY queue_order ASC`, [draftId, nextTeamId], (err, premove) => {
         if (err) {
             console.log("Error getting premoves: ", err);
             callback(draftTurn);
             return;
         }
-        if (!player) {
+        if (!premove) {
             console.log("No player found in draft queue")
             callback(draftTurn);
             return;
         }
-        db.get(`SELECT * FROM players WHERE id = ?`, [player.player_id], (err, player) => {
+        db.get(`SELECT * FROM players WHERE id = ?`, [premove.player_id], (err, player) => {
             if (err) {
                 console.log("Error getting player: ", err);
                 callback(draftTurn);
@@ -212,40 +212,41 @@ function draftQueue(teams, draftId, draftTurn, callback) {
             }
             if(player.team_id) {
                 console.log("Player already drafted")
-                db.run(`DELETE FROM draft_premoves WHERE draft_id = ? AND team_id = ? AND player_id = ?`, [draftId, nextTeamId, player.player_id], (err) => {
+                db.run(`DELETE FROM draft_premoves WHERE draft_id = ? AND team_id = ? AND player_id = ?`, [draftId, nextTeamId, player.id], (err) => {
                     if (err) {
                         console.log("Error removing premove: ", err);
                         callback(draftTurn);
                         return;
                     }
-                    console.log("Removed player ", player.player_id, " from premove queue")
+                    console.log("Removed player ", player.id, " from premove queue")
                     draftQueue(teams, draftId, draftTurn, (turn) => {
                         callback(turn);
                     });
                     return;
+                });
+            } else {
+                console.log("Queuing draft for player: ", player)
+                db.run(`UPDATE players SET team_id = ? WHERE id = ?`, [nextTeamId, player.id], (err) => {
+                    if (err) {
+                        console.log("Error updating player: ", err);
+                        callback(draftTurn);
+                        return;
+                    }
+                    console.log("Updated player ", player.id, " to team ", nextTeamId)
+                    db.run(`DELETE FROM draft_premoves WHERE draft_id = ? AND team_id = ? AND player_id = ?`, [draftId, nextTeamId, player.id], (err) => {
+                        if (err) {
+                            console.log("Error removing premove: ", err);
+                            callback(draftTurn);
+                            return;
+                        }
+                        console.log("Removed player ", player.id, " from premove queue")
+                        draftTurn++;
+                        draftQueue(teams, draftId, draftTurn, (turn) => {
+                            callback(turn);
+                        });
+                    });
                 });
             }
-            console.log("Queuing draft for player: ", player)
-            db.run(`UPDATE players SET team_id = ? WHERE id = ?`, [nextTeamId, player.player_id], (err) => {
-                if (err) {
-                    console.log("Error updating player: ", err);
-                    callback(draftTurn);
-                    return;
-                }
-                console.log("Updated player ", player.player_id, " to team ", nextTeamId)
-                db.run(`DELETE FROM draft_premoves WHERE draft_id = ? AND team_id = ? AND player_id = ?`, [draftId, nextTeamId, player.player_id], (err) => {
-                    if (err) {
-                        console.log("Error removing premove: ", err);
-                        callback(draftTurn);
-                        return;
-                    }
-                    console.log("Removed player ", player.player_id, " from premove queue")
-                    draftTurn++;
-                    draftQueue(teams, draftId, draftTurn, (turn) => {
-                        callback(turn);
-                    });
-                });
-            });
         });
     });
 }

@@ -21,7 +21,7 @@ export class RockSolid extends Quirk {
         return false;
     }
 
-    static attackEffect(player, target) {
+    static attackEffect(player, target, match) {
         if(target.quirk.title !== "Scissor Sharp") {
             return null;
         }

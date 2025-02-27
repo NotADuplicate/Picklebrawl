@@ -158,7 +158,6 @@ class Match {
                 }
                 self.match_id = this.lastID;
                 self.setTargets();
-                self.savePriorities();
                 console.log("NEW MATCH: " + self.homeTeam.teamName + " vs " + self.awayTeam.teamName);
                 self.weather.startGameEffect(self, self.offenseTeam, self.defenseTeam);
                 
@@ -169,10 +168,10 @@ class Match {
                 for(const player of self.players) {
                     player.quirk.startGameEffect(self, player);
                     if(player.offensePriority == "Score") {
-                        
                         player.range = self.RANGE_DICTIONARY[player.offenseProperty];
                     }
                 }
+                self.savePriorities();
                 self.runMatch();
                 resolve();
             });
@@ -755,7 +754,7 @@ class Match {
         if(suspense < 0) {suspense = 0;}
         db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense, blitzer_id, blocker_id, points_worth) `
             + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense, 
-                this.blitzerId, blocker_id, blitz==null ? 2 : 1],
+                this.blitzerId, blocker_id, blitz==false ? 2 : 1],
             function(err) {
                 if (err) {
                     console.error('Error inserting score into scoring_history:', err.message);

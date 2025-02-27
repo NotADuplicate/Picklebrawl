@@ -8,7 +8,7 @@ export class ScissorSharp extends Quirk {
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 
-    static attackEffect(player, target) {
+    static attackEffect(player, target, match) {
         if(target.quirk.title !== "Paper Thin") {
             const damage = Math.random() * (player.strength + player.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);

@@ -11,7 +11,7 @@ let watchingLive = false; // If the user is watching the game live, cannot get b
 let consequetiveStalls = 0;
 let possessionTeam = null;
 let field_length = 100;
-const TIME_PER_TICK = 1000; // Time in milliseconds per tick
+const TIME_PER_TICK = 2000; // Time in milliseconds per tick
 const TIME_PER_SCORE = 1000; // Time in milliseconds per score
 const teamPositions = {
     home: {

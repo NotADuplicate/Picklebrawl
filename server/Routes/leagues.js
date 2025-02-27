@@ -159,8 +159,8 @@ router.get('/matches', (req, res) => {
             away_team_score,
             type,
             (strftime('%s', 'now') - strftime('%s', created_at)) > 202 AS is_over,
-            SUM(CASE WHEN scoring_history.team_id = home_team_id THEN scoring_history.successful_score * (points_worth) ELSE 0 END) AS home_team_live_score,
-            SUM(CASE WHEN scoring_history.team_id = away_team_id THEN scoring_history.successful_score * (points_worth) ELSE 0 END) AS away_team_live_score
+            SUM(CASE WHEN scoring_history.team_id = home_team.id THEN scoring_history.successful_score * (scoring_history.points_worth) ELSE 0 END) AS home_team_live_score,
+            SUM(CASE WHEN scoring_history.team_id = away_team.id THEN scoring_history.successful_score * (scoring_history.points_worth) ELSE 0 END) AS away_team_live_score
         FROM 
             match_history
         JOIN 

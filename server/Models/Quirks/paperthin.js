@@ -10,7 +10,7 @@ export class PaperThin extends Quirk {
     static APPEARS_IN_DRAFT = true;
     static DAMAGE_TAKEN_MODIFIER = 2;
 
-    static attackEffect(player, target) {
+    static attackEffect(player, target, match) {
         if(target.quirk.title !== "Rock Solid") {
             return null;
         }

@@ -4,13 +4,12 @@ export class Codependent extends Quirk {
     static POWER_MODIFIER = 5;
     static title = "Codependent";
     static description = ("Sets your highest stat(s) to 1 unless someone else has this quirk");
-    static likelihood = 5;
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = false;
-    static APPEARS_IN_DRAFT = false;
+    static APPEARS_IN_DRAFT = true;
 
     //Since this quirk decreases your highest stat, the generation should prevent having multiple stats tied for highest
     static playerStatGenerationChanges(player, power) {
-        console.log("Pack Animal playerStatGenerationChanges\n");
         // Find the highest stat value
         const stats = {
             finesse: player.finesse,
@@ -44,7 +43,7 @@ export class Codependent extends Quirk {
 
     static startGameEffect(match, player) {
         for (const otherPlayer of match.players) {
-            if (otherPlayer.quirk instanceof Codependent && otherPlayer !== player) {
+            if (otherPlayer.quirk.title == "Codependent" && otherPlayer !== player) {
                 return;
             }
         }
@@ -67,7 +66,6 @@ export class Codependent extends Quirk {
     }
 
     static challengeStatModification(players, player) {
-        console.log("Pack Animal challenge stat modification");
         for(const otherPlayer of players) {
             if(otherPlayer != player && otherPlayer.quirk instanceof Codependent) {
                 return false;

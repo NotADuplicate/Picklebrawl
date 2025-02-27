@@ -52,8 +52,8 @@ function renderCalendar() {
         dayNumber.textContent = day;
         cell.appendChild(dayNumber);
 
-        // Format the date string as YYYY-MM-DD
-        const formattedDate = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Format the date string as MM/DD/YYYY
+        const formattedDate = `${String(month+1)}/${String(day)}/${year}`;
 
         // Find and display any events for this date
         events.filter(event => event.date === formattedDate).forEach(event => {
@@ -85,10 +85,12 @@ function getUpcoming(leagueId, callback) {
         console.log("Upcoming challenges: ", challenges);
         challenges.sort((a, b) => new Date(a.happening_at) - new Date(b.happening_at));
         challenges.forEach(challenge => {
+            const time = new Date(challenge.happening_at).toLocaleDateString().substring(0, 10);
+            console.log("Time: ", time);
             const myTeamId = challenge.my_team_id
             let event = {
                 title: `${challenge.challenger_name} vs ${challenge.challenged_name}`,
-                date: challenge.happening_at.substring(0, 10)
+                date: time
             };
             if(challenge.challenger_team_id == myTeamId || challenge.challenged_team_id == myTeamId) {
                 event.url = `../bench/bench.html?challengedId=${challenge.challenged_team_id}&challengerId=${challenge.challenger_team_id}&challengeId=${challenge.challenge_id}`;

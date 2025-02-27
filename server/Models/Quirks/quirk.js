@@ -54,7 +54,7 @@ export class Quirk {
         return shooting+bonus-(range*match.SHOOTING_DISTANCE_LINEAR + match.SHOOTING_DISTANCE_EXPONENTIAL*(range**2))>0;
     }
 
-    static attackEffect(player, target) {
+    static attackEffect(player, target, match) {
         return null;
     }
 

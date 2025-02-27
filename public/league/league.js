@@ -226,14 +226,15 @@ function addUpcomingMatch(challenge) {
     const currentEventsContainer = document.getElementById('current-events-container');
     console.log("My team id: ", myTeamId) 
 
+    const time = new Date(challenge.happening_at).toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     if(challenge.challenger_team_id == myTeamId || challenge.challenged_team_id == myTeamId) {
-        const clone = createCurrentEvent(`${challenge.challenger_name} VS ${challenge.challenged_name}`, `${new Date(challenge.happening_at).toLocaleDateString()}`, 'Set Players/Actions', function() {
+        const clone = createCurrentEvent(`${challenge.challenger_name} VS ${challenge.challenged_name}`, `${time}`, 'Set Players/Actions', function() {
             window.location.href = `../bench/bench.html?challengedId=${challenge.challenged_team_id}&challengerId=${challenge.challenger_team_id}&challengeId=${challenge.challenge_id}`;
         });
         currentEventsContainer.appendChild(clone);
     }
     else {
-        const clone = createCurrentEvent(`${challenge.challenger_name} VS ${challenge.challenged_name}`, `${new Date(challenge.happening_at).toLocaleDateString()}`);
+        const clone = createCurrentEvent(`${challenge.challenger_name} VS ${challenge.challenged_name}`, `${time}`);
         currentEventsContainer.appendChild(clone);
     }
 }

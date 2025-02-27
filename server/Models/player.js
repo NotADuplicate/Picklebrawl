@@ -205,7 +205,7 @@ class Player {
     }
 
     attack(match, target) {
-        if(this.quirk.attackEffect(this, target) == null) { //if its not null then use the quirk attack effect
+        if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
             // TODO: add code in quirk attack effects to add to db
             const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
