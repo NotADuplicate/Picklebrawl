@@ -79,9 +79,9 @@ router.get('/match/teams', (req, res) => {
     console.log("Getting teams for match id:", req.query.matchId);
     const { matchId } = req.query;
     let query = `
-        SELECT users.username AS owner, teams.name, teams.id, home_team_id, away_team_id
-        FROM match_history, teams, users
-        WHERE (home_team_id = teams.id OR away_team_id = teams.id) AND users.id = teams.owner_id
+        SELECT users.username AS owner, teams.name, teams.id, home_team_id, away_team_id, friendly_tick_secs
+        FROM match_history, teams, users, leagues
+        WHERE (home_team_id = teams.id OR away_team_id = teams.id) AND users.id = teams.owner_id AND leagues.id = match_history.league_id
         AND match_history.id = ${matchId}
     `;
     db.all(query, (err, teams) => {

@@ -13,7 +13,7 @@ export class PepTalker extends Quirk {
         if((match.offenseTeam === player.team && player.team.score < match.defenseTeam.score) ||
         (match.defenseTeam === player.team && player.team.score < match.offenseTeam.score)) {
             match.players.forEach((otherPlayer) => {
-                if(otherPlayer.team === player.team) {
+                if(otherPlayer.team === player.team && otherPlayer !== player) {
                     player.bulk += this.STAT_INCREASE;
                     player.height += this.STAT_INCREASE;
                     player.strength += this.STAT_INCREASE;

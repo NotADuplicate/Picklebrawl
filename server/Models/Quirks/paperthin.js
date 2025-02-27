@@ -5,7 +5,7 @@ export class PaperThin extends Quirk {
     static POWER_MODIFIER = 3;
     static title = "Paper Thin";
     static description = "Takes double damage"
-    static likelihood = 3
+    static likelihood = 2
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static DAMAGE_TAKEN_MODIFIER = 2;

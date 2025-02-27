@@ -5,6 +5,7 @@ import { Draft } from '../Models/draft.js';
 import { authenticator } from '../Models/authenticator.js';
 
 const router = express.Router();
+let scheduledDraftExpires = {};
 
 router.get('/draft/players', (req, res) => {
     const { draftId } = req.query;
@@ -18,7 +19,7 @@ router.get('/draft/players', (req, res) => {
             return res.status(404).json({message: "Draft not found"})
         }
         const order = draft.turn;
-        db.all(`SELECT bulk, finesse, focus, height, strength, trickiness, players.id, title, description, name
+        db.all(`SELECT bulk, finesse, focus, height, strength, trickiness, power, players.id, title, description, name
             FROM players JOIN quirks on players.quirk = quirks.id 
             WHERE players.draft_id = ? AND players.team_id IS NULL`, [draftId], (err, players) => {
             if (err) {
@@ -55,11 +56,13 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
             }
             let nextTurn = draft.turn+1;
 
-            db.all(`SELECT id FROM teams WHERE in_season = TRUE AND league_id = (SELECT league_id FROM drafts WHERE id = ?) ORDER BY id`, [draftId], (err, teams) => {
+            db.all(`SELECT teams.id, draft_timer_mins FROM teams LEFT JOIN leagues on teams.league_id = leagues.id
+                WHERE in_season = TRUE AND league_id = (SELECT league_id FROM drafts WHERE drafts.id = ?) ORDER BY teams.id`, [draftId], (err, teams) => {
                 if (err) {
                     console.log("Error getting teams: ", err);
                     return res.status(400).json({ message: 'Error getting teams!' });
                 }
+                const draft_timer_ms = teams[0].draft_timer_mins * 60 * 1000;
                 db.get(`SELECT COUNT(*) as playerCount FROM players WHERE team_id = ?`, [team.id], (err, result) => {
                     console.log("Player count: ", result.playerCount)
                     if (err) {
@@ -92,6 +95,12 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
                                     return res.status(400).json({ message: 'Error updating currently drafting team!' });
                                 }
                                 res.json({ message: 'Player updated successfully!' });
+                                if(scheduledDraftExpires[draftId]) {
+                                    clearTimeout(scheduledDraftExpires[draftId]);
+                                }
+                                scheduledDraftExpires[draftId] = setTimeout(() => {
+                                    skipTurn(draftId, draft_timer_ms);
+                                }, draft_timer_ms);
                             });
                         });
                     });
@@ -247,6 +256,41 @@ function draftQueue(teams, draftId, draftTurn, callback) {
                     });
                 });
             }
+        });
+    });
+}
+
+function skipTurn(draftId, timer) {
+    scheduledDraftExpires[draftId] = setTimeout(() => {
+        skipTurn(draftId);
+    }, timer);
+    console.log("Skipping turn for draft ", draftId);
+    db.get(`SELECT * FROM drafts WHERE id = ?`, [draftId], (err, draft) => {
+        if (err) {
+            console.log("Error finding draft: ", err);
+            return;
+        }
+        if (!draft) {
+            console.log("Draft not found")
+            return;
+        }
+        db.all(`SELECT id FROM teams WHERE in_season = TRUE AND league_id = (SELECT league_id FROM drafts WHERE id = ?) ORDER BY id`, [draftId], (err, teams) => {
+            if (err) {
+                console.log("Error getting teams: ", err);
+                return;
+            }
+            const nextTurn = draft.turn+1;
+            const backwards = Math.floor(nextTurn/teams.length) % 2;
+            const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
+            const nextTeamId = teams[nextTeamIndex].id;
+            draftQueue(teams, draftId, nextTurn, (turn) => {
+                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, turn, draftId], (err) => {
+                    if (err) {
+                        console.log("Error updating turn: ", err);
+                        return;
+                    }
+                });
+            });
         });
     });
 }

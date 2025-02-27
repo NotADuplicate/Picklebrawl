@@ -109,21 +109,24 @@ router.get('/leagues', authenticator.authenticateToken, (req, res) => {
 
 router.post('/start-league', authenticator.authenticateToken, (req, res) => {
     console.log("Starting league")
-    const { leagueName } = req.body;
+    const { leagueName, startTime, draftTimeValue, friendlyTickValue, competitiveTickValue } = req.body;
     db.get(`SELECT * FROM leagues WHERE name = ?`, [leagueName], (err, league) => {
         if (err || !league) {
+            console.log("Error or no league avilable: ", err);
             return res.status(400).json({ message: 'League does not exist!' });
         }
 
         if (league.founder_id != req.userId) {
+            console.log('Only the founder can start the league!', league.founder_id, req.userId);
             return res.status(400).json({ message: 'Only the founder can start the league!' });
         }
 
         if(league.started) {
+            console.log('League already started!');
             return res.status(400).json({ message: 'League already started!' });
         }
 
-        db.run(`UPDATE leagues SET started = ? WHERE id = ?`, [true, league.id], (err) => {
+        db.run(`UPDATE leagues SET started = ?, draft_timer_mins = ?, friendly_tick_secs = ?, competitive_tick_secs = ? WHERE id = ?`, [true, draftTimeValue, friendlyTickValue, competitiveTickValue, league.id], (err) => {
             if (err) {
                 return res.status(400).json({ message: 'Error starting league!' });
             }
@@ -136,7 +139,8 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             }
 
             const season = new Season(league.id);
-            season.setMatches(new Date(Date.now() + 24 * 60 * 60 * 1000), (err) => {
+            console.log("Start time: ", startTime);
+            season.setMatches(new Date(startTime), (err) => {
                 if (err) {
                     console.log(err);
                 }
@@ -158,7 +162,7 @@ router.get('/matches', (req, res) => {
             home_team_score, 
             away_team_score,
             type,
-            (strftime('%s', 'now') - strftime('%s', created_at)) > 202 AS is_over,
+            (strftime('%s', 'now') - strftime('%s', created_at)) > 101*friendly_tick_secs AS is_over,
             SUM(CASE WHEN scoring_history.team_id = home_team.id THEN scoring_history.successful_score * (scoring_history.points_worth) ELSE 0 END) AS home_team_live_score,
             SUM(CASE WHEN scoring_history.team_id = away_team.id THEN scoring_history.successful_score * (scoring_history.points_worth) ELSE 0 END) AS away_team_live_score
         FROM 
@@ -167,8 +171,10 @@ router.get('/matches', (req, res) => {
             teams AS home_team ON home_team_id = home_team.id
         JOIN 
             teams AS away_team ON away_team_id = away_team.id
+        JOIN
+            leagues ON match_history.league_id = leagues.id
         LEFT JOIN
-            scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick*2 < (strftime('%s', 'now') - strftime('%s', created_at))
+            scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick*friendly_tick_secs < (strftime('%s', 'now') - strftime('%s', created_at))
         WHERE 
             match_history.league_id = ${leagueId}
         GROUP BY 

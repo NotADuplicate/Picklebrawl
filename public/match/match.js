@@ -11,7 +11,7 @@ let watchingLive = false; // If the user is watching the game live, cannot get b
 let consequetiveStalls = 0;
 let possessionTeam = null;
 let field_length = 100;
-const TIME_PER_TICK = 2000; // Time in milliseconds per tick
+let TIME_PER_TICK = 2000; // Time in milliseconds per tick
 const TIME_PER_SCORE = 1000; // Time in milliseconds per score
 const teamPositions = {
     home: {
@@ -114,6 +114,7 @@ function getTeams(matchId) {
     return new Promise((resolve, reject) => {
         fetchData('/match/teams?matchId=' + matchId, 'GET', {}, null, (data) => {
             console.log('Teams:', data);
+            TIME_PER_TICK = data[0].friendly_tick_secs * 1000;
             //possession = homeTeamId;
             const homeTeamElement = document.getElementById('home-team-name');
             const awayTeamElement = document.getElementById('away-team-name');

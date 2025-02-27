@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     playerCardTemplate = document.getElementById('player-card-template').content;
 
     // Fetch and display teams
-    fetchData(`/teams?leagueId=${leagueId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (teamsInfo) => {
+    fetchData(`/active-teams?leagueId=${leagueId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (teamsInfo) => {
         teams = teamsInfo;
         console.log("Teams: ", teams);
         leagueName = teamsInfo[0].league_name;
@@ -75,8 +75,12 @@ function displayPlayers(playerList) {
         playerCard.querySelector('.player-strength').textContent = player.strength;
         playerCard.querySelector('.player-trickiness').textContent = player.trickiness;
         playerCard.querySelector('.player-focus').textContent = player.focus;
+        //playerCard.querySelector('.player-power').textContent = player.power;
         playerCard.querySelector('.tooltip').textContent = player.title;
         playerCard.querySelector('.tooltip').setAttribute('data-tooltip', player.description);
+        playerCard.power = player.power;
+
+        
 
         const loggedInUser = localStorage.getItem('loggedInUser');
         console.log("Current draft index: ", currentDraftIndex);
@@ -156,7 +160,13 @@ function undoPremove(playerId) {
 // Function to sort players by selected attribute
 function sortPlayers() {
     const sortBy = document.getElementById('sort-select').value;
-    draftPlayers.sort((a, b) => b[sortBy] - a[sortBy]);
+    draftPlayers.sort((a, b) => {
+        if (typeof a[sortBy] === 'string' && typeof b[sortBy] === 'string') {
+            return a[sortBy].localeCompare(b[sortBy]);
+        } else {
+            return b[sortBy] - a[sortBy];
+        }
+    });
     displayPlayers(draftPlayers);
 }
 

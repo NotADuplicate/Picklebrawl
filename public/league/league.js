@@ -392,14 +392,5 @@ function challenge(teamId, myTeamId, button) {
 }
 
 function startLeague(leagueName) {
-    console.log("Starting league")
-    fetchData('/start-league', 'POST', { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, { leagueName }, (data) => {
-        messageDiv.innerText = data.message;
-        if (data.message === 'League started successfully!') {
-            window.location.reload();
-        }
-    }, (error) => {
-        console.log("Error: ", error);
-        messageDiv.innerText = 'Error starting league!';
-    });
+    window.location.href = `../settings/settings.html?leagueName=${leagueName}`;
 }

@@ -4,7 +4,7 @@ export class Loner extends Quirk {
     static POWER_MODIFIER = -3;
     static title = "Loner";
     static description = ("+2 to all stats for every player less than 4 you have on your team");
-    static likelihood = 10//2;
+    static likelihood = 2;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 1;

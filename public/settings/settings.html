@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>League Settings</title>
+    <link rel="stylesheet" href="/settings/settings.css">
+</head>
+<body>
+    <div class="container">
+        <h1>League Settings</h1>
+        <form id="settings-form">
+            <div class="form-group">
+                <label for="start-datetime">First Match Starting Time:</label>
+                <!-- Using datetime-local for both date and time -->
+                <input type="datetime-local" id="start-datetime" name="startDatetime" required>
+            </div>
+            <div class="form-group">
+                <label for="draft-time">Draft Time Limit (minutes):</label>
+                <!-- Default value set to 300 -->
+                <input type="number" id="draft-time" name="draftTime" min="1" value="300" required>
+            </div>
+            <div class="form-group">
+                <label for="friendly-tick">Friendly Match Tick Time (seconds):</label>
+                <!-- Default value set to 1 -->
+                <input type="number" id="friendly-tick" name="friendlyTick" min="0.1" step="0.1" value="1" required>
+            </div>
+            <div class="form-group">
+                <label for="competitive-tick">Competitive Match Tick Time (seconds):</label>
+                <!-- Default value set to 2 -->
+                <input type="number" id="competitive-tick" name="competitiveTick" min="0.1" step="0.1" value="2" required>
+            </div>
+            <button type="submit">Save Settings</button>
+        </form>
+        <div id="message"></div>
+    </div>
+    <script type="module" src="/settings/settings.js"></script>
+</body>
+</html>

@@ -1,10 +1,10 @@
 import { Quirk } from './quirk.js';
 
 export class WildCard extends Quirk {
-    static POWER_MODIFIER = 1;
+    static POWER_MODIFIER = 3;
     static title = "Wild Card";
     static description = ("After being locked into a game (but before deciding actions) redistribute all stats");
-    static likelihood = 10//2;
+    static likelihood = 2;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 1;

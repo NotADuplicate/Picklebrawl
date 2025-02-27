@@ -363,7 +363,7 @@ router.post('/challenges/:id/add-actions', authenticator.authenticateToken, (req
                             }
                             console.log("Challenge row after updating actions: ", row);
                             //run friendly match if all actions are set
-                            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set && row.friendly) {
+                            if(row.challenger_players_set && row.challenged_players_set && row.challenger_actions_set && row.challenged_actions_set && row.friendly==1) {
                                 runMatch(row.id, row.friendly); 
                             }
                         });
@@ -669,7 +669,7 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
     });
 });
 
-function runMatch(challengeId, friendly) {
+export function runMatch(challengeId, friendly) {
     let id = challengeId;
     let type;
 
@@ -721,5 +721,4 @@ function runMatch(challengeId, friendly) {
     })
 }
 
-runMatch(1);
 export default router;

@@ -30,6 +30,9 @@ db.serialize(() => {
         password TEXT NOT NULL,
         founder_id INT NOT NULL,
         started BOOLEAN NOT NULL,
+        draft_timer_mins INT DEFAULT 300,
+        friendly_tick_secs INT DEFAULT 1,
+        competitive_tick_secs INT DEFAULT 2, 
         FOREIGN KEY (founder_id) REFERENCES users(id)
     )`);
 
