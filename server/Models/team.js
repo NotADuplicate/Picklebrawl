@@ -10,6 +10,7 @@ class Team {
     teamId;
     leagueId;
     scoreRange = 30;
+    full_dead = false;
 
     constructor() {
         this.players = [];

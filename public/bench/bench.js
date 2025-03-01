@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} playerName - The name of the player.
  * @param {object} stats - An object containing the player's stats.
  */
-function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirkDescription) {
+function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirkDescription, health) {
     const sanitizedPlayerName = playerName.replace(/\s+/g, '_');
     const teamList = document.getElementById(`${teamId}-list`);
     const template = document.getElementById('player-template');
@@ -141,6 +141,16 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
     player.dataset.focus = stats.Fcs;
     player.dataset.quirkTitle = playerQuirk;
     player.dataset.stats = JSON.stringify(stats);
+
+    if(health < 100) {
+        const healthbarFill = player.querySelector('.healthbar-fill');
+        healthbarFill.style.width = `${health}%`
+        player.style.height = '90px';
+    }
+    else {
+        const healthbar = player.querySelector('.healthbar');
+        healthbar.style.display = 'none';
+    }
 
 
     player.addEventListener('click', () => {
@@ -248,6 +258,7 @@ fetchData(`/teams/${otherTeamId}`, 'GET', { 'Authorization': `Bearer ${token}` }
 });
 
 fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
+    console.log("My team players: ", players)
     if (Array.isArray(players)) {
         players.forEach(player => {
             addPlayerToTeam('your-team', player.name, {
@@ -257,9 +268,10 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                 Str: player.strength,
                 Trk: player.trickiness,
                 Fcs: player.focus
-            }, player.id, player.quirk_title, player.quirk_description);
+            }, player.id, player.quirk_title, player.quirk_description, player.health);
         });
         fetchData(`/teams/${otherTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
+            console.log("Other team players: ", players)
             if (Array.isArray(players)) {
                 players.forEach(player => {
                     addPlayerToTeam('other-team', player.name, {
@@ -269,7 +281,7 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                         Str: player.strength,
                         Trk: player.trickiness,
                         Fcs: player.focus
-                    }, player.id, player.quirk_title, player.quirk_description);
+                    }, player.id, player.quirk_title, player.quirk_description, player.health);
                 });
                 checkChallengeFlags();
             } else {
@@ -429,11 +441,12 @@ function selectPlayer(player) {
                 alert('Bench is full!');
             }
         } else if (player.dataset.location === 'bench') {
+            console.log("Remove player from bench")
             // Move player back to the team
             benchList.removeChild(player);
             teamList.appendChild(player);
             player.dataset.location = 'team';
-            stats = JSON.parse(player.dataset.stats);
+            const stats = JSON.parse(player.dataset.stats);
             player.classList.remove('selected');
             player.style.width = '';       // Reset inline width
             player.style.display = '';     // Reset inline display
@@ -803,21 +816,6 @@ function recommendPlayers(teamId) {
     }, (error) => {
         console.error('Error recommending players:', error);
     });
-    /*fetch(`/challenges/${teamId}/recommend-players`)
-    .then(response => response.json())
-    .then(data => {
-        console.log('Recommended players:', data);
-        const yourTeamPlayers = document.querySelectorAll('.your-team .player');
-        yourTeamPlayers.forEach(player => {
-            if (player.dataset.location === 'bench') {
-                selectPlayer(player);
-            }
-        });
-        data.forEach(playerId => {
-            const player = playerDict[playerId];
-            selectPlayer(player);
-        });
-    });*/
 }
 
 function recommendActions(teamId) {
@@ -829,14 +827,6 @@ function recommendActions(teamId) {
     }, (error) => {
         console.error('Error recommending actions:', error);
     });
-    /*fetch(`/challenges/${teamId}/recommend-actions`)
-    .then(response => response.json())
-    .then(data => {
-        console.log('Recommended actions:', data);
-        data.forEach(action => {
-            setAction(action, false);
-        });
-    });*/
 }
 
 async function goToMatch(challengeId) {

@@ -96,7 +96,7 @@ ul {
     align-items: flex-start;
     justify-content: flex-start;
     width: 46%; /* Keep the width as it is */
-    height: 77px;
+    height: 75px;
     transition: width 0.5s, margin 0.5s background-color 0.2s, transform 0.2s;
     gap: 0px; /* Remove gap between elements */
 }
@@ -247,10 +247,16 @@ ul {
 .priority-container {
     display: flex;
     align-items: center;
+    width: 100%;
 }
 
 .priority-container label {
-    margin-right: 5px;
+    flex: 1;          /* Fills the available space */
+    text-align: right; /* Aligns the text to the right */
+}
+
+.priority-container select {
+    margin-left: 0px; /* Adds a small gap between the label and the select */
 }
 
 /* Show priority menus when .show-priority class is present */
@@ -270,7 +276,7 @@ ul {
     gap: 10px;
 }
 .priority-menu label {
-    margin-right: 50px;
+    margin-right: 0px;
     margin-left: 0px;
 }
 .target-menu {
@@ -340,4 +346,24 @@ ul {
 .modal-button.cancel {
     background-color: #f44336;
     color: #fff;
+}
+
+/* Health bar container: thin and spans full width */
+.healthbar {
+    width: 80%;
+    height: 4px;
+    background-color: #ccc; /* Darker background for missing health */
+    border: 1px solid #aaa; /* Border to emphasize the container */
+    border-radius: 3px;
+    margin: 4px 0;
+    overflow: hidden;
+}
+
+/* Fill element for the health bar */
+.healthbar-fill {
+    height: 100%;
+    width: 100%; /* Updated via JavaScript to reflect player's health */
+    background-color: #27ae60; /* Green color for current health */
+    border-radius: 3px;
+    transition: width 0.3s ease;
 }

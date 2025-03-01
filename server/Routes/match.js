@@ -99,7 +99,7 @@ router.get('/match/players', (req, res) => {
     console.log("Getting players for match id:", req.query.matchId);
     const { matchId } = req.query;
     let query = `
-        SELECT name, team_id, title, players.id, offensive_role, defensive_role, description, offensive_target_id, defensive_target_id
+        SELECT name, team_id, title, players.id, offensive_role, defensive_role, description, offensive_target_id, defensive_target_id, player_history.health
         FROM players, player_history, quirks
         WHERE players.id = player_history.player_id AND players.quirk = quirks.id
         AND match_id = ${matchId}

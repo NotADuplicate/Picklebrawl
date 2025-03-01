@@ -52,6 +52,7 @@ class Player {
 
     hp = 100;
     maxHp = 100;
+    health = 0;
     ATTACK_MODIFIER = 1;
     advance = 0;
     assisters = 0;
@@ -249,6 +250,7 @@ class Player {
     }
 
     knockout(match) {
+        console.log("KNOCKED OUT")
         this.knockedOut = true;
         // Remove player from match players list
         const playerIndex = match.players.indexOf(this);
@@ -269,8 +271,11 @@ class Player {
         }
 
         // Check if any team is empty and end the game if so
-        if (match.offenseTeam.players.length === 0 || match.defenseTeam.players.length === 0) {
-            match.endGame();
+        if (match.offenseTeam.players.length === 0) {
+            match.offenseTeam.full_dead = true;
+        }
+        else if (match.defenseTeam.players.length === 0) {
+            match.defenseTeam.full_dead = true;
         }
     }
 
@@ -279,7 +284,9 @@ class Player {
     }
 
     load(id) {
+        console.log("Loading player")
         this.id = id;
+        const self = this;
         return new Promise((resolve, reject) => {
             db.get(`SELECT * FROM players WHERE id = ?`, [id], (err, row) => {
                 if (err) {
@@ -287,6 +294,9 @@ class Player {
                     return reject(err);
                 }
                 if (row) {
+                    console.log("Player health: ", row.health)
+                    self.hp = Math.floor(row.health);
+                    console.log("Self: ", self)
                     this.name = row.name;
                     this.team = row.team_id;
                     this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);

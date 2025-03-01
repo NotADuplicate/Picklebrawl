@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Selfish extends Quirk {
-    static POWER_MODIFIER = 5;
+    static POWER_MODIFIER = 6;
     static title = "Selfish";
     static description = ("All teammates get -1 to all stats");
     static STAT_DECREASE = 1;

@@ -1,13 +1,21 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // Convert import.meta.url to __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Use a file-based SQLite database
-const dbPath = path.resolve(__dirname, 'database.sqlite');
+// Use a file-based SQLite database in the ./db directory
+const dbDir = path.resolve(__dirname, 'db');
+const dbPath = path.join(dbDir, 'database.sqlite');
+
+// Ensure the ./db directory exists
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir);
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
@@ -75,6 +83,7 @@ db.serialize(() => {
         team_id INTEGER,
         quirk INT NOT NULL,
         draft_id INT,
+        health INTEGER NOT NULL DEFAULT 100,
         FOREIGN KEY (team_id) REFERENCES teams(id)
         FOREIGN KEY (quirk) REFERENCES quirks(id)
         FOREIGN KEY (draft_id) REFERENCES drafts(id)
@@ -108,6 +117,7 @@ db.serialize(() => {
         defense_target_id INT,
         offense_property TEXT,
         defense_property TEXT,
+        health INT NOT NULL DEFAULT 100,
         FOREIGN KEY (challenge_id) REFERENCES challenges(id),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (team_id) REFERENCES teams(id)
@@ -115,7 +125,6 @@ db.serialize(() => {
     );`);
 
     // Make a table where each row contains a single historical match
-    db.run('DROP TABLE IF EXISTS match_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
@@ -142,7 +151,6 @@ db.serialize(() => {
     who attempted to score and if they succeeded (can only allow 1 attempt per tick if that's ok),
     maybe in the future implement log of random events or ways quirks interacted
     */
-    db.run('DROP TABLE IF EXISTS match_ticks_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_ticks_history (
         tick INT NOT NULL,
         match_id INT NOT NULL,
@@ -154,7 +162,6 @@ db.serialize(() => {
         FOREIGN KEY (player_possession_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS match_action_history');
    db.run(`CREATE TABLE IF NOT EXISTS match_action_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -165,7 +172,6 @@ db.serialize(() => {
         FOREIGN KEY (player_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS match_trick_history');
     db.run(`CREATE TABLE IF NOT EXISTS match_trick_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -178,7 +184,6 @@ db.serialize(() => {
         FOREIGN KEY (tricked_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS player_history');
     db.run(`CREATE TABLE IF NOT EXISTS player_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -190,13 +195,13 @@ db.serialize(() => {
         defensive_target_id INT,
         offense_action_property TEXT,
         defense_action_property TEXT,
+        health INT NOT NULL DEFAULT 100,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (player_id) REFERENCES players(id),
         FOREIGN KEY (offensive_target_id) REFERENCES players(id),
         FOREIGN KEY (defensive_target_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS attack_history');
     db.run(`CREATE TABLE IF NOT EXISTS attack_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id INT NOT NULL,
@@ -212,7 +217,6 @@ db.serialize(() => {
         FOREIGN KEY (attacked_player_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS scoring_history');
     db.run(`CREATE TABLE IF NOT EXISTS scoring_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,
@@ -231,7 +235,6 @@ db.serialize(() => {
         FOREIGN KEY (blitzer_id) REFERENCES players(id)
     );`);
 
-    db.run('DROP TABLE IF EXISTS advancement_history');
     db.run(`CREATE TABLE IF NOT EXISTS advancement_history (
         match_id INT NOT NULL,
         tick INT NOT NULL,

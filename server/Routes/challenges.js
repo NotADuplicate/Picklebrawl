@@ -582,6 +582,7 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
 });
 
 export function runMatch(challengeId, friendly) {
+    console.log("RUNNINGs")
     let id = challengeId;
     let type;
 
@@ -618,6 +619,7 @@ export function runMatch(challengeId, friendly) {
                 const row = rows[i];
                 const { player_id, offense_action, defense_action, offense_target_id, defense_target_id, offense_property, defense_property } = row;
                 const player = new Player();
+                console.log("Awaiting player load")
                 await player.load(player_id);
                 player.setPriorities(offense_action, defense_action, offense_target_id, defense_target_id, offense_property, defense_property);
                 if(row.team_id == challenger_team_id) {
@@ -626,7 +628,7 @@ export function runMatch(challengeId, friendly) {
                     challengedTeam.addPlayer(player);
                 }
             }
-            const match = new Match(challengerTeam, challengedTeam, new Weather());
+            const match = new Match(challengerTeam, challengedTeam, new Weather(), type);
             await match.startGame(challengeId, type);
 
         })
@@ -733,5 +735,6 @@ export function recommendActions(challengePlayers) {
     console.log("Reccomended: ", actions)
     return actions;
 }
+
 
 export default router;

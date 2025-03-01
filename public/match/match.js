@@ -78,7 +78,7 @@ function getPlayers(matchId) {
             const newPlayerElement = playerTemplate.cloneNode(true);
             newPlayerElement.querySelector('.player-name').textContent = player.name;
             newPlayerElement.querySelector('.quirk-name').textContent = player.title;
-            newPlayerElement.querySelector('.health-bar').style.width = '100%';
+            newPlayerElement.querySelector('.health-bar').style.width = `${player.health}%`;
             newPlayerElement.querySelector('.tooltip').textContent = player.description;
             newPlayerElement.querySelector('.player-offense-action').textContent = player.offensive_role;
             newPlayerElement.querySelector('.player-defense-action').textContent = player.defensive_role;
@@ -360,7 +360,6 @@ function runMatchTick(data, tick) {
                 }
             });
         }
-        console.log("Position 2: ", position);
         if(data.scoringHistory.length > 0) { //if a shot was attempted
             if (possession != homeTeamId) {
                 position = data.scoringHistory[0].range;
@@ -407,13 +406,10 @@ function runMatchTick(data, tick) {
             const playerBreakingaway = players[data.breakawayHistory[0].player_id];
             addBoldTextToTextBox(`${playerBreakingaway.querySelector('.player-name').textContent} got past the defense!`);
         }
-        console.log("Here")
 
         if (data.matchTick.possession_team_id == homeTeamId) {
-            console.log("Home team pos: ", position)
             position = data.matchTick.ball_position;
         } else {
-            console.log("Away team pos: ", field_length - data.matchTick.ball_position)
             position = field_length - data.matchTick.ball_position;
         }
 
@@ -455,7 +451,7 @@ function runMatchTick(data, tick) {
             }
         }
 
-        console.log("Position 4: ", position);
+        console.log("Position: ", position);
         moveSliderIcon(position);
         moveBallIconToPlayer(data.matchTick.player_possession_id);
         tick++;

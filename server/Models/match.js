@@ -26,6 +26,7 @@ class Match {
     lastAdvance = 0;
     breakAway = 0;
     breakAwayer = null;
+    type = "friendly";
 
     // CONSTANTS
     GAME_LENGTH = 100;    // number of ticks to play the game for // TODO: set to 100 when done testing
@@ -55,7 +56,7 @@ class Match {
         "Full Field": 100
     }
 
-    constructor(homeTeam, awayTeam, weather) {
+    constructor(homeTeam, awayTeam, weather, type) {
         console.log("\n\n\n\n\n\n");
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
@@ -64,6 +65,7 @@ class Match {
         this.offenseTeam = this.homeTeam;
         this.defenseTeam = this.awayTeam;
         this.weather = weather;
+        this.type = type;
     }
 
     runMatch() {
@@ -133,20 +135,22 @@ class Match {
 
             db.run(`INSERT INTO player_history ` 
                 + `(match_id, second_half, player_id, offensive_role, offensive_target_id, `
-                + `defensive_role, defensive_target_id) `
-                + `VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                + `defensive_role, defensive_target_id, health) `
+                + `VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [self.match_id, false, player.id, player.offensePriority, offenseId,
-                player.defensePriority, defenseId], function(err) {
+                player.defensePriority, defenseId, player.hp], function(err) {
                 if (err) {
                     console.error('Error inserting player into player_history:', err.message);
                 }
                 player_history_id = this.lastID;
+                console.log("Saved priority: ", this.lastID)
             });
         }
     }
 
     startGame(challengeId, type) {
         this.players = this.homeTeam.players.concat(this.awayTeam.players);
+        console.log("Teams: ", this.homeTeam)
         const self = this;
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, challenge_id,`
@@ -170,6 +174,7 @@ class Match {
 
                 // Activate startGameEffect in the sorted order
                 for(const player of self.players) {
+                    console.log("Player hp: ", player.id, player.hp)
                     player.quirk.startGameEffect(self, player);
                     if(player.offensePriority == "Score") {
                         player.range = self.RANGE_DICTIONARY[player.offenseProperty];
@@ -177,7 +182,7 @@ class Match {
                 }
 
                 // Re-add ghost players to the players list
-                self.players.push(...ghostPlayers);
+                self.players.push(...ghostPlayers);      
                 self.savePriorities();
                 self.runMatch();
                 resolve();
@@ -189,13 +194,6 @@ class Match {
         this.over = true;
         console.log("Game over!");
         console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
-        console.log("Possession lengths: " + this.possessionLengths);
-        console.log("Number of possessions: " + this.possessionLengths.length);
-        console.log("Min ranges: ", this.minRanges)
-        //console.log("Average possession length: " + this.possessionLengths.reduce((a, b) => a + b, 0) / this.possessionLengths.length);
-        console.log("Shots attempted: " + this.shotsAttempted);
-        console.log("Average " + this.offenseTeam.teamName + " advancement: " + this.homeAdvancements.reduce((a, b) => a + b, 0) / this.homeAdvancements.length);
-        console.log("Average " + this.defenseTeam.teamName + " advancement: " + this.awayAdvancements.reduce((a, b) => a + b, 0) / this.awayAdvancements.length);
 
         // Update match_history
         const self = this;
@@ -205,6 +203,33 @@ class Match {
                 console.error("Error updating scores in match_history:", err.message);
             }
         });
+        if(this.type != "friendly") { //do health things for friendly matches
+            const updatePromises = this.players.map(player => {
+                return new Promise((resolve, reject) => {
+                    db.run(`UPDATE players SET health = ? WHERE id = ?`, [Math.min(100, Math.round(player.hp)), player.id], function(err) {
+                        if (err) {
+                            console.error('Error updating player health:', err.message);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            });
+
+            Promise.all(updatePromises).then(() => {
+                console.log("Teams: ", this.offenseTeam.id, this.defenseTeam.id)
+                db.run(`UPDATE players SET health = MIN(100, health + (25 + (abs(random())/9223372036854775807.0)*50)) WHERE team_id = ? OR team_id = ?`,
+                    [this.offenseTeam.teamId, this.defenseTeam.teamId], function(err) {
+                        if(err) {
+                            console.log("Error regaining health ", err)
+                        }
+                        console.log("Updated player health: ", this.changes)
+                    })
+            }).catch(err => {
+                console.error('Error updating player health:', err);
+            });
+        }
     }
 
     // Function to get player object by id
@@ -219,10 +244,16 @@ class Match {
     }
 
     tick() { //every game tick
-        //console.log("");
+        if(this.over) {
+            return;
+        }
+
         this.turnedover = false;
-        //console.log("Tick " + this.gameTicks);
-        //console.log(this.offenseTeam.teamName + " " + this.position + " " + this.defenseTeam.teamName);
+
+        if(this.offenseTeam.full_dead) {
+            this.turnover();
+        }
+
         this.possessionTicks++;
         this.gameTicks++;
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
@@ -232,14 +263,14 @@ class Match {
             player.quirk.tickEffect(player, this);
         }
 
-        
-
         this.resetTempStats();
         this.setRandomPriorities(); //randomly change priorities
         this.doPriority("Assist", this.assist, true) //calculate assists and add temp stats to player
         this.doPriority("Protect", this.protect, true) //calculate protection and add ProtectBulk to player 
         this.resetInjuries();
-        this.doPriority("Attack", this.attack, true) //calculate injuries and tick stat decreases
+        if(!this.offenseTeam.full_dead && !this.defenseTeam.full_dead) {
+            this.doPriority("Attack", this.attack, true) //calculate injuries and tick stat decreases
+        }
         this.applyInjuries();
         this.doAdvancement();
         if(!this.turnedover) {
@@ -263,11 +294,11 @@ class Match {
             }
         )
 
-        if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
+        /*if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
             for(const player of this.players) {
                 player.quirk.halftimeEffect(this, player);
             }
-        }
+        }*/
 
        if(this.gameTicks >= this.GAME_LENGTH) { //overtime
             this.FIELD_LENGTH -= 1.5;
@@ -334,6 +365,7 @@ class Match {
     resetInjuries() {
         for(const player of this.players) {
             player.tempInjury = 0;
+            //player.hp = 100;
             player.bulk = Math.max(0.5, player.baseBulk * (player.hp / player.maxHp));
             player.finesse = Math.max(0.5, player.baseFinesse * (player.hp / player.maxHp));
             player.height = Math.max(0.5, player.baseHeight * (player.hp / player.maxHp));
@@ -352,9 +384,15 @@ class Match {
     }
 
     doPriority(priority, action, targeted) {
+        if(this.over) {
+            return;
+        }
         // Loop through offense team
         for (const player of this.offenseTeam.players) {
-            if (player.offensePriority === priority) {
+            if(action == "Attack" && (this.offenseTeam.full_dead || this.defenseTeam.full_dead)) {
+                return;
+            }
+            if (player.offensePriority === priority && !player.knockedOut) {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
@@ -378,6 +416,7 @@ class Match {
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else if(player.offensePriorityTarget == "Any") {
+                                console.log("Attack any")
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else {
@@ -397,7 +436,7 @@ class Match {
 
         // Loop through defense team
         for (const player of this.defenseTeam.players) {
-            if (player.defensePriority === priority) {
+            if (player.defensePriority === priority && !player.knockedOut) {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
@@ -418,6 +457,7 @@ class Match {
                             break;
                         case "Attack":
                             if(player.defensePriorityTarget == "Any") {
+                                console.log("Attack any defense")
                                 this.attack(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
                             }
                             else {
@@ -447,6 +487,11 @@ class Match {
     }
 
     doAdvancement() {
+        if(this.over) {
+            return;
+        }
+        console.log("Starting advancement")
+        const self = this;
         if(this.turnedover) {return;}
         let advancing = this.weather.advanceEffect(this.offenseTeam, this.defenseTeam, this.position);
         if(advancing == null) {
@@ -484,38 +529,40 @@ class Match {
             }
 
             // Loop through defense team, calculate amount defended
-            let numDefenders = 0;
             let defendAmount = 0;
+            let numDefenders = 0;
             let topDefender = null;
             let topDefendAmount = 0;
-            for (const player of this.defenseTeam.players) {
-                if(player.defensePriority === "Defend_Advance") {
-                    if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
-                        db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
-                            + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
-                            function(err) {
-                                if (err) {
-                                    console.error('Error inserting trick into match_trick_history:', err.message);
+            if(!this.defenseTeam.full_dead) {
+                for (const player of this.defenseTeam.players) {
+                    if(player.defensePriority === "Defend_Advance") {
+                        if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
+                            db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
+                                + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
+                                function(err) {
+                                    if (err) {
+                                        console.error('Error inserting trick into match_trick_history:', err.message);
+                                    }
                                 }
-                            }
-                        );
-                    }
-                    else {
-                        player.defendAmount = Math.random() * (player.bulk + player.tempBulk);
-                        defendAmount += player.defendAmount;
-
-                        // Track the player who contributes the most to the defendAmount
-                        if (player.defendAmount > topDefendAmount) {
-                            topDefendAmount = player.defendAmount;
-                            topDefender = player;
+                            );
                         }
+                        else {
+                            player.defendAmount = Math.random() * (player.bulk + player.tempBulk);
+                            defendAmount += player.defendAmount;
+
+                            // Track the player who contributes the most to the defendAmount
+                            if (player.defendAmount > topDefendAmount) {
+                                topDefendAmount = player.defendAmount;
+                                topDefender = player;
+                            }
+                        }
+                        numDefenders++;
+                        //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
                     }
-                    numDefenders++;
-                    //console.log(player.name + " bulk " + player.bulk + " + " + player.tempBulk);
                 }
+                if(numDefenders > 1) {defendAmount *= 1-(this.MULTIPLE_ADVANCE_DEFENDERS_REDUCTION*numDefenders);} //if more than one player is defending, reduce the amount defended by 20%
+                defendAmount += Math.random() * 3;
             }
-            if(numDefenders > 1) {defendAmount *= 1-(this.MULTIPLE_ADVANCE_DEFENDERS_REDUCTION*numDefenders);} //if more than one player is defending, reduce the amount defended by 20%
-            defendAmount += Math.random() * 3;
 
             // Calculate net advancement
             let netAdvance = 0;
@@ -524,6 +571,7 @@ class Match {
             advanceAmount += (1-this.position/this.FIELD_LENGTH)*4;
             advanceAmount += Math.max(9,this.defenseTeam.score -this.offenseTeam.score)/3;
 
+            if(this.defenseTeam.full_dead) { this.breakAway = 10}
             if(this.breakAway > 0) { 
                 console.log("Breakaway: " + this.breakAway);
                 this.breakAway -= 1 + 2*defendAmount/(advanceAmount+defendAmount);
@@ -539,11 +587,13 @@ class Match {
                 netAdvance = randomness * (advanceAmount - defendAmount)*this.ADVANCEMENT_MULTIPLIER + (advanceAmount - defendAmount)/2;
                 const netDefense = (randomness * advanceAmount + advanceAmount/2) * this.ADVANCEMENT_MULTIPLIER - netAdvance;
                 this.savePlayerAdvancement(netAdvance);
-                this.savePlayerDefend(netDefense);
+                if(!this.defenseTeam.full_dead) {
+                    this.savePlayerDefend(netDefense);
+                }
 
                 //Chance for a break away
                 if(topAdvancer != null) {
-                    if(Math.random() < topAdvancer.breakAwayChance) {
+                    if(Math.random() < topAdvancer.breakAwayChance && !this.defenseTeam.full_dead) {
                         this.breakAway = 10+Math.random()*5;
                         console.log("Breakaway! ", this.breakAway);
                         topAdvancer.breakAwayChance -= 0.01;
@@ -560,7 +610,9 @@ class Match {
                 }
             } else {
                 netAdvance = 0;
-                this.savePlayerDefend(Math.random() * (advanceAmount) * this.ADVANCEMENT_MULTIPLIER + (advanceAmount)/2);
+                if(!this.defenseTeam.full_dead) {
+                    this.savePlayerDefend(Math.random() * (advanceAmount) * this.ADVANCEMENT_MULTIPLIER + (advanceAmount)/2);
+                }
             }
             if(this.offenseTeam == this.awayTeam) {this.awayAdvancements.push(netAdvance);}
             else {this.homeAdvancements.push(netAdvance);}
@@ -574,30 +626,33 @@ class Match {
             this.lastAdvance = netAdvance;
 
             // Calculate turnover chance
-            let turnoverChance = (Math.min(this.possessionTicks, this.POSSESSION_TICK_MAX) * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
-                (defendAmount / (advanceAmount + defendAmount)));
-            if (turnoverChance > this.TURNOVER_CHANCE_MAX) {turnoverChance = this.TURNOVER_CHANCE_MAX;}
-            
-            if(Math.random() < turnoverChance) {
-                if(topDefender != null) {
-                    this.playerWithPossession = topDefender;
-                    db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
-                        + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, topDefender.id, 0, "Steal"],
-                        function(err) {
-                            if (err) {
-                                console.error('Error inserting advancement into advancement_history:', err.message);
+            if(!this.defenseTeam.full_dead) {
+                let turnoverChance = (Math.min(this.possessionTicks, this.POSSESSION_TICK_MAX) * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
+                    (defendAmount / (advanceAmount + defendAmount)));
+                if (turnoverChance > this.TURNOVER_CHANCE_MAX) {turnoverChance = this.TURNOVER_CHANCE_MAX;}
+                
+                if(Math.random() < turnoverChance) {
+                    if(topDefender != null) {
+                        this.playerWithPossession = topDefender;
+                        db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
+                            + `VALUES (?, ?, ?, ?, ?)`, [self.gameTicks, self.match_id, topDefender.id, 0, "Steal"],
+                            function(err) {
+                                if (err) {
+                                    console.log(self.gameTicks, self.match_id, topDefender.id)
+                                    console.error('Error inserting steal into advancement_history:', err.message);
+                                }
                             }
-                        }
-                    );
+                        );
+                    }
+                    for (const possibleShooter of this.offenseTeam.players) {
+                        possibleShooter.range += 5; //if the ball is being stolen then start shooting from further
+                    }
+                    this.turnover();
                 }
-                for (const possibleShooter of this.offenseTeam.players) {
-                    possibleShooter.range += 5; //if the ball is being stolen then start shooting from further
-                }
-                this.turnover();
             }
         }
         else {
-            if(advancing == -1) { //if -1 advancement, automatic turnover
+            if(advancing == -1 && !this.defenseTeam.full_dead) { //if -1 advancement, automatic turnover
                 this.turnover();
             }
             else {
@@ -793,26 +848,29 @@ class Match {
             }
         }
 
-        // Divide the netAdvance proportionally by their advance
-        for (const player of this.offenseTeam.players) {
-            if (player.offensePriority === "Advance") {
-                player.advance = (player.advance / totalAdvance) * netAdvance;
-                const self = this;
-                db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
-                    + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, player.id, player.advance, "Advance"],
-                    function(err) {
-                        if (err) {
-                            console.error("Tick: ", self.gameTicks, "Match_id: ", self.match_id, "Player_id: ", player.id, "Advancement: ", player.advance, "Type: ", "Advance");
-                            console.error('Error inserting advancement into advancement_history:', err.message);
-                            
+        if(totalAdvance > 0) {
+            // Divide the netAdvance proportionally by their advance
+            for (const player of this.offenseTeam.players) {
+                if (player.offensePriority === "Advance") {
+                    player.advance = (player.advance / totalAdvance) * netAdvance;
+                    const self = this;
+                    db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
+                        + `VALUES (?, ?, ?, ?, ?)`, [self.gameTicks, self.match_id, player.id, player.advance, "Advance"],
+                        function(err) {
+                            if (err) {
+                                console.error("Tick: ", self.gameTicks, "Match_id: ", self.match_id, "Player_id: ", player.id, "Advancement: ", player.advance, "Type: ", "Advance");
+                                console.error('Error inserting advancement into advancement_history:', err.message);
+                                
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
         }
     }
 
     savePlayerDefend(defendAmount) {
+        const self = this;
         // Loop through defense team players with defensePriority of "Defend_Advance"
         let totalDefend = 0;
         for (const player of this.defenseTeam.players) {
@@ -821,18 +879,21 @@ class Match {
             }
         }
 
-        // Divide the defendAmount proportionally by their defense
-        for (const player of this.defenseTeam.players) {
-            if (player.defensePriority === "Defend_Advance") {
-                player.defendAmount = (player.defendAmount / totalDefend) * defendAmount;
-                db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
-                    + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, player.id, player.defendAmount, "Defend"],
-                    function(err) {
-                        if (err) {
-                            console.error('Error inserting advancement into advancement_history:', err.message);
+        if(totalDefend > 0) {
+            // Divide the defendAmount proportionally by their defense
+            for (const player of this.defenseTeam.players) {
+                if (player.defensePriority === "Defend_Advance") {
+                    player.defendAmount = (player.defendAmount / totalDefend) * defendAmount;
+                    db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
+                        + `VALUES (?, ?, ?, ?, ?)`, [self.gameTicks, self.match_id, player.id, player.defendAmount, "Defend"],
+                        function(err) {
+                            if (err) {
+                                console.log(self.gameTicks, self.match_id, player.id, player.defendAmount)
+                                console.error('Error inserting defend into advancement_history:', err.message);
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
         }
     }
