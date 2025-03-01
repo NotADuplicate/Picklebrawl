@@ -161,7 +161,11 @@ class Match {
                 console.log("NEW MATCH: " + self.homeTeam.teamName + " vs " + self.awayTeam.teamName);
                 self.weather.startGameEffect(self, self.offenseTeam, self.defenseTeam);
                 
-                // Sort players by their quirk's START_EFFECT_ORDER
+                // Find and remove players with quirk title "Ghost"
+                const ghostPlayers = self.players.filter(player => player.quirk.title === "Ghost");
+                self.players = self.players.filter(player => player.quirk.title !== "Ghost");
+
+                // Sort remaining players by their quirk's START_EFFECT_ORDER
                 self.players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
 
                 // Activate startGameEffect in the sorted order
@@ -171,6 +175,9 @@ class Match {
                         player.range = self.RANGE_DICTIONARY[player.offenseProperty];
                     }
                 }
+
+                // Re-add ghost players to the players list
+                self.players.push(...ghostPlayers);
                 self.savePriorities();
                 self.runMatch();
                 resolve();

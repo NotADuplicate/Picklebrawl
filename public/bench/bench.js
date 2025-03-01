@@ -301,7 +301,7 @@ function checkChallengeFlags() {
         friendly = response.flags.friendly;
         //If all players set
         if(response.flags.challengerPlayersSet && response.flags.challengedPlayersSet) {
-            if(response.flags.challengedActionsSet && response.flags.challengerActionsSet) {
+            if(response.flags.challengedActionsSet && response.flags.challengerActionsSet && friendly) {
                 console.log("All actions set, starting match");
                 goToMatch(challengeId);
             }

@@ -261,8 +261,11 @@ function draftQueue(teams, draftId, draftTurn, callback) {
 }
 
 function skipTurn(draftId, timer) {
+    if(scheduledDraftExpires[draftId]) {
+        clearTimeout(scheduledDraftExpires[draftId]);
+    }
     scheduledDraftExpires[draftId] = setTimeout(() => {
-        skipTurn(draftId);
+        skipTurn(draftId, timer);
     }, timer);
     console.log("Skipping turn for draft ", draftId);
     db.get(`SELECT * FROM drafts WHERE id = ?`, [draftId], (err, draft) => {
@@ -280,10 +283,10 @@ function skipTurn(draftId, timer) {
                 return;
             }
             const nextTurn = draft.turn+1;
-            const backwards = Math.floor(nextTurn/teams.length) % 2;
-            const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
-            const nextTeamId = teams[nextTeamIndex].id;
             draftQueue(teams, draftId, nextTurn, (turn) => {
+                const backwards = Math.floor(turn/teams.length) % 2;
+                const nextTeamIndex = !backwards ? turn % teams.length : teams.length - turn % teams.length - 1;
+                const nextTeamId = teams[nextTeamIndex].id;
                 db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, turn, draftId], (err) => {
                     if (err) {
                         console.log("Error updating turn: ", err);

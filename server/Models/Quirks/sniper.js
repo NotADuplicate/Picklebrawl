@@ -4,7 +4,7 @@ export class Sniper extends Quirk {
     static POWER_MODIFIER = -4;
     static title = "Sniper";
     static description = ("Distance affects their shooting half as much");
-    static likelihood = 2;
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 3;

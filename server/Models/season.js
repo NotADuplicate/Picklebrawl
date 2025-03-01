@@ -1,6 +1,6 @@
 import { db } from '../database.js';
 import { scheduleJob } from "node-schedule";
-import { runMatch } from "../Routes/challenges.js";
+import { runMatch, recommendActions, recommendPlayers } from "../Routes/challenges.js";
 import { run } from 'mocha';
 
 export class Season {
@@ -188,14 +188,158 @@ export class Season {
     scheduleMatch(happening_at, challenge_id, runMatch) {
       console.log(`Scheduling match for challenge ${challenge_id} at ${happening_at}`);
       // Schedule the job for the exact happening_at time.
+      const self = this;
       scheduleJob(happening_at, async function() {
         try {
           console.log(`Running match for challenge ${challenge_id}`);
-          await runMatch(challenge_id, false);
-          await db.run("UPDATE challenges SET status = 'completed' WHERE id = ?", [challenge_id]);
+          self.verifyMatch(challenge_id, async () => {
+            await runMatch(challenge_id, false);
+            await db.run("UPDATE challenges SET status = 'completed' WHERE id = ?", [challenge_id]);
+          });
         } catch (err) {
           console.error(`Error processing challenge ${challenge_id}:`, err);
         }
+      });
+
+      const verifyPlayersTime = new Date(new Date(happening_at).getTime() - 90 * 60 * 1000);
+      scheduleJob(verifyPlayersTime, async function() {
+        try {
+          console.log(`Verifying players set for challenge ${challenge_id}`);
+          await self.verifyPlayersSet(challenge_id);
+        } catch (err) {
+          console.error(`Error verifying players for challenge ${challenge_id}:`, err);
+        }
+      });
+      
+    }
+
+    verifyMatch(challenge_id, callback) {
+      db.get(`SELECT * FROM challenges WHERE id = ?`, [challenge_id], async (err, challenge) => {
+        if (err) {
+          console.error(`Error fetching challenge ${challenge_id}:`, err);
+          return;
+        }
+        if(!challenge) {
+          console.error(`Challenge ${challenge_id} not found.`);
+          return;
+        }
+        if (challenge.status !== "upcoming") {
+          console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
+          return;
+        }
+        let problems = 0;
+        if(challenge.challenger_actions_set === 0) {
+          problems++;
+          this.setActions(challenge_id, challenge.challenger_team_id, () => {
+            problems--;
+          });
+        }
+        if(challenge.challenged_actions_set === 0) {
+          problems++;
+          this.setActions(challenge_id, challenge.challenged_team_id, () => {
+            problems--;
+          });
+        }
+        const checkInterval = setInterval(() => {
+          if (problems === 0) {
+            clearInterval(checkInterval);
+            callback();
+          }
+        }, 50);  });
+    }
+
+    verifyPlayersSet(challenge_id) {
+      db.get(`SELECT * FROM challenges WHERE id = ?`, [challenge_id], async (err, challenge) => {
+        if (err) {
+          console.error(`Error fetching challenge ${challenge_id}:`, err);
+          return;
+        }
+        if(!challenge) {
+          console.error(`Challenge ${challenge_id} not found.`);
+          return;
+        }
+        if (challenge.status !== "upcoming") {
+          console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
+          return;
+        }
+        let problems = 0;
+        if(challenge.challenger_players_set === 0) {
+          problems++;
+          this.setPlayers(challenge_id, challenge.challenger_team_id, () => {
+            problems--;
+          });
+        }
+        if(challenge.challenged_players_set === 0) {
+          problems++;
+          this.setPlayers(challenge_id, challenge.challenged_team_id, () => {
+            problems--;
+          });
+        }
+        const checkInterval = setInterval(() => {
+          if (problems === 0) {
+            clearInterval(checkInterval);
+          }
+        }, 50);
+      });
+    }
+
+    setActions(challenge_id, team_id, callback) {
+      db.all("SELECT * FROM challenge_players, players where players.team_id = ? AND players.id = player_id", [team_id], (err, rows) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        const actions = recommendActions(rows);
+        let pending = actions.length;
+        db.serialize(() => {
+          actions.forEach((action) => {
+            console.log("Inserting action:", action);
+            db.run(
+            `UPDATE challenge_players SET offense_action = ?, offense_target_id = ?, offense_property = ?, defense_action = ?, defense_target_id = ?, defense_property = ? 
+              WHERE player_id = ? AND challenge_id = ?`,
+            [action.offense_action, action.offense_target_id, action.offense_property, action.defense_action, action.defense_target_id, action.defense_property, action.player_id, challenge_id], (err) => {
+              pending--;
+              if (err) {
+                console.error("Error creating action:", err);
+              } 
+            });
+          });
+        });
+        const checkInterval = setInterval(() => {
+          if (pending === 0) {
+            clearInterval(checkInterval);
+            callback();
+          }
+        }, 50);
+      });
+    }
+
+    setPlayers(challenge_id, team_id, callback) {
+      db.all("SELECT * FROM players where team_id = ?", [team_id], (err, rows) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        const players = recommendPlayers(rows);
+        let pending = players.length;
+        db.serialize(() => {
+          players.forEach((player) => {
+            console.log("Inserting player:", player);
+            db.run(
+            'INSERT INTO challenge_players (challenge_id, team_id, player_id) VALUES (?, ?, ?)', [challenge_id, team_id, player], function (err) {
+              pending--;
+              if (err) {
+                console.error("Error creating player:", err);
+              } 
+            });
+          });
+        });
+        const checkInterval = setInterval(() => {
+          if (pending === 0) {
+            clearInterval(checkInterval);
+            callback();
+          }
+        }, 50);
       });
     }
       

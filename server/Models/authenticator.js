@@ -10,7 +10,6 @@ class Authenticator {
     authenticateToken(req, res, next) {
         const SECRET_KEY = 'charliecharlie'; // Replace after putting on github
         let token = req.headers['authorization'];
-        console.log('Token:', token);
         if (token && token.startsWith('Bearer ')) {
             token = token.slice(7, token.length).trim(); // Remove 'Bearer ' from the token
         }

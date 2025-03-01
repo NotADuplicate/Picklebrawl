@@ -520,6 +520,7 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
             players.push(player);
         });
     })).then(() => {
+        players = players.filter(player => player.quirk.title !== "Ghost");
         players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
         players.forEach(player => {
             player.quirk.challengeStatModification(players, player);
@@ -557,32 +558,7 @@ router.get('/challenges/:id/recommend-players', (req, res) => {
             console.error(err);
             return res.status(500).json({ error: 'Internal server error' });
         }
-        const players = rows.map(row => ({
-            id: row.id,
-            finesse: row.finesse,
-            height: row.height,
-            bulk: row.bulk,
-            strength: row.strength
-        }));
-
-        const highestFinesse = players.reduce((max, player) => player.finesse > max.finesse ? player : max, players[0]);
-        const highestHeight = players.reduce((max, player) => player.height > max.height ? player : max, players[0]);
-        const highestBulk = players.reduce((max, player) => player.bulk > max.bulk ? player : max, players[0]);
-        const highestStrength = players.reduce((max, player) => player.strength > max.strength ? player : max, players[0]);
-
-        const selectedPlayers = new Set([highestFinesse.id, highestHeight.id, highestBulk.id, highestStrength.id]);
-
-        if (selectedPlayers.size < 4) {
-            const remainingPlayers = players.filter(player => !selectedPlayers.has(player.id));
-            remainingPlayers.sort((a, b) => b.finesse - a.finesse || b.strength - a.strength);
-            for (const player of remainingPlayers) {
-                if (selectedPlayers.size < 4) {
-                    selectedPlayers.add(player.id);
-                } else {
-                    break;
-                }
-            }
-        }
+        const selectedPlayers = recommendPlayers(rows);
 
         res.json(Array.from(selectedPlayers));
     });
@@ -599,72 +575,8 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
             console.error(err);
             return res.status(500).json({ error: 'Internal server error' });
         }
-
-        const actions = rows.map(row => ({
-            player_id: row.player_id,
-            offense_action: row.offense_action,
-            offense_target_id: row.offense_target_id,
-            offense_property: row.offense_property,
-            defense_action: row.defense_action,
-            defense_target_id: row.defense_target_id,
-            defense_property: row.defense_property
-        }));
-        const highestStrength = rows.reduce((max, player) => player.strength > max.strength ? player : max, rows[0]);
-        const highestFinesse = rows.reduce((max, player) => {
-            if (player.player_id === highestStrength.player_id) {
-            return max;
-            }
-            return player.finesse > max.finesse ? player : max;
-        }, rows[0]);
-        const highestBulk = rows.reduce((max, player) => player.bulk > max.bulk ? player : max, rows[0]);
-        const highestHeight = rows.reduce((max, player) => {
-            if (player.player_id === highestBulk.player_id) {
-            return max;
-            }
-            return player.height > max.height ? player : max;
-        }, rows[0]);
-
-        const offenseMap = new Map();
-        const defenseMap = new Map();
-        offenseMap.set(highestStrength.player_id, "Advance");
-        actions.find(action => action.player_id === highestStrength.player_id).offense_property = "Blitz";
-        offenseMap.set(highestFinesse.player_id, "Score");
-        actions.find(action => action.player_id === highestFinesse.player_id).offense_property = "Medium";
-        defenseMap.set(highestBulk.player_id, "Defend_Advance");
-        defenseMap.set(highestHeight.player_id, "Defend_Score");
-
-        rows.forEach(player => {
-            if(!offenseMap.has(player.player_id)) {
-                if(Math.random() < 0.3) {
-                    offenseMap.set(player.player_id, "Rest");
-                }
-                else if (player.finesse > player.strength) {
-                    offenseMap.set(player.player_id, "Assist");
-                    const targetPlayerId = Math.random() > 0.5 ? highestStrength.player_id : highestFinesse.player_id;
-                    actions.find(action => action.player_id === player.player_id).offense_target_id = targetPlayerId;
-                } else {
-                    offenseMap.set(player.player_id, "Attack");
-                    actions.find(action => action.player_id === player.player_id).offense_property = "Any";
-                }
-            }
-            if(!defenseMap.has(player.player_id)) {
-                if(Math.random() < 0.3 && offenseMap.get(player.player_id) !== "Rest") {
-                    defenseMap.set(player.player_id, "Rest");
-                }
-                else if (player.finesse > player.strength) {
-                    defenseMap.set(player.player_id, "Assist");
-                    const targetPlayerId = Math.random() > 0.5 ? highestBulk.player_id : highestHeight.player_id;
-                    actions.find(action => action.player_id === player.player_id).defense_target_id = targetPlayerId;
-                } else {
-                    defenseMap.set(player.player_id, "Attack");
-                    actions.find(action => action.player_id === player.player_id).defense_property = "Any";
-                }
-            }
-        });
-        actions.forEach(action => {
-            action.offense_action = offenseMap.get(action.player_id);
-            action.defense_action = defenseMap.get(action.player_id);
-        });
+        
+        const actions = recommendActions(rows);
         res.json(actions);
     });
 });
@@ -719,6 +631,107 @@ export function runMatch(challengeId, friendly) {
 
         })
     })
+}
+
+export function recommendPlayers(teamPlayers) {
+    const players = teamPlayers.map(row => ({
+        id: row.id,
+        finesse: row.finesse,
+        height: row.height,
+        bulk: row.bulk,
+        strength: row.strength
+    }));
+    console.log("Players for recommending: ", players)
+
+    const highestFinesse = players.reduce((max, player) => player.finesse > max.finesse ? player : max, players[0]);
+    const highestHeight = players.reduce((max, player) => player.height > max.height ? player : max, players[0]);
+    const highestBulk = players.reduce((max, player) => player.bulk > max.bulk ? player : max, players[0]);
+    const highestStrength = players.reduce((max, player) => player.strength > max.strength ? player : max, players[0]);
+
+    const selectedPlayers = new Set([highestFinesse.id, highestHeight.id, highestBulk.id, highestStrength.id]);
+
+    if (selectedPlayers.size < 4) {
+        const remainingPlayers = players.filter(player => !selectedPlayers.has(player.id));
+        remainingPlayers.sort((a, b) => b.finesse - a.finesse || b.strength - a.strength);
+        for (const player of remainingPlayers) {
+            if (selectedPlayers.size < 4) {
+                selectedPlayers.add(player.id);
+            } else {
+                break;
+            }
+        }
+    }
+    return selectedPlayers;
+}
+
+export function recommendActions(challengePlayers) {
+    const actions = challengePlayers.map(row => ({
+        player_id: row.player_id,
+        offense_action: row.offense_action,
+        offense_target_id: row.offense_target_id,
+        offense_property: row.offense_property,
+        defense_action: row.defense_action,
+        defense_target_id: row.defense_target_id,
+        defense_property: row.defense_property
+    }));
+    const highestStrength = challengePlayers.reduce((max, player) => player.strength > max.strength ? player : max, challengePlayers[0]);
+    const highestFinesse = challengePlayers.reduce((max, player) => {
+        if (player.player_id === highestStrength.player_id) {
+        return max;
+        }
+        return player.finesse > max.finesse ? player : max;
+    }, challengePlayers[0]);
+    const highestBulk = challengePlayers.reduce((max, player) => player.bulk > max.bulk ? player : max, challengePlayers[0]);
+    const highestHeight = challengePlayers.reduce((max, player) => {
+        if (player.player_id === highestBulk.player_id) {
+        return max;
+        }
+        return player.height > max.height ? player : max;
+    }, challengePlayers[0]);
+
+    const offenseMap = new Map();
+    const defenseMap = new Map();
+    offenseMap.set(highestStrength.player_id, "Advance");
+    actions.find(action => action.player_id === highestStrength.player_id).offense_property = "Blitz";
+    offenseMap.set(highestFinesse.player_id, "Score");
+    actions.find(action => action.player_id === highestFinesse.player_id).offense_property = "Medium";
+    defenseMap.set(highestBulk.player_id, "Defend_Advance");
+    defenseMap.set(highestHeight.player_id, "Defend_Score");
+
+    challengePlayers.forEach(player => {
+        if(!offenseMap.has(player.player_id)) {
+            if(Math.random() < 0.3) {
+                offenseMap.set(player.player_id, "Rest");
+            }
+            else if (player.finesse > player.strength) {
+                offenseMap.set(player.player_id, "Assist");
+                const targetPlayerId = Math.random() > 0.5 ? highestStrength.player_id : highestFinesse.player_id;
+                actions.find(action => action.player_id === player.player_id).offense_target_id = targetPlayerId;
+            } else {
+                offenseMap.set(player.player_id, "Attack");
+                actions.find(action => action.player_id === player.player_id).offense_property = "Any";
+            }
+        }
+        if(!defenseMap.has(player.player_id)) {
+            if(Math.random() < 0.3 && offenseMap.get(player.player_id) !== "Rest") {
+                defenseMap.set(player.player_id, "Rest");
+            }
+            else if (player.finesse > player.strength) {
+                defenseMap.set(player.player_id, "Assist");
+                const targetPlayerId = Math.random() > 0.5 ? highestBulk.player_id : highestHeight.player_id;
+                actions.find(action => action.player_id === player.player_id).defense_target_id = targetPlayerId;
+            } else {
+                defenseMap.set(player.player_id, "Attack");
+                actions.find(action => action.player_id === player.player_id).defense_property = "Any";
+            }
+        }
+    });
+    actions.forEach(action => {
+        action.offense_action = offenseMap.get(action.player_id);
+        action.defense_action = defenseMap.get(action.player_id);
+    });
+    console.log("Reccomended: ", actions)
+    return actions;
 }
 
 export default router;

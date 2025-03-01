@@ -4,7 +4,7 @@ export class AlliterationAddict extends Quirk {
     static POWER_MODIFIER = -2;
     static title = "Alliteration Addict";
     static description = ("+1 to all stats for every teammate with the same first letter of their name");
-    static likelihood = 5;
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;

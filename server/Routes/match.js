@@ -22,7 +22,8 @@ router.get('/match/match-ticks', (req, res) => {
     // req is the request, req.query is the parameters in the request
     const { matchId, tick } = req.query;
     console.log("Getting match ticks for match id:", matchId);
-    db.all('SELECT tick, possession_team_id, ball_position, player_possession_id, created_at FROM match_ticks_history, match_history WHERE match_id = ? AND id = ?', [matchId, matchId], (err, tick_rows) => {
+    db.all(`SELECT tick, possession_team_id, ball_position, player_possession_id, created_at FROM match_ticks_history, match_history WHERE match_id = ? AND id = ?
+        ORDER BY tick ASC`, [matchId, matchId], (err, tick_rows) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ message: 'Error fetching match tick!' });
