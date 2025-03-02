@@ -39,7 +39,6 @@ class Team {
 
             // Save players and associate them with the team
             const savePlayer = (player, cb) => {
-                console.log("Saving player : " + player.name);
                 player.save(cb, self.teamId, false);
             };
 
@@ -57,7 +56,6 @@ class Team {
 
     addPlayer(player) {
         this.players.push(player);
-        console.log("Team " + this.teamName + " added player " + player.name);
     }
 
     getPlayers() {

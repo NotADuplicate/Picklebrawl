@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Helpful extends Quirk {
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -3;
     static title = "Helpful";
     static description = ("Twice as good at assisting");
     static likelihood = 4;

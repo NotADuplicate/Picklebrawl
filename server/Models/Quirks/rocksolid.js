@@ -3,7 +3,7 @@ import {db} from '../../database.js';
 
 export class RockSolid extends Quirk {
     static likelihood = 3;
-    static POWER_MODIFIER = -1;
+    static POWER_MODIFIER = -2;
     static title = "Rock Solid";
     static description = ("Cannot be tricked");
     static APPEARS_IN_GENERATION = true;
@@ -11,9 +11,9 @@ export class RockSolid extends Quirk {
 
     static playerStatGenerationChanges(player, power) {
         console.log("Rock Solid playerStatGenerationChanges\n");
-        player.bulk += Math.floor(power / 5);
+        player.bulk += player.focus+player.trickiness-1
         player.focus = 0;
-        player.trickiness = 0;        
+        player.trickiness = 0;
         return;
     }
 

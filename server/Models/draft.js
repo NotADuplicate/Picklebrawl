@@ -27,18 +27,14 @@ export class Draft {
     }
 
     generatePlayers(numUsers) {
-        const numPlayers = numUsers * 3 + 15;//5 
+        const numPlayers = numUsers * 3
         for (let i = 0; i < numPlayers; i++) {
             const player = new Player();
             player.pickRandomQuirk(true);
             if(i <= numUsers) { //make sure there is 1 good player per user
-                player.randomize_stats(Math.floor(Math.random() * 3) + 16);
-            }
-            /*else if(i <= numUsers + 2) { //make sure there are 2 codependents
-                player.pickSetQuirk(Codependent);
-            }*/
-            else {
-                player.randomize_stats(Math.floor(Math.random() * 8) + 9);
+                player.randomize_stats(20);
+            } else {
+                player.randomize_stats(Math.floor(Math.random() * 8) + 11);
             }
             this.players.push(player);
         }

@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         fetchData(`/teams/${teamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
+            console.log(players)
             players.forEach(player => {
                 const playerCard = document.importNode(playerCardTemplate, true);
 

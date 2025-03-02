@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Loner extends Quirk {
-    static POWER_MODIFIER = -3;
+    static POWER_MODIFIER = -2;
     static title = "Loner";
     static description = ("+2 to all stats for every player less than 4 you have on your team");
     static likelihood = 5; //2

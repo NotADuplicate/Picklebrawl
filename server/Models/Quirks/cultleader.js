@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class CultLeader extends Quirk {
-    static POWER_MODIFIER = -3;
+    static POWER_MODIFIER = -4;
     static title = "Cult Leader";
     static description = ("+2X to all stats where X is the number of teammates that share the most common religion on your team.");
     static likelihood = 1;

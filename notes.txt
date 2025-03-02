@@ -30,7 +30,7 @@ ADVANCE_MAX
 REVERSE_ATTACK_CHANCE
 
 
-								QUIRKS
+QUIRKS
 Streaky
 Sun worship
 Star worship
@@ -87,7 +87,18 @@ Sly
 
 
 
-								RANDOM EVENTS
+RANDOM EVENTS
 Home game audience interferes
 Out of game fight
 Mosh pit
+
+BUILDING:
+Remove-Item -Recurse -Force node_modules, package-lock.json
+DELETE THE DATABASE
+docker build -t painapple64/picklebrawl .
+docker push painapple64/picklebrawl
+ssh charlie@ssh.jazure.net
+
+docker pull painapple64/picklebrawl
+docker stop Picklebrawl
+docker rm Picklebrawl

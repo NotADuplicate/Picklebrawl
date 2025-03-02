@@ -4,6 +4,7 @@ import { db } from '../database.js';
 import { Draft } from '../Models/draft.js';
 import { Season } from '../Models/season.js';
 import { authenticator } from '../Models/authenticator.js';
+import { Player } from '../Models/player.js';
 
 const router = express.Router();
 

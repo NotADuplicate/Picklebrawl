@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Streaky extends Quirk {
-    static likelihood = 1;
+    static likelihood = 0;
     static title = "Streaky";
     static description = ("At the start of the game, has a 50% chance to increase all stats by 1, or decrease all stats by 1.");
     static STAT_CHANGE = 1

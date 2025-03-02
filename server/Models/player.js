@@ -81,10 +81,8 @@ class Player {
         this.baseTrickiness = trickiness;
         this.baseFocus = focus;
 
-        this.quirkId = quirkId;
-        const quirkKeys = Object.keys(quirks);
-        const quirkClass = quirks[quirkKeys[quirkId]];
-        this.quirk = quirkClass;
+        this.quirkId = row.quirk;
+        this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId];
         console.log("Set stats of player ", this.name);
     }
 
@@ -150,13 +148,13 @@ class Player {
     randomize_stats(power) {
         this.power = power;
         power += this.quirk.POWER_MODIFIER;
-        //return; // Disable randomization for now
-        const totalPoints = power + this.quirk.POWER_MODIFIER;
+        console.log(this.name, " setting points ", power, " quirk modifier of: ", this.quirk.POWER_MODIFIER)
 
         const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
 
         for (let i = 0; i < power; i++) {
-            stats[Math.floor(Math.random()*stats.length-1)] += 1;
+            const ran = Math.floor(Math.random()*(stats.length-1))
+            stats[ran] += 1;
         }
 
         const extraStats = stats[4]; //trickiness and focus should split points between them
@@ -166,6 +164,15 @@ class Player {
         }
 
         [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
+        const totalStats = this.bulk + this.finesse + this.height + this.strength + this.trickiness + this.focus;
+        console.log("Total stats: ", totalStats-5)
+        if(totalStats-5 > power) {
+            console.log(this.name, " IS UNFAIRLY GOOD! \n")
+        }
+        else if(totalStats-5 < power) {
+            console.log(this.name, " IS UNFAIRLY BAD! \n")
+        }
+
         this.quirk.playerStatGenerationChanges(this, power);
     }
 
@@ -207,7 +214,6 @@ class Player {
 
     attack(match, target) {
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
-            // TODO: add code in quirk attack effects to add to db
             const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
             const finalDamage = (damage - defense)+0.25;
@@ -294,9 +300,7 @@ class Player {
                     return reject(err);
                 }
                 if (row) {
-                    console.log("Player health: ", row.health)
                     self.hp = Math.floor(row.health);
-                    console.log("Self: ", self)
                     this.name = row.name;
                     this.team = row.team_id;
                     this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);
@@ -308,6 +312,21 @@ class Player {
                 }
             });
         });
+    }
+
+    reset_stats(id) {
+        db.get(`SELECT * FROM players WHERE id = ?`, [id], (err, row) => {
+            if(err) {
+                console.log("Error resetting stats for player ", id, " :", err)
+            }
+            this.name = row.name
+            this.quirkId = row.quirk;
+            this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId];
+            console.log("Quirk id: ", this.quirkId, " quirk: ", this.quirk.title)
+            this.randomize_stats(row.power);
+            db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, trickiness = ?, focus = ?
+                WHERE id = ?`, [this.finesse, this.height, this.strength, this.bulk, this.trickiness, this.focus, id])
+            });
     }
 }
 
