@@ -95,7 +95,7 @@ class Player {
     }
 
     setPriorities(offense, defense, offenseTarget = null, defenseTarget = null, offenseProperty = null, defenseProperty = null) {
-        console.log(offense + " " + offenseTarget); 
+        console.log("Setting offense priority: ", offense + " " + offenseTarget); 
         this.offensePriority = offense;
         this.defensePriority = defense;
         this.offensePriorityTarget = offenseTarget;
@@ -217,6 +217,7 @@ class Player {
     }
 
     attack(match, target) {
+        console.log(this.name, " attacks ", target.name)
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
             const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
@@ -290,7 +291,7 @@ class Player {
     }
 
     protect(target) {
-        target.protectBulk += this.height*0.8;
+        target.protectBulk += this.height;
     }
 
     load(id) {

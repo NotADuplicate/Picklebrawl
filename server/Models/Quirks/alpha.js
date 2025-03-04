@@ -2,7 +2,7 @@ import { Quirk } from './quirk.js';
 
 export class Alpha extends Quirk {
     static title = "Alpha";
-    static description = ("The player gets a stat boost if their name is first alphabetically on their team");
+    static description = ("+2 to all stats if their name is first alphabetically on their team");
     static POWER_MODIFIER = -4;
     static STAT_CHANGE = 2
     static likelihood = 4;

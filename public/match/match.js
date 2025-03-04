@@ -237,18 +237,10 @@ async function changeTeamPossession(team) {
     uncenterAllPlayers();
 
     advancingPlayers.forEach(player => {
-        const healthBar = player.querySelector('.health-bar');  
-        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
-        if(currentHealth > 0.5) {
-            toggleCentered(player.getAttribute('data-player-id'));
-        }
+        toggleCentered(player.getAttribute('data-player-id'), true);
     });
     defendingPlayers.forEach(player => {
-        const healthBar = player.querySelector('.health-bar');  
-        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
-        if(currentHealth > 0.5) {
-            toggleCentered(player.getAttribute('data-player-id'));
-        }
+        toggleCentered(player.getAttribute('data-player-id'), true);
     });
 }
 
@@ -369,27 +361,30 @@ function runMatchTick(data, tick) {
             moveSliderIcon(position);
             uncenterAllPlayers();
             let i = 0;
-            
-            const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== (data.scoringHistory.team_id === homeTeamId ? 'home' : 'away'));
-            oppositeTeamPlayers.forEach(player => {
-                if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
-                    const healthBar = player.querySelector('.health-bar');  
-                    const currentHealth = parseFloat(healthBar.style.width.replace('%', ''));
-                    if(currentHealth > 0.5) {
-                        toggleCentered(player.getAttribute('data-player-id'));
-                    }
-                }
-            });
 
-            data.scoringHistory.forEach(score => {
-                toggleCentered(score.shooter_id);
-            });
             if(data.scoringHistory[0].blitzer_id != null) {
                 toggleHighlight(data.scoringHistory[0].blitzer_id);
                 addBoldTextToTextBox(`${players[data.scoringHistory[0].blitzer_id].querySelector('.player-name').textContent} blitzes!`);
+                toggleCentered(data.scoringHistory[0].blitzer_id, true)
                 await wait(1000);
                 toggleHighlight(data.scoringHistory[0].blitzer_id);
+                toggleCentered(data.scoringHistory[0].blitzer_id, false)
             }
+
+            data.scoringHistory.forEach(score => {
+                const scoringTeam = score.team_id === homeTeamId ? 'home' : 'away'
+                console.log(scoringTeam, score.team_id, homeTeamId)
+                const oppositeTeamPlayers = Object.values(players).filter(player => player.getAttribute('data-team') !== scoringTeam);
+                oppositeTeamPlayers.forEach(player => {
+                    console.log("Opposing player: ", player)
+                    if (player.querySelector('.player-defense-action').textContent === 'Defend_Score') {
+                        toggleCentered(player.getAttribute('data-player-id'), true);
+                    }
+                });
+                
+                toggleCentered(score.shooter_id, true);
+            });
+
             while(i < data.scoringHistory.length) {
                 const scoringTrick = !!data.trickHistory.find(trick => trick.tricker_id === data.scoringHistory[i].shooter_id && trick.trick_type === 'Score' && trick.tick === tick);
                 await doShooting(data.scoringHistory[i], scoringTrick);
@@ -554,6 +549,7 @@ async function doShooting(score, scoringTrick) {
     }
     else {
         if(score.blocker_id != null) {
+            toggleCentered(score.blocker_id, true)
             addBoldTextToTextBox(`BLOCKED BY ${players[score.blocker_id].querySelector('.player-name').textContent}`, 'red', true);
         }
         else {
@@ -573,12 +569,18 @@ function toggleHighlight(playerId) {
     }
 }
 
-function toggleCentered(playerId) {
+function toggleCentered(playerId, toggle) {
     const playerElement = players[playerId];
     if (playerElement) {
         const team = playerElement.getAttribute('data-team'); // Assuming data-team attribute is set
         const centeredClass = team === 'home' ? 'centered-left' : 'centered-right';
-        playerElement.classList.toggle(centeredClass);
+        const healthBar = playerElement.querySelector('.health-bar');  
+        const currentHealth = parseFloat(healthBar.style.width.replace('%', ''))
+        if (toggle && currentHealth > 0.5) {
+            playerElement.classList.add(centeredClass);
+        } else {
+            playerElement.classList.remove(centeredClass);
+        }
     } else {
         console.error(`Player with ID ${playerId} not found.`);
     }

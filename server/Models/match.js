@@ -359,6 +359,7 @@ class Match {
             player.tempTrickiness = player.trickiness;
             player.tempFocus = player.focus;
             player.assisters = 0;
+            player.protectBulk = 0;
         }
     }
 
@@ -688,14 +689,14 @@ class Match {
             return;
         } else if(this.breakAway <= 0){ //check for trying to score
             for (const player of this.offenseTeam.players) {
-                if(player.offensePriority === "Score" && Math.random() < this.position/this.FIELD_LENGTH) { //scorers have ~30% chance of attempting a shot
+                if(player.offensePriority === "Score" && Math.random()*0.9 < this.position/this.FIELD_LENGTH) { //scorers have ~30% chance of attempting a shot
                     let range = 0;
                     let minRange;
                     if(player.offenseProperty === "Close") {
                         minRange = 0;
                     }
-                    else {
-                        minRange = 10 + this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
+                    else { // dont shoot if youre on track to make a blitz
+                        minRange = 5 + this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
                     }
                     if(this.gameTicks > this.GAME_LENGTH - 10) { //last second shot
                         if(this.offenseTeam.score == this.defenseTeam.score - 3) { //have to blitz
@@ -749,6 +750,10 @@ class Match {
         this.playerWithPossession = shooter;
         this.breakAway = 0;
         let numShooters = 0;
+        let dedicatedShooterBonus = 0;
+        if(shooter.offensePriority == "Score") {
+            dedicatedShooterBonus = 1;
+        }
         for (const player of this.offenseTeam.players) { //count number of shooters
             if(player.offensePriority === "Score") {
                 numShooters++;
@@ -762,7 +767,7 @@ class Match {
         let blocker_id = null;
         const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
         if(score == null) { //no weather effect, handle scoring as usual
-            let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse + shooter.PLAYER_SHOOTING_BONUS)
+            let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse + shooter.PLAYER_SHOOTING_BONUS + dedicatedShooterBonus)
             console.log("Shooting: " + shooting);
             //console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {

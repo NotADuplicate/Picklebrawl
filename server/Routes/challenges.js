@@ -510,19 +510,20 @@ router.get('/challenges/:id/players-actions', authenticator.authenticateToken, (
 
 // Get quirk effects for all players in a challenge
 router.post('/challenges/:id/quirk-effects', (req, res) => {
-    console.log("Req: ", req.body)
-    const { ids } = req.body;
+    console.log("Req: ", req.body.players)
+    const playerDicts = req.body.players;
     let players = [];
-    console.log("Console:", ids)
-    Promise.all(ids.map((playerId, index) => {
+    Promise.all(playerDicts.map((playerDict, index) => {
         const player = new Player();
-        return player.load(playerId).then(() => {
+        return player.load(playerDict.id).then(() => {
+            player.setPriorities(playerDict.offensePriority, playerDict.defensePriority, playerDict.offenseTargetId, playerDict.defenseTargetId)
             players.push(player);
         });
     })).then(() => {
         players = players.filter(player => player.quirk.title !== "Ghost");
         players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
         players.forEach(player => {
+            console.log(player.name, player.quirk.title)
             player.quirk.challengeStatModification(players, player);
         });
         res.json(players);
@@ -531,6 +532,7 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
 
 // Get quirk actions for all players in a challenge
 router.post('/challenges/quirk-actions/:id', (req, res) => {
+    console.log("Getting quirk action")
     const { ids } = req.body;
     let extraActions = [];
     Promise.all(ids.map(playerId => {
@@ -735,6 +737,5 @@ export function recommendActions(challengePlayers) {
     console.log("Reccomended: ", actions)
     return actions;
 }
-
 
 export default router;

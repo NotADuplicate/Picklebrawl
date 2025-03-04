@@ -3,7 +3,7 @@ import { Quirk } from './quirk.js';
 export class Duplicitous extends Quirk {
     static POWER_MODIFIER = -2;
     static title = "Duplicitous";
-    static description = ("Your chance to trick players is 50% higher (base 50% instead of 33%).");
+    static description = ("Has 1.5 times the chance to trick players (base 50% instead of 33%).");
     static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;

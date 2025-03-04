@@ -4,7 +4,7 @@ import {db} from '../../database.js';
 export class PaperThin extends Quirk {
     static POWER_MODIFIER = 3;
     static title = "Paper Thin";
-    static description = "Takes double damage"
+    static description = "Takes double damage. Scared of scissors"
     static likelihood = 3
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;

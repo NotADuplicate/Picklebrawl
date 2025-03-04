@@ -19,43 +19,17 @@ export class WeakestLink extends Quirk {
     }
 
     static startGameEffect(match, player) {
-        let lowestFinesse = 5;
-        let lowestStrength = 5;
-        let lowestTrickiness = 5;
-        let lowestFocus = 5;
-        let lowestHeight = 5;
-        let lowestBulk = 5;
-        if(player in match.homeTeam.players) {
-            // Compare to home team players
-            for(const otherPlayer of match.players) {
-                if(otherPlayer !== player && otherPlayer.team == player.team) {
-                    lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
-                    lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
-                    lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
-                    lowestFocus = Math.min(lowestFocus, otherPlayer.focus);
-                    lowestHeight = Math.min(lowestHeight, otherPlayer.height);
-                    lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
-                }
-            }
-        }
-        player.baseFiness += lowestFinesse;
-        player.baseStrength += lowestStrength;
-        player.baseTrickiness += lowestTrickiness;
-        player.baseFocus += lowestFocus;
-        player.baseHeight += lowestHeight;
-        player.baseBulk += lowestBulk;
-    }
-
-    static challengeStatModification(players, player) {
-        console.log("Weakest Link Challenge Stat Modification");
-        let lowestFinesse = 5;
-        let lowestStrength = 5;
-        let lowestTrickiness = 5;
-        let lowestFocus = 5;
-        let lowestHeight = 5;
-        let lowestBulk = 5;
-        for(const otherPlayer of players) {
+        let lowestFinesse = 10;
+        let lowestStrength = 10;
+        let lowestTrickiness = 10;
+        let lowestFocus = 10;
+        let lowestHeight = 10;
+        let lowestBulk = 10;
+        let onlyPlayer = true;
+        // Compare to same team players
+        for(const otherPlayer of match.players) {
             if(otherPlayer !== player && otherPlayer.team == player.team) {
+                onlyPlayer = false;
                 lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
                 lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
                 lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
@@ -64,12 +38,44 @@ export class WeakestLink extends Quirk {
                 lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
             }
         }
-        player.finesse += lowestFinesse;
-        player.strength += lowestStrength;
-        player.trickiness += lowestTrickiness;
-        player.focus += lowestFocus;
-        player.height += lowestHeight;
-        player.bulk += lowestBulk;
+        if(!onlyPlayer) {
+            player.baseFiness += lowestFinesse;
+            player.baseStrength += lowestStrength;
+            player.baseTrickiness += lowestTrickiness;
+            player.baseFocus += lowestFocus;
+            player.baseHeight += lowestHeight;
+            player.baseBulk += lowestBulk;
+        }
+    }
+
+    static challengeStatModification(players, player) {
+        console.log("Weakest Link Challenge Stat Modification");
+        let lowestFinesse = 10;
+        let lowestStrength = 10;
+        let lowestTrickiness = 10;
+        let lowestFocus = 10;
+        let lowestHeight = 10;
+        let lowestBulk = 10;
+        let onlyPlayer = true;
+        for(const otherPlayer of players) {
+            if(otherPlayer !== player && otherPlayer.team == player.team) {
+                onlyPlayer = false;
+                lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
+                lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
+                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
+                lowestFocus = Math.min(lowestFocus, otherPlayer.focus);
+                lowestHeight = Math.min(lowestHeight, otherPlayer.height);
+                lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
+            }
+        }
+        if(!onlyPlayer) {
+            player.finesse += lowestFinesse;
+            player.strength += lowestStrength;
+            player.trickiness += lowestTrickiness;
+            player.focus += lowestFocus;
+            player.height += lowestHeight;
+            player.bulk += lowestBulk;
+        }
         return true;
     }
 }

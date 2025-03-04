@@ -2,7 +2,7 @@ import { Quirk } from './quirk.js';
 
 export class AlphabetCompletionist extends Quirk {
     static title = "Alphabet Completionist";
-    static description = ("Stats decrease for each letter not included in the names of each player in the match");
+    static description = ("-1 to all stats for each letter not included in the names of each player in the match");
     static POWER_MODIFIER = 8;
     static BASE_STAT_INCREASE = 2;
     static STAT_DECREASE = 1;

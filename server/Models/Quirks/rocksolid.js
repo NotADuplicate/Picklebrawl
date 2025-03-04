@@ -5,7 +5,7 @@ export class RockSolid extends Quirk {
     static likelihood = 3;
     static POWER_MODIFIER = -2;
     static title = "Rock Solid";
-    static description = ("Cannot be tricked");
+    static description = ("Cannot be tricked. Scared of paper");
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 

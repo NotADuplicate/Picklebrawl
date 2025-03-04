@@ -220,6 +220,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
 
         defensePrioritySelect.addEventListener('change', (event) => {
             const selectedPriority = event.target.value;
+            console.log("Defense prio: ", defensePriorities)
             updateTargetMenu(selectedPriority, defensePriorities[selectedPriority].split(' ')[1], defenseTargetMenu, defenseTargetSelect);
         });
 
@@ -301,7 +302,7 @@ document.getElementById('backButton').addEventListener('click', function() {
 });
 
 function checkChallengeFlags() {
-    fetchData(`/challenges/${challengeId}/players-actions`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (response) => {
+    fetchData(`/challenges/${challengeId}/players-actions`, 'GET', { 'Authorization': `Bearer ${token}` }, null, async (response) => {
         const lockButton = document.getElementById('lock-button');
         console.log("Challenge players: ", response);
         const playerIds = [];
@@ -317,7 +318,7 @@ function checkChallengeFlags() {
                 console.log("All actions set, starting match");
                 goToMatch(challengeId);
             }
-            bothTeamsReady(playerIds, lockButton);
+            await bothTeamsReady(playerIds, lockButton);
             getActions(response);
         }
         else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) { //if your players are set
@@ -537,101 +538,74 @@ function unlockActions() {
     const yourTeamPlayers = document.querySelectorAll('.your-team .player');
     const teamId = myTeamId;
 
-    fetchData(`/challenges/${challengeId}/players-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, {teamId}, (response) => {
-        const playerIds = [];
-        if (response.playersActions !== null) {
-            response.playersActions.forEach(playerAction => {
-                playerIds.push(playerAction.player_id);
-            });
+    fetchData(`/challenges/${challengeId}/remove-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, {teamId}, (response) => {
+        if(response.message === 'Actions already removed') {
+            console.log("Actions have already been removed!");
+            return;
         }
-        if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
-            console.log("All actions set, starting match");
-            goToMatch(challengeId);
+        else if(response.message === 'Actions already locked in') {
+            console.log("Actions have already been set!");
+            checkChallengeFlags();
+            return;
         }
-        else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) { //if your actions are set
-            for(let i = 0; i < playerIds.length; i++) {
-                if(playerIds[i].team_id == myTeamId) {
-                    const action = playerIds[i];
-                    setAction(action, false);
-                }
-            }
-            const lockButton = document.getElementById('lock-button');
-            lockButton.textContent = 'Lock In Actions';
-        }
-        else if(response.flags.challengerActionsSet && !challenger || response.flags.challengedActionsSet && challenger) {
-            const readyDiv = document.getElementById('other-team-ready');
-            readyDiv.textContent = 'ACTIONS LOCKED';
-            readyDiv.style.color = 'darkgreen';
-        }
+        actionsLocked = false;
+        console.log('Actions removed successfully:', response);
+        yourTeamPlayers.forEach(player => {
+            const priorityDiv = player.querySelector('.priority');
+            const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+            const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+            const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+            const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+            offensePrioritySelect.disabled = false;
+            defensePrioritySelect.disabled = false;
+            offenseTargetSelect.disabled = false;
+            defenseTargetSelect.disabled = false;
+        });
+        const lockButton = document.getElementById('lock-button');
+        lockButton.textContent = 'Lock In Actions';
     }, (error) => {
         console.log('Error fetching player actions:', error);
     });
     }
 }
 
-function bothTeamsReady(playerIds, lockButton) {
-    console.log("All players are set");
-    let teamPlayerIds = [];
-    for(let i = 0; i < playerIds.length; i++) {
-        const id = playerIds[i];
-        selectPlayer(playerDict[id]);
-        playerDict[id].dataset.locked = true;
-        playerDict[id].classList.add('locked');
-        if(playerDict[id].dataset.team === 'your-team') {
-            teamPlayerIds.push(id);
-        }
-        lockButton.textContent = 'Lock In Actions';
-        const recommendButton = document.getElementById('reccomend-button');
-        recommendButton.textContent = 'Recommend Actions';
-    }
-
-    applyQuirkStats();
-
-    //Add quirk actions
-    fetchData(`/challenges/${challengeId}/quirk-actions`, 'POST', { 'Authorization': `Bearer ${token}` }, { ids: teamPlayerIds }, (data) => {
-        console.log('Quirk actions added successfully:', data);
-        data.forEach(action => {
-            console.log(action);
-            const player = playerDict[action.playerId];
-            Object.entries(action.action).forEach(([key]) => {
-                prioritiesDescriptions[key] = action.action[key].description;
-                if(action.action[key].offense) {
-                    const option = document.createElement('option');
-                    option.value = key;
-                    option.textContent = key;
-                    console.log("Offense: ", action.action[key].target);
-                    offensePriorities[key] = action.action[key].target;
-                    player.querySelector('.offense-priority-select').appendChild(option);
-
-                }
-                if(action.action[key].defense) {
-                    const option = document.createElement('option');
-                    option.value = key;
-                    option.textContent = key;
-                    defensePriorities[key] = action.action[key].target;
-                    player.querySelector('.defense-priority-select').appendChild(option);
-                }
-            });
-        });
-    }, (error) => {
-        console.log('Error adding quirk actions:', error);
-    });
-
-    const yourTeamPlayers = document.querySelectorAll('.your-team .player');
-    yourTeamPlayers.forEach(player => {
-        if (player.dataset.location === 'bench') {
-            const priorityDiv = player.querySelector('.priority');
-            if (priorityDiv) {
-                priorityDiv.style.display = 'flex';
-                player.classList.add('show-priority');
+async function bothTeamsReady(playerIds, lockButton) {
+    return new Promise(async (resolve) => {
+        console.log("All players are set");
+        let teamPlayerIds = [];
+        for(let i = 0; i < playerIds.length; i++) {
+            const id = playerIds[i];
+            selectPlayer(playerDict[id]);
+            playerDict[id].dataset.locked = true;
+            playerDict[id].classList.add('locked');
+            if(playerDict[id].dataset.team === 'your-team') {
+                teamPlayerIds.push(id);
             }
+            lockButton.textContent = 'Lock In Actions';
+            const recommendButton = document.getElementById('reccomend-button');
+            recommendButton.textContent = 'Recommend Actions';
         }
+
+        await applyQuirkActions(teamPlayerIds);
+        applyQuirkStats();
+
+        const yourTeamPlayers = document.querySelectorAll('.your-team .player');
+        yourTeamPlayers.forEach(player => {
+            if (player.dataset.location === 'bench') {
+                const priorityDiv = player.querySelector('.priority');
+                if (priorityDiv) {
+                    priorityDiv.style.display = 'flex';
+                    player.classList.add('show-priority');
+                }
+            }
+        });
+
+        resolve();
     });
 }
 
 function getActions(response) { 
-    console.log("Getting actions");
-    console.log(response);
+    console.log("Getting actions: ", response);
     if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
         console.log("All actions set, starting match");
     }
@@ -642,11 +616,13 @@ function getActions(response) {
         for(let i = 0; i < playerActions.length; i++) {
             if(playerActions[i].team_id == myTeamId) {
                 const action = playerActions[i];
+                console.log("Setting action from response: ", response)
                 setAction(action, true);
             }
         }
         const lockButton = document.getElementById('lock-button');
         lockButton.textContent = 'Undo actions';
+        applyQuirkStats();
     }
     else if(response.flags.challengerActionsSet && !challenger || response.flags.challengedActionsSet && challenger) {
         const readyDiv = document.getElementById('other-team-ready');
@@ -658,15 +634,41 @@ function getActions(response) {
 function applyQuirkStats() {
     const playerElements = document.querySelectorAll('.player');
     const benchPlayers = Array.from(playerElements).filter(playerElement => playerElement.dataset.location === 'bench');
-    let ids = [];
+    let players = [];
     let teamIds = [];
+    console.log("Quirk stats")
     benchPlayers.forEach(player => {
-        ids.push(player.dataset.playerId);
+        const priorityDiv = player.querySelector('.priority');
+        const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
+        const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
+        const offenseTargetSelect = priorityDiv.querySelector('.offense-target-select');
+        const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
+        let offenseTargetId = null;
+        let defenseTargetId = null;
+        
+        if (!offenseTargetSelect.value.includes('Property') && offenseTargetSelect.textContent !== '') {
+            console.log("Offense target: ", offenseTargetSelect);
+            offenseTargetId = offenseTargetSelect.value;
+        }
+        if (!defenseTargetSelect.value.includes('Property') && defenseTargetSelect.textContent !== '') {
+            console.log("Defense target: ", offenseTargetSelect);
+            defenseTargetId = defenseTargetSelect.value;
+        }
+
+        const playerDictObject = {
+            id: player.dataset.playerId,
+            offensePriority: offensePrioritySelect.value,
+            defensePriority: defensePrioritySelect.value,
+            offenseTargetId,
+            defenseTargetId
+        }
+        console.log("Player dict obj: ", playerDictObject)
+        players.push(playerDictObject);
         teamIds.push(player.dataset.team);
     });
 
-    console.log(ids)
-    fetchData(`/challenges/${challengeId}/quirk-effects`, 'POST', { 'Authorization': `Bearer ${token}` }, { ids }, (data) => {
+    fetchData(`/challenges/${challengeId}/quirk-effects`, 'POST', { 'Authorization': `Bearer ${token}` }, { players }, (data) => {
+        console.log("Quirk stats: ", data)
         data.forEach(player => {
             const playerElement = playerDict[player.id];
             const playerStats = {
@@ -699,6 +701,38 @@ function applyQuirkStats() {
         });
     }, (error) => {
         console.error('Error applying quirk stats:', error);
+    });
+}
+
+async function applyQuirkActions(teamPlayerIds) {
+    return new Promise((resolve, reject) => {
+        fetchData(`/challenges/quirk-actions/${challengeId}`, 'POST', { 'Authorization': `Bearer ${token}` }, { ids: teamPlayerIds }, (data) => {
+            console.log('Quirk actions got successfully:', data);
+            data.forEach(action => {
+                const player = playerDict[action.playerId];
+                Object.entries(action.action).forEach(([key]) => {
+                    prioritiesDescriptions[key] = action.action[key].description;
+                    if(action.action[key].offense) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = key;
+                        offensePriorities[key] = action.action[key].target;
+                        player.querySelector('.offense-priority-select').appendChild(option);
+                    }
+                    if(action.action[key].defense) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = key;
+                        defensePriorities[key] = action.action[key].target;
+                        player.querySelector('.defense-priority-select').appendChild(option);
+                    }
+                });
+            });
+            resolve();
+        }, (error) => {
+            console.log('Error adding quirk actions:', error);
+            reject(error);
+        });
     });
 }
 
@@ -751,9 +785,7 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
 }
 
 function setAction(action, disabled) {
-    console.log("Action: ", action);
     const player = playerDict[action.player_id];
-    console.log("Player: ", player);
     const priorityDiv = player.querySelector('.priority');
     const offensePrioritySelect = priorityDiv.querySelector('.offense-priority-select');
     const defensePrioritySelect = priorityDiv.querySelector('.defense-priority-select');
@@ -761,6 +793,7 @@ function setAction(action, disabled) {
     const defenseTargetSelect = priorityDiv.querySelector('.defense-target-select');
     offensePrioritySelect.value = action.offense_action;
     defensePrioritySelect.value = action.defense_action;
+
     updateTargetMenu(action.offense_action, offensePriorities[action.offense_action].split(' ')[1], offenseTargetSelect.parentElement, offenseTargetSelect);
     updateTargetMenu(action.defense_action, defensePriorities[action.defense_action].split(' ')[1], defenseTargetSelect.parentElement, defenseTargetSelect);
     console.log("Target menus");

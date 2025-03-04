@@ -306,4 +306,17 @@ function skipTurn(draftId, timer) {
     });
 }
 
+db.all(`SELECT drafts.id AS draft_id, draft_timer_mins FROM drafts, leagues WHERE drafts.league_id = leagues.id`, (err, rows) => {
+    if(err) {
+        console.log("Setting draft timer error: ", err)
+    }
+    console.log(rows)
+    for(const row of rows) {
+        const draft_timer_ms = row.draft_timer_mins * 60 * 1000;
+        scheduledDraftExpires[row.draft_id] = setTimeout(() => {
+            skipTurn(row.draft_id, draft_timer_ms);
+        }, draft_timer_ms);
+    }
+})
+
 export default router;

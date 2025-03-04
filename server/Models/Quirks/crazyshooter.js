@@ -2,7 +2,7 @@ import { Quirk } from './quirk.js';
 
 export class CrazyShooter extends Quirk {
     static title = "Crazy Shooter";
-    static description = ("Always has a chance to take a shot from anywhere on the field. Crazy shots are more likely to go in");
+    static description = ("Always has a chance to take a shot from anywhere on the field regardless of what action they're set to. Crazy shots are more likely to go in");
     static likelihood = 1;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
