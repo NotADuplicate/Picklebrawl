@@ -81,7 +81,7 @@ class Player {
         this.baseTrickiness = trickiness;
         this.baseFocus = focus;
 
-        this.quirkId = row.quirk;
+        this.quirkId = quirkId;
         this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId];
         console.log("Set stats of player ", this.name);
     }
@@ -128,11 +128,14 @@ class Player {
     }
 
     pickRandomQuirk(draft = false) {
-        const quirkKeys = Object.keys(quirks);
+        /*const quirkKeys = Object.keys(quirks);
         const selectedQuirkKey = QuirkGenerator.pickRandomQuirk(draft);
         const quirkClass = quirks[selectedQuirkKey];
         this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
-        this.quirk = quirkClass;
+        this.quirk = quirkClass;*/
+        this.quirkId = QuirkGenerator.pickRandomQuirk(draft);
+        this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId]
+        console.log(this.name, " Pikced random quirk: ", this.quirkId, this.quirk.title)
         this.quirk.nameGenerationChanges(this);
     }
 
@@ -148,6 +151,7 @@ class Player {
     randomize_stats(power) {
         this.power = power;
         power += this.quirk.POWER_MODIFIER;
+        console.log("Quirk: ", this.quirkId, this.quirk.title)
         console.log(this.name, " setting points ", power, " quirk modifier of: ", this.quirk.POWER_MODIFIER)
 
         const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
@@ -320,8 +324,10 @@ class Player {
                 console.log("Error resetting stats for player ", id, " :", err)
             }
             this.name = row.name
+            console.log(this.name)
             this.quirkId = row.quirk;
             this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId];
+            console.log(this.quirkId, this.quirk)
             console.log("Quirk id: ", this.quirkId, " quirk: ", this.quirk.title)
             this.randomize_stats(row.power);
             db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, trickiness = ?, focus = ?

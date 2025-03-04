@@ -268,6 +268,14 @@ function skipTurn(draftId, timer) {
         skipTurn(draftId, timer);
     }, timer);
     console.log("Skipping turn for draft ", draftId);
+    const currentTime = new Date();
+    const currentHour = currentTime.getUTCHours();
+    const estHour = (currentHour - 5 + 24) % 24; // Convert UTC to EST
+
+    if (estHour < 10 || estHour >= 22) {
+        console.log("Draft is outside of allowed hours (10 AM - 10 PM EST)");
+        return;
+    }
     db.get(`SELECT * FROM drafts WHERE id = ?`, [draftId], (err, draft) => {
         if (err) {
             console.log("Error finding draft: ", err);

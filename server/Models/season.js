@@ -342,5 +342,18 @@ export class Season {
         }, 50);
       });
     }
+
+    scheduleOnStartup() {
+      db.all(`SELECT * from challenges where status = "upcoming"`, (err, rows) => {
+        if(err) {
+          console.log("Error scheduling on startup, row: ",rows, " err: ", err)
+        }
+        else {
+          rows.forEach(row => {
+            this.scheduleMatch(row.happening_at, row.id, runMatch);
+          });
+        }
+      })
+    }
       
 }

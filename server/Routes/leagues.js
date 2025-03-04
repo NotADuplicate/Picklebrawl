@@ -228,4 +228,25 @@ router.get('/league/upcoming', authenticator.authenticateToken, (req, res) => {
     });
 });
 
+/*/Reset stats
+setTimeout(() => {
+    db.all(`SELECT id FROM players WHERE team_id IS NOT NULL`, (err, rows) => {
+        if (err) {
+            console.log('Error fetching player ids:', err);
+            return;
+        }
+        rows.forEach(element => {
+            const player = new Player()
+            player.reset_stats(element.id)
+        });
+    });
+}, 3000);*/
+
+setTimeout(() => {
+    const season = new Season(1);
+    season.scheduleOnStartup();
+}, 3000);
+
+
+
 export default router;

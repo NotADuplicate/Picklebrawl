@@ -86,6 +86,10 @@ export class QuirkGenerator {
                 newId++;
             });
         }, 1000); // Delay (adjust if needed) to ensure initial inserts have finished
+
+        setTimeout(() => {
+            console.log(this.idToQuirkMap)
+        }, 2000);
     }
 
     static findQuirk(title) {
@@ -98,23 +102,43 @@ export class QuirkGenerator {
         return null;
     }
 
+    static getQuirkId(quirk) {
+        for (const id in QuirkGenerator.idToQuirkMap) {
+            if (QuirkGenerator.idToQuirkMap[id].title === quirk.title) {
+                return parseInt(id, 10);
+            }
+        }
+        return null;
+    }
+
     static pickRandomQuirk(draft = false) {
-        const quirkKeys = Object.keys(quirks);
-        const filteredQuirkKeys = quirkKeys.filter(key => (!draft && quirks[key].APPEARS_IN_GENERATION) || (draft && quirks[key].APPEARS_IN_DRAFT));
-        const totalLikelihood = filteredQuirkKeys.reduce((sum, key) => sum + quirks[key].likelihood, 0);
+        const quirkMap = QuirkGenerator.idToQuirkMap;
+        const keys = Object.keys(quirkMap);
+        // Filter keys based on the draft flag.
+        const filteredKeys = keys.filter(key => {
+            const quirk = quirkMap[key];
+            return (!draft && quirk.APPEARS_IN_GENERATION) || (draft && quirk.APPEARS_IN_DRAFT);
+        });
+    
+        // Calculate the total likelihood.
+        const totalLikelihood = filteredKeys.reduce((sum, key) => sum + quirkMap[key].likelihood, 0);
         
         let randomValue = Math.random() * totalLikelihood;
         let cumulativeLikelihood = 0;
-        let selectedQuirkKey;
-
-        filteredQuirkKeys.sort(() => Math.random() - 0.5);
-        for (const key of filteredQuirkKeys) {
-            cumulativeLikelihood += quirks[key].likelihood;
+        let selectedKey = null;
+        
+        // Shuffle the filtered keys to randomize order
+        filteredKeys.sort(() => Math.random() - 0.5);
+        
+        // Loop through and pick based on likelihood weighting.
+        for (const key of filteredKeys) {
+            cumulativeLikelihood += quirkMap[key].likelihood;
             if (randomValue < cumulativeLikelihood) {
-                selectedQuirkKey = key;
+                selectedKey = key;
                 break;
             }
         }
-        return selectedQuirkKey;
+        
+        return selectedKey;
     }
 }

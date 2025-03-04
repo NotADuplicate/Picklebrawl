@@ -102,3 +102,6 @@ ssh charlie@ssh.jazure.net
 docker pull painapple64/picklebrawl
 docker stop Picklebrawl
 docker rm Picklebrawl
+sudo docker run -p 6969:6969 -v /picklebrawl-data/database.sqlite:/server/db/database.sqlite --name Picklebrawl --network=host painapple64/picklebrawl
+
+sudo docker run -p 6969:6969 -v /picklebrawl-data:/app/server/db --name Picklebrawl --network=host painapple64/picklebrawl
