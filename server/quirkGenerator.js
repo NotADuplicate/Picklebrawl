@@ -7,7 +7,7 @@ export class QuirkGenerator {
     //This should give errors of unable to add quirks that are already in the table, this should be fine it just means when we add new quirks they'll be added on runtime
     static loadQuirks() {
         const quirkKeys = Object.keys(quirks);
-        console.log('Loading quirks:', quirkKeys);
+        //console.log('Loading quirks:', quirkKeys);
         // Array to hold quirks that failed due to id conflict
         const failedIdInserts = [];
         let highestId = 0;
@@ -15,7 +15,7 @@ export class QuirkGenerator {
         for (let i = 0; i < quirkKeys.length; i++) {
             const currentId = i;
             const quirk = quirks[quirkKeys[currentId]];
-            console.log("Processing quirk", currentId, ":", quirk.title);
+            //console.log("Processing quirk", currentId, ":", quirk.title);
             
             // Check if the title already exists in DB
             db.get(
@@ -29,7 +29,7 @@ export class QuirkGenerator {
                     
                     if (row) {
                         // Title exists—skip insertion for this quirk.
-                        console.log("Quirk already exists (by title):", quirk.title);
+                        //console.log("Quirk already exists (by title):", quirk.title);
                         highestId = Math.max(highestId,row.id)
                         QuirkGenerator.idToQuirkMap[row.id] = quirk;
                         db.run(`UPDATE quirks SET description = ?, power_modifier = ? WHERE title = ?`,
@@ -67,7 +67,7 @@ export class QuirkGenerator {
         // After processing all quirks, wait a moment to allow the async operations to complete,
         // then reinsert all quirks that failed due to id conflict.
         setTimeout(() => {
-            console.log("Highest id: ", highestId)
+            //console.log("Highest id: ", highestId)
             let newId = highestId+1; // Start new ids after the last original id.
             failedIdInserts.forEach(({ originalId, quirk }) => {
                 const currentId = newId;
@@ -86,10 +86,6 @@ export class QuirkGenerator {
                 newId++;
             });
         }, 1000); // Delay (adjust if needed) to ensure initial inserts have finished
-
-        setTimeout(() => {
-            console.log(this.idToQuirkMap)
-        }, 2000);
     }
 
     static findQuirk(title) {

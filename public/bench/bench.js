@@ -606,7 +606,7 @@ async function bothTeamsReady(playerIds, lockButton) {
 
 function getActions(response) { 
     console.log("Getting actions: ", response);
-    if(response.flags.challengerActionsSet && response.flags.challengedActionsSet) {
+    if(response.flags.challengerActionsSet && response.flags.challengedActionsSet && friendly) {
         console.log("All actions set, starting match");
     }
     else if(response.flags.challengerActionsSet && challenger || response.flags.challengedActionsSet && !challenger) { //if your actions are set

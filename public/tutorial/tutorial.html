@@ -271,18 +271,86 @@
                 <ul>
                     <li>
                         <strong>Advancing:</strong> The advancing player's Strength is compared against the defending player's Bulk. The amount of field advancement is proportional to the difference in these stats.
+                        <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                        <div class="dropdown-content">
+                            <p>Each advancing player contributes an "advance amount" that is equal to a random number between 1/4th of their strength and 5/4ths of their strength. <br>
+                                If there are multiple players advancing then the total advance amount is reduced by 10% per player. So if there are 2 players advancing, each one is only 80% as effective.<br>
+                                Each defending advancing player decreases the advance amount by a random number between 0 and their bulk.<br>
+                                If there are multiple players defending advancing then the total defend advance amount is reduced by 10% per player. So if there are 2 players defending advancing, each one is only 80% as effective.<br>
+                                The meters advanced is equal to a random number between 0.5 and 1.5 multiplied by the advance amount.
+                            </p>
+                            Breakaways: <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                            <div class="dropdown-content">
+                                <p>
+                                    Every once in a while an advancing player will go on a breakaway and "get past the defense". This means that the player will no longer be impeded by defenders
+                                    for a few ticks (between 3 and 10) and they cannot pass to other players. This means that even if you have a player set to shoot, the advancing player on a breakaway
+                                    might go all the way to the endzone and attempt a score or blitz. The chance for a breakaway is 4% per tick, but once a player does go on a breakaway, their chance
+                                    is decreased by 2%.
+                                </p>
+                            </div>
+                            Turnovers: <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                            <div class="dropdown-content">
+                                <p>
+                                    Every tick while advancing, the defense has a chance to force a turnover and steal the ball. The turnover chance is dependent on how many ticks the offense has had the ball.
+                                    The base turnover chance starts at 4% and goes up to 25% after 7 ticks. The final chance is calculated by multiplying the base turnover chance by the fraction of the defend advance amount
+                                    compared to the (defend advance amount + advance amount). This means that if the advancer and defending advancer are about equal (thus this proportion is 1/2) then the turnover chance will go from 
+                                    2% to 12.5% over 7 ticks.
+                                </p>
+                            </div>
+                        </div>
                     </li>
                     <li>
-                        <strong>Scoring:</strong> The scoring player's Finesse is weighed against the defending player's Height. Higher Finesse increases the chance of a successful score. Each 5 meters of distance away from the goal reduces the shooter's finesse by 1. 
+                        <strong>Scoring:</strong> The scoring player's Finesse is weighed against the defending player's Height and the distance to the goal to determine if they make their shot.
+                        <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                        <div class="dropdown-content">
+                            <p>The shooting player generates a "shooting value" that is a random number between 0 and their finesse. <br>
+                            Then each defend scoring player generates a "block value" that is a random number between 0 and their height. <br>
+                            If there are multiple players defending scoring then the total defend amount is reduced by 10% per player. So if there are 2 players defending scoring, each one is only 80% as effective.<br>
+                            On field goals, the shooter gets +1.5 finesse and if there are multiple players set to score, then the defender's attention is split between them. The total block value is divided by the number of shooters. <br>
+                            The shot is successful if it is greater than the score threshold which is determined by the distance from the goal.
+                            </p>
+                            Score Threshold: <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                            <div class="dropdown-content">
+                                <p>
+                                    The scoring threshold is determined by the distance to the goal according to the following formula: <br>
+                                    <strong>-1.5 + (range*0.08 + 0.001*(range^2))</strong> <br>
+                                    Which means there is a slight exponentional component to how difficult it is to score, but on average, each 12 meters is an extra +1 to the scoring threshold, which is as if your shooter had -2 finesse.
+                                </p>
+                            </div>
+                        </div>
+                        <br>
+                        Scoring Simulator: 
+                        <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                        <div class="dropdown-content">
+                            <label for="range">Range:</label>
+                            <input type="range" id="range" name="range" min="0" max="100" value="100" oninput="updateRangeValue(this.value)">
+                            <br>
+                            Range:
+                            <span id="range-value">0</span>
+                            <br>
+                            <label for="finesse">Shooter's Finesse:</label>
+                            <input type="number" id="finesse" name="finesse" min="0" step="1">
+                            <br>
+                            <label for="height">Blocker's Height:</label>
+                            <input type="number" id="height" name="height" min="0" step="1">
+                            <br>
+                            <button onclick="calculateScore()">Calculate Score</button>
+                            <div id="score-result"></div>
+                        </div>
                     </li>
                     <li>
-                        <strong>Attacking:</strong> The attacker's Strength is used to calculate damage against the target's Bulk. Damage reduces the target's stats for the rest of the match. Being attacked also reduces their effectiveness while being attacked
+                        <strong>Attacking:</strong> The attacker's Strength is used to calculate damage against the target's Bulk. Damage reduces the target's stats for the rest of the match. Being attacked also reduces their effectiveness while being attacked.
+                        <button class="dropdown-btn" onclick="toggleDropdown(this)">▼</button>
+                        <div class="dropdown-content">
+                            <p>Damage is calculated as a random number from 0 to the attacker's strength * 0.75, minus a random number between 0 and the target's bulk. This is then added to 1.25 for the final damage. <br>
+                            Players have 100 hp and when they take damage, all of their stats are reduced to be proportional to their percent health. So at 30 health, all of their stats are at 30%.</p>
+                        </div>
                     </li>
                     <li>
                         <strong>Assisting:</strong> Assisting provides the assisted player with a bonus to every stat equal to (Assister's Finesse + Assister's Relevant Stat) / 3. So if an assister has 4 finesse, 2 strength, and 6 height, the assisted player would get +1 to strength and + 5/3 to height.
                     </li>
                     <li>
-                        <strong>Protecting:</strong> The protector's Height reduces the damage dealt to the protected player. This is very strong compared to attacking, a protected player will likely take almost no damage even if attacked by multiple attackers.
+                        <strong>Protecting:</strong> The protector's Height reduces the damage dealt to the protected player.
                     </li>
                 </ul>
                 <h4>Scoring</h4>
@@ -297,10 +365,6 @@
                         <strong>Damage Effects:</strong> Players who have taken damage perform at reduced capacity, affecting their stats until the end of the match. If a player is reduced to 0 hp they are knocked out and cannot do anything.
                     </li>
                 </ul>
-                <h4>Randomness and Probability</h4>
-                <p>
-                    While stats heavily influence outcomes, there is an element of randomness to simulate the unpredictability of sports. This means that even with statistical advantages, there is no guaranteed outcome.
-                </p>
             </section>
         </div>
         <script src="tutorial.js"></script>

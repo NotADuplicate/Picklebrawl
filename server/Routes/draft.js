@@ -306,16 +306,23 @@ function skipTurn(draftId, timer) {
     });
 }
 
-db.all(`SELECT drafts.id AS draft_id, draft_timer_mins FROM drafts, leagues WHERE drafts.league_id = leagues.id`, (err, rows) => {
+db.all(`SELECT drafts.id AS draft_id, turn, draft_timer_mins FROM drafts, leagues WHERE drafts.league_id = leagues.id`, (err, rows) => {
     if(err) {
         console.log("Setting draft timer error: ", err)
     }
     console.log(rows)
     for(const row of rows) {
-        const draft_timer_ms = row.draft_timer_mins * 60 * 1000;
-        scheduledDraftExpires[row.draft_id] = setTimeout(() => {
-            skipTurn(row.draft_id, draft_timer_ms);
-        }, draft_timer_ms);
+        if(row.turn > 21) {
+            db.run(`UPDATE drafts SET active=false WHERE id=${row.draft_id}`, (err) => {
+                console.log("Error deactivating draft: ", err)
+            })
+        }
+        else {
+            const draft_timer_ms = row.draft_timer_mins * 60 * 1000;
+            scheduledDraftExpires[row.draft_id] = setTimeout(() => {
+                skipTurn(row.draft_id, draft_timer_ms);
+            }, draft_timer_ms);
+        }
     }
 })
 

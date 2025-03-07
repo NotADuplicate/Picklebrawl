@@ -139,3 +139,36 @@ footer {
     border-color: transparent transparent #2c3e50 transparent;
     z-index: 10;
 }
+
+.dropdown-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    margin-left: 10px;
+}
+
+.dropdown-content {
+    display: none;
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.dropdown-content p {
+    margin: 0;
+}
+
+input[type="range"] {
+    width: 80%;
+    margin: 5px 0;
+}
+
+input[type="number"] {
+    width: 100px;
+    margin: 5px 0;
+}
+
+#score-result {
+    margin-top: 10px;
+    font-weight: bold;
+}

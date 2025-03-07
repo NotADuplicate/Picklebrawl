@@ -1,7 +1,7 @@
 import { db } from '../database.js';
 import { scheduleJob } from "node-schedule";
 import { runMatch, recommendActions, recommendPlayers } from "../Routes/challenges.js";
-import { run } from 'mocha';
+import moment from 'moment-timezone';
 
 export class Season {
     leagueId;
@@ -186,26 +186,35 @@ export class Season {
     }
     
     scheduleMatch(happening_at, challenge_id, runMatch) {
-      console.log(`Scheduling match for challenge ${challenge_id} at ${happening_at}`);
+      const estCurrentTime = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+      console.log(`Current time (EST): ${estCurrentTime}`);
+      const estTime = moment.tz(happening_at, "America/New_York").format("YYYY-MM-DD HH:mm:ss");
+      console.log(`Scheduling match for challenge ${challenge_id} at ${estTime}`);
       // Schedule the job for the exact happening_at time.
       const self = this;
-      scheduleJob(happening_at, async function() {
+      scheduleJob(estTime, async function() {
         try {
           console.log(`Running match for challenge ${challenge_id}`);
           self.verifyMatch(challenge_id, async () => {
             await runMatch(challenge_id, false);
-            await db.run("UPDATE challenges SET status = 'completed' WHERE id = ?", [challenge_id]);
+            db.run("UPDATE challenges SET status = 'completed' WHERE id = ?", [challenge_id]);
           });
         } catch (err) {
           console.error(`Error processing challenge ${challenge_id}:`, err);
         }
       });
 
-      const verifyPlayersTime = new Date(new Date(happening_at).getTime() - 90 * 60 * 1000);
+      const happeningAtEST = moment.tz(happening_at, "America/New_York").toDate();
+      const verifyPlayersTime = new Date(happeningAtEST.getTime() - 90 * 60 * 1000);
+      console.log("Going to verify players at time (EST): ", verifyPlayersTime);
+
+      const now = new Date();
+      const timeUntilVerify = verifyPlayersTime - now;
+      console.log(`Time until verify players: ${Math.floor(timeUntilVerify / 1000 / 60)} minutes`);
       scheduleJob(verifyPlayersTime, async function() {
         try {
           console.log(`Verifying players set for challenge ${challenge_id}`);
-          await self.verifyPlayersSet(challenge_id);
+          self.verifyPlayersSet(challenge_id);
         } catch (err) {
           console.error(`Error verifying players for challenge ${challenge_id}:`, err);
         }
@@ -267,12 +276,14 @@ export class Season {
           problems++;
           this.setPlayers(challenge_id, challenge.challenger_team_id, () => {
             problems--;
+            db.run(`UPDATE challenges set challenger_players_set=true WHERE id=${challenge_id}`);
           });
         }
         if(challenge.challenged_players_set === 0) {
           problems++;
           this.setPlayers(challenge_id, challenge.challenged_team_id, () => {
             problems--;
+            db.run(`UPDATE challenges set challenged_players_set=true WHERE id=${challenge_id}`);
           });
         }
         const checkInterval = setInterval(() => {

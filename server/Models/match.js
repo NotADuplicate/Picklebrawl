@@ -33,20 +33,21 @@ class Match {
     FIELD_LENGTH = 100;
     MULTIPLE_ADVANCERS_REDUCTION = 0.1;
     NO_ADVANCERS_MAX_ADVANCEMENT = 2;
-    MULTIPLE_ADVANCE_DEFENDERS_REDUCTION = 0.2;
+    MULTIPLE_ADVANCE_DEFENDERS_REDUCTION = 0.1;
     MAX_ADVANCEMENT_PER_TICK = null;
     NET_ADVANCEMENT_MODIFIER = 1.0;
-    TURNOVER_CHANCE_INCREASE_PER_TICK = 0.05;
+    TURNOVER_CHANCE_INCREASE_PER_TICK = 0.04;
     RANDOM_PRIORITY_CHANCE = .15;
     TURNOVER_CHANCE_MAX = 0.25;
-    POSSESSION_TICK_MAX = 4;
-    SHOOTING_DISTANCE_LINEAR = 0.1;
+    POSSESSION_TICK_MAX = 10;
+    SHOOTING_DISTANCE_LINEAR = 0.08;
     SHOOTING_DISTANCE_EXPONENTIAL = 0.001;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
     TRICK_CHANCE = 1/3;
     ASSIST_MODIFIER = 1;
     SHOOTING_BONUS = 1.5;
-    ADVANCEMENT_MULTIPLIER = 1.5;
+    ADVANCEMENT_MULTIPLIER = 1.3;
+    MULTIPLE_BLOCKER_REDUCTION = 0.2;
 
     RANGE_DICTIONARY = {
         "Close": 12,
@@ -78,10 +79,12 @@ class Match {
     setTargets() {
         // Loop through offense team players and set offenseTarget to player object
         for (const player of this.players) {
-            console.log(player.name, player.id, player.offensePriority, player.offensePriorityTarget)
             if (player.offensePriorityTarget !== null) {
                 player.offensePriorityTarget = this.getPlayerById(player.offensePriorityTarget);
                 player.savedOffensePriorityTarget = player.offensePriorityTarget;
+            }
+            else {
+                player.offensePriorityTarget == "Any";
             }
             if(player.offenseProperty == "Any") {
                 player.offensePriorityTarget = "Any";
@@ -90,9 +93,14 @@ class Match {
                 player.defensePriorityTarget = this.getPlayerById(player.defensePriorityTarget);
                 player.savedDefensePriorityTarget = player.defensePriorityTarget;
             }
+            else {
+                player.defensePriorityTarget = "Any";
+            }
             if(player.defenseProperty == "Any") {
                 player.defensePriorityTarget = "Any";
             }
+            console.log("Offense prio: ", player.name, player.id, player.offensePriority, player.offensePriorityTarget)
+            console.log("Defense prio: ", player.name, player.id, player.defensePriority, player.defensePriorityTarget)
         }
     }
 
@@ -248,6 +256,13 @@ class Match {
             return;
         }
 
+        if(this.offenseTeam.players.length == 0) {
+            this.offenseTeam.full_dead = true;
+        }
+        if(this.defenseTeam.players.length == 0) {
+            this.defenseTeam.full_dead = true;
+        }
+
         this.turnedover = false;
 
         if(this.offenseTeam.full_dead) {
@@ -277,7 +292,7 @@ class Match {
             this.doScoring();
         }
 
-        if(this.playerWithPossession.knockedOut) { //possession player is knocked out
+        if(!this.offenseTeam.players.includes(this.playerWithPossession) || this.playerWithPossession.knockedOut) { //cant have possession if youre not on offense
             const healthyPlayer = this.offenseTeam.players.find(player => !player.knockedOut);
             if (healthyPlayer) {
                 this.playerWithPossession = healthyPlayer;
@@ -285,6 +300,7 @@ class Match {
                 this.turnover();
             }
         }
+
         db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position, player_possession_id) `
             + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, this.offenseTeam.teamId, this.position, this.playerWithPossession.id],
             function(err) {
@@ -294,11 +310,11 @@ class Match {
             }
         )
 
-        /*if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
+        if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
             for(const player of this.players) {
                 player.quirk.halftimeEffect(this, player);
             }
-        }*/
+        }
 
        if(this.gameTicks >= this.GAME_LENGTH) { //overtime
             this.FIELD_LENGTH -= 1.5;
@@ -393,11 +409,24 @@ class Match {
             if(action == "Attack" && (this.offenseTeam.full_dead || this.defenseTeam.full_dead)) {
                 return;
             }
-            if (player.offensePriority === priority && !player.knockedOut) {
+
+            //Protect even on the other end
+            /*if(player.defensePriority == "Protect" && priority == "Protect") {
+                if(player.defensePriorityTarget == "Any") {
+                    this.protect(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
+                }
+                else {
+                    this.protect(player, player.defensePriorityTarget);
+                }
+            }*/
+            if (player.offensePriority === priority  && !player.knockedOut) {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
-                            if(player.offensePriorityTarget == "Any") {
+                            if(typeof(player.offensePriorityTarget) == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.knockedOut) {
+                                this.assist(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else if(player.offensePriorityTarget == "Any") {
                                 this.assist(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
                             }
                             else {
@@ -405,8 +434,15 @@ class Match {
                             }
                             break;
                         case "Protect":
-                            if(player.offensePriorityTarget == "Any") {
+                            if(typeof(player.offensePriorityTarget) == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.knockedOut) {
                                 this.protect(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else if(player.offensePriorityTarget == "Any" && this.offenseTeam.players.length > 1) {
+                                let target;
+                                do {
+                                    target = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
+                                } while (target === player);
+                                this.protect(player,target);
                             }
                             else {
                                 this.protect(player, player.offensePriorityTarget);
@@ -414,13 +450,15 @@ class Match {
                             break;
                         case "Attack":
                             if(typeof player.offensePriorityTarget == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.knockedOut) {
+                                console.log("First attck")
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else if(player.offensePriorityTarget == "Any") {
                                 console.log("Attack any")
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
-                            else {
+                            else if(typeof player.offensePriorityTarget == "object" && player.offensePriorityTarget != null) {
+                                console.log("Last attack")
                                 this.attack(player, player.offensePriorityTarget);
                             }
                             break;
@@ -441,7 +479,10 @@ class Match {
                 if (targeted) {
                     switch(priority) {
                         case "Assist":
-                            if(player.defensePriorityTarget == "Any") {
+                            if(typeof(player.defensePriorityTarget) == "object" && player.defensePriorityTarget != null && player.defensePriorityTarget.knockedOut) {
+                                this.assist(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else if(player.defensePriorityTarget == "Any") {
                                 this.assist(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else {
@@ -449,8 +490,12 @@ class Match {
                             }   
                             break;
                         case "Protect":
-                            if(player.defensePriorityTarget == "Any") {
-                                this.protect(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
+                            if(player.defensePriorityTarget == "Any" && this.defenseTeam.players.length > 1) {
+                                let target;
+                                do {
+                                    target = this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)];
+                                } while (target === player);
+                                this.protect(player,target);
                             }
                             else {
                                 this.protect(player, player.defensePriorityTarget);
@@ -461,7 +506,7 @@ class Match {
                                 console.log("Attack any defense")
                                 this.attack(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
                             }
-                            else {
+                            else if(player.defensePriorityTarget !== null) {
                                 this.attack(player, player.defensePriorityTarget);
                             }
                             break;
@@ -500,12 +545,10 @@ class Match {
             let numAdvancers = 0;
             let advanceAmount = 0;
             let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
-            let advancingPlayer;
             let topAdvancer = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
             let topAdvancerAmount = -1;
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance" && this.turnedover == false) {
-                    advancingPlayer = player;
                     if(player.trickiness < minTrickiness) {minTrickiness = player.trickiness;}
                     numAdvancers++;
                     player.advance = Math.random() * (player.strength + player.tempStrength) + player.strength / 4;
@@ -526,7 +569,12 @@ class Match {
                 advanceAmount = Math.random() * this.NO_ADVANCERS_MAX_ADVANCEMENT;
             } 
             if(topAdvancer != null) {
-                this.playerWithPossession = topAdvancer;
+                if(this.offenseTeam.players.includes(topAdvancer)) {
+                    this.playerWithPossession = topAdvancer;
+                }
+                else {
+                    console.log("TOP ADVANCER IS A DEFENDER??")
+                }
             }
 
             // Loop through defense team, calculate amount defended
@@ -597,7 +645,7 @@ class Match {
                     if(Math.random() < topAdvancer.breakAwayChance && !this.defenseTeam.full_dead) {
                         this.breakAway = 10+Math.random()*5;
                         console.log("Breakaway! ", this.breakAway);
-                        topAdvancer.breakAwayChance -= 0.01;
+                        topAdvancer.breakAwayChance -= 0.02;
                         this.breakAwayer = topAdvancer;
                         db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) `
                             + `VALUES (?, ?, ?, ?, ?)`, [this.gameTicks, this.match_id, topAdvancer.id, this.breakAway, "Breakaway"],
@@ -689,14 +737,15 @@ class Match {
             return;
         } else if(this.breakAway <= 0){ //check for trying to score
             for (const player of this.offenseTeam.players) {
-                if(player.offensePriority === "Score" && Math.random()*0.9 < this.position/this.FIELD_LENGTH) { //scorers have ~30% chance of attempting a shot
+                if(player.offensePriority === "Score" && Math.random()/2 < this.position/this.FIELD_LENGTH) { //scorers have ~30% chance of attempting a shot
                     let range = 0;
                     let minRange;
                     if(player.offenseProperty === "Close") {
                         minRange = 0;
                     }
                     else { // dont shoot if youre on track to make a blitz
-                        minRange = 5 + this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
+                        minRange = this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
+                        console.log("Player: ", player.name, " has a min range of: ", minRange)
                     }
                     if(this.gameTicks > this.GAME_LENGTH - 10) { //last second shot
                         if(this.offenseTeam.score == this.defenseTeam.score - 3) { //have to blitz
@@ -750,9 +799,10 @@ class Match {
         this.playerWithPossession = shooter;
         this.breakAway = 0;
         let numShooters = 0;
+        let numBlockers = 0;
         let dedicatedShooterBonus = 0;
         if(shooter.offensePriority == "Score") {
-            dedicatedShooterBonus = 1;
+            dedicatedShooterBonus = 1.5;
         }
         for (const player of this.offenseTeam.players) { //count number of shooters
             if(player.offensePriority === "Score") {
@@ -772,6 +822,7 @@ class Match {
             //console.log("Shooting: " + shooting);
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend_Score") {
+                    numBlockers++;
                     console.log("Shooter trickiness: ", shooter.tempTrickiness);
                     console.log("Defender focus: ", player.tempFocus);
                     if(player.quirk.beTrickedEffect(player, shooter, this) && shooter.quirk.trickEffect(shooter, player, this)) { //trickiness check
@@ -787,14 +838,16 @@ class Match {
                     }
                     else {
                         let defendAmount = (Math.random() * (player.bulk + player.tempBulk));
+                        if(numBlockers > 1) {defendAmount -= defendAmount*numBlockers*this.MULTIPLE_BLOCKER_REDUCTION}
+
                         if(defendAmount > shooting+this.SHOOTING_BONUS) { //block
                             blocker_id = player.id;
                         }
                         if(!blitz) {
-                            defendAmount /= Math.max(numShooters,1);
+                            defendAmount /= Math.max(numShooters,1); //defenders split defense among all the shooters
                         } 
                         console.log("Defend amount: " + defendAmount);
-                        shooting -= defendAmount; //defenders split defense among all the shooters
+                        shooting -= defendAmount; 
                     }
                 }
             }

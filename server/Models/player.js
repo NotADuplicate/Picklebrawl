@@ -227,7 +227,7 @@ class Player {
             }
             target.tempInjury += finalDamage;
 
-            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1.5;
+            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1;
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {

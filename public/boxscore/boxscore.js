@@ -16,12 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let team2Data = [];
         fetchData('/match/match-stats?matchId=' + matchId, 'GET', {}, null, (stats) => {
             stats.forEach(stat => {
-                console.log(stat);
+                console.log("Stat: ", stat);
                 const player = {
                     player: stat.name,
                     offense: stat.offensive_role,
                     defense: stat.defensive_role,
-                    offenseTaregt: stat.offensive_target,
+                    offenseTarget: stat.offensive_target,
                     defenseTarget: stat.defensive_target,
                     offenseProperty: stat.offense_action_property,
                     defenseProperty: stat.defensive_action_property,
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tricks: stat.tricks,
                     metersAdvanced: Math.round(stat.advancements),
                     damage: Math.round(stat.damage),
+                    damageTaken: Math.round(stat.damage_taken),
                     pointsBlocked: stat.points_blocked,
                     steals: stat.steals,
                     metersDefended: Math.round(stat.defense)
@@ -55,6 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
 function populateTable(teamData, tbodyId) {
     const tbody = document.getElementById(tbodyId);
     teamData.forEach(playerData => {
+        if(playerData.offenseTarget) {
+            playerData.offense = playerData.offense + " " + playerData.offenseTarget
+        }
+        if(playerData.offenseProperty) {
+            playerData.offense = playerData.offense + " " + playerData.offenseProperty
+        }
+        if(playerData.defenseTarget) {
+            playerData.defense = playerData.defense + " " + playerData.defenseTarget
+        }
+        if(playerData.defenseProperty) {
+            playerData.defense = playerData.defense + " " + playerData.defenseProperty  
+        }
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${playerData.player}</td>
@@ -67,9 +80,9 @@ function populateTable(teamData, tbodyId) {
             <td>${playerData.blitzGoalsMade} / ${playerData.blitzGoalsAttempted}</td>
             <td>${playerData.fieldGoalsMade} / ${playerData.fieldGoalsAttempted}</td>
             <td>${playerData.damage}</td>
+            <td>${playerData.damageTaken}</td>
             <td>${playerData.pointsBlocked}</td>
             <td>${playerData.steals}</td>
-            <td>${playerData.tricks}</td>
         `;
         tbody.appendChild(tr);
     });

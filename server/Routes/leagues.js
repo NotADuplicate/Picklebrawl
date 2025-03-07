@@ -4,6 +4,7 @@ import { db } from '../database.js';
 import { Draft } from '../Models/draft.js';
 import { Season } from '../Models/season.js';
 import { authenticator } from '../Models/authenticator.js';
+import moment from 'moment-timezone';
 import { Player } from '../Models/player.js';
 
 const router = express.Router();
@@ -154,6 +155,9 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
 router.get('/matches', (req, res) => {
     console.log("Getting matches for league id:", req.query.leagueId);
     const { leagueId } = req.query;
+    // Get the current time in EST
+    const nowEST = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+    console.log("Now EST: ", nowEST)
     let query = `
         SELECT 
             DISTINCT match_history.id, 
@@ -215,10 +219,13 @@ router.get('/league/upcoming', authenticator.authenticateToken, (req, res) => {
     const { leagueId } = req.query;
     console.log("Getting upcoming matches for league id:", leagueId);
 
+    // Get the current time in EST
+    const nowEST = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+    console.log("Now EST: ", nowEST)
     db.all(`SELECT my_team.id AS my_team_id, happening_at, challenger_team_id, challenged_team_id, challenges.id AS challenge_id, challenger.name AS challenger_name, challenged.name AS challenged_name
         FROM challenges, teams AS challenger, teams AS challenged, teams AS my_team WHERE challenger_team_id = challenger.id AND challenged_team_id = challenged.id
         AND my_team.owner_id = ? AND challenges.league_id = ? AND challenges.status = 'upcoming'
-        AND (strftime('%s', happening_at) - strftime('%s', 'now')) > 0`, [req.userId, leagueId], (err, matches) => {
+        AND (strftime('%s', happening_at) - strftime('%s', ?)) > 0`, [req.userId, leagueId, nowEST], (err, matches) => {
         if (err) {
             console.log(err);
             return res.status(500).json({ message: 'Error fetching upcoming matches!' });
@@ -242,10 +249,10 @@ setTimeout(() => {
     });
 }, 3000);*/
 
-setTimeout(() => {
+/*setTimeout(() => {
     const season = new Season(1);
     season.scheduleOnStartup();
-}, 3000);
+}, 3000);*/
 
 
 
