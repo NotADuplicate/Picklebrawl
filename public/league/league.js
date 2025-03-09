@@ -46,6 +46,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Get tab buttons and sections (only for mobile)
+    const tabButtons = document.querySelectorAll('#mobile-tab-buttons .tab-button');
+    const sections = document.querySelectorAll('#horizontal-container section');
+    
+    // Function to switch the active section
+    function switchTab(targetId) {
+        const sections = document.querySelectorAll('#horizontal-container section');
+        sections.forEach(section => {
+            if(section.id === targetId) {
+                console.log("Active: ",section)
+                section.classList.add('active');
+            } else {
+                section.classList.remove('active');
+                console.log("Not: ", section)
+            }
+        });
+    }
+    
+    // Add click event listeners to tab buttons
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // Remove active class from all tab buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to the clicked button
+            button.classList.add('active');
+    
+            // Switch active section based on data-target attribute
+            const targetId = button.getAttribute('data-target');
+            switchTab(targetId);
+        });
+    });
+    
+    // Set default active section on mobile (Matches)
+    switchTab('current-events-section');
+
     // Fetch and display league details
     console.log("Here")
     fetchData(`/leagues?leagueName=${leagueName}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (leagues) => {

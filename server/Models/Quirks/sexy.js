@@ -20,7 +20,8 @@ export class Sexy extends Quirk {
     static startGameEffect(match, player) {
         match.players.forEach((otherPlayer) => {
             if (otherPlayer.team !== player.team && otherPlayer.quirk.title !== "Ace") {
-                otherPlayer.focus -= 1;
+                otherPlayer.baseFocus -= 1;
+                console.log(otherPlayer.name, " decreased focus to ", otherPlayer.baseFocus)
             }
         });
     }

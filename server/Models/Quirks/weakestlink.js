@@ -30,15 +30,23 @@ export class WeakestLink extends Quirk {
         for(const otherPlayer of match.players) {
             if(otherPlayer !== player && otherPlayer.team == player.team) {
                 onlyPlayer = false;
-                lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
-                lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
-                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
-                lowestFocus = Math.min(lowestFocus, otherPlayer.focus);
-                lowestHeight = Math.min(lowestHeight, otherPlayer.height);
-                lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
+                lowestFinesse = Math.min(lowestFinesse, otherPlayer.baseFinesse);
+                lowestStrength = Math.min(lowestStrength, otherPlayer.baseStrength);
+                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.baseTrickiness);
+                lowestFocus = Math.min(lowestFocus, otherPlayer.baseFocus);
+                lowestHeight = Math.min(lowestHeight, otherPlayer.baseHeight);
+                lowestBulk = Math.min(lowestBulk, otherPlayer.baseBulk);
             }
         }
         if(!onlyPlayer) {
+            console.log("Lowest Stats:", {
+                finesse: lowestFinesse,
+                strength: lowestStrength,
+                trickiness: lowestTrickiness,
+                focus: lowestFocus,
+                height: lowestHeight,
+                bulk: lowestBulk
+            });
             player.baseFiness += lowestFinesse;
             player.baseStrength += lowestStrength;
             player.baseTrickiness += lowestTrickiness;

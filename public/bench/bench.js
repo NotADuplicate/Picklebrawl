@@ -87,6 +87,37 @@ document.addEventListener('DOMContentLoaded', () => {
             recommendActions(myTeamId);
         }
     });
+
+
+        // Get mobile team tab buttons and team sections
+        const teamTabButtons = document.querySelectorAll('#mobile-team-tabs .team-tab');
+        const teams = document.querySelectorAll('.container .team');
+    
+        function switchTeam(targetId) {
+            teams.forEach(team => {
+                if(team.id === targetId) {
+                    team.classList.add('active');
+                } else {
+                    team.classList.remove('active');
+                }
+            });
+        }
+    
+        teamTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove "active" from all tab buttons
+                teamTabButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to the clicked button
+                button.classList.add('active');
+    
+                // Get the target team id and switch the active team
+                const targetId = button.getAttribute('data-target');
+                switchTeam(targetId);
+            });
+        });
+    
+        // Set an initial active team tab on mobile (Your Team)
+        switchTeam('your-team');
 });
 
 /**

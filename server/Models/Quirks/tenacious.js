@@ -19,7 +19,6 @@ export class Tenacious extends Quirk {
     static tickEffect(player, match) {
         if (match.defenseTeam.players.includes(player) && player.defensePriority === "Defend_Score") {
             match.offenseTeam.players.forEach(offender => {
-                console.log("Offender prio: ", offender.offensePriority)
                 if (offender.offensePriority === "Score") {
                     this.beTrickedEffect(player, offender, match)
                 }

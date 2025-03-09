@@ -738,4 +738,60 @@ export function recommendActions(challengePlayers) {
     return actions;
 }
 
+function rerunMatch(match_id, friendly) {
+    const tables = [
+        'advancement_history',
+        'player_history',
+        'attack_history',
+        'match_action_history',
+        'match_ticks_history',
+        'match_trick_history',
+        'scoring_history'
+    ];
+    console.log("Rerunning match")
+
+    const deletePromises = tables.map(table => {
+        return new Promise((resolve, reject) => {
+            db.run(`DELETE FROM ${table} WHERE match_id = ?`, [match_id], function(err) {
+                if (err) {
+                    console.error(`Error deleting from ${table}:`, err.message);
+                    reject(err);
+                } else {
+                    console.log(`Deleted rows from ${table} where match_id = ${match_id}`);
+                    resolve();
+                }
+            });
+        });
+    });
+
+    Promise.all(deletePromises)
+        .then(() => {
+            // Retrieve the challenge_id before deleting the match_history row
+            db.get(`SELECT challenge_id FROM match_history WHERE id = ?`, [match_id], function(err, row) {
+                if (err) {
+                    console.error(`Error retrieving challenge_id from match_history:`, err.message);
+                } else if (row) {
+                    const challenge_id = row.challenge_id;
+                    console.log(`Challenge ID of the match to be deleted: ${challenge_id}`);
+
+                    // Delete the row from match_history where id equals match_id
+                    db.run(`DELETE FROM match_history WHERE id = ?`, [match_id], function(err) {
+                        if (err) {
+                            console.error(`Error deleting from match_history:`, err.message);
+                        } else {
+                            console.log(`Deleted row from match_history where id = ${match_id}`);
+                            console.log(`Challenge ID of the deleted match: ${challenge_id}`);
+                            runMatch(challenge_id, friendly);
+                        }
+                    });
+                } else {
+                    console.error(`No match found with id = ${match_id}`);
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error during deletion process:', err);
+        });
+}
+
 export default router;

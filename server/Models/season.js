@@ -188,8 +188,15 @@ export class Season {
     scheduleMatch(happening_at, challenge_id, runMatch) {
       const estCurrentTime = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
       console.log(`Current time (EST): ${estCurrentTime}`);
-      const estTime = moment.tz(happening_at, "America/New_York").format("YYYY-MM-DD HH:mm:ss");
+      const estTime = moment.tz(happening_at, "America/New_York").toDate();
+      const now = new Date();
       console.log(`Scheduling match for challenge ${challenge_id} at ${estTime}`);
+      console.log(`Time until run match: ${Math.floor((estTime-now) / 1000 / 60)} minutes`);
+      if(estTime < now) {
+        console.log("Match passed \n")
+        return;
+      }
+      
       // Schedule the job for the exact happening_at time.
       const self = this;
       scheduleJob(estTime, async function() {
@@ -197,7 +204,6 @@ export class Season {
           console.log(`Running match for challenge ${challenge_id}`);
           self.verifyMatch(challenge_id, async () => {
             await runMatch(challenge_id, false);
-            db.run("UPDATE challenges SET status = 'completed' WHERE id = ?", [challenge_id]);
           });
         } catch (err) {
           console.error(`Error processing challenge ${challenge_id}:`, err);
@@ -208,7 +214,6 @@ export class Season {
       const verifyPlayersTime = new Date(happeningAtEST.getTime() - 90 * 60 * 1000);
       console.log("Going to verify players at time (EST): ", verifyPlayersTime);
 
-      const now = new Date();
       const timeUntilVerify = verifyPlayersTime - now;
       console.log(`Time until verify players: ${Math.floor(timeUntilVerify / 1000 / 60)} minutes`);
       scheduleJob(verifyPlayersTime, async function() {

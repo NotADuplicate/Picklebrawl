@@ -27,6 +27,7 @@ class Match {
     breakAway = 0;
     breakAwayer = null;
     type = "friendly";
+    last_turned_over = 0;
 
     // CONSTANTS
     GAME_LENGTH = 100;    // number of ticks to play the game for // TODO: set to 100 when done testing
@@ -36,10 +37,9 @@ class Match {
     MULTIPLE_ADVANCE_DEFENDERS_REDUCTION = 0.1;
     MAX_ADVANCEMENT_PER_TICK = null;
     NET_ADVANCEMENT_MODIFIER = 1.0;
-    TURNOVER_CHANCE_INCREASE_PER_TICK = 0.04;
+    TURNOVER_CHANCE_INCREASE_PER_TICK = 0.015;
     RANDOM_PRIORITY_CHANCE = .15;
-    TURNOVER_CHANCE_MAX = 0.25;
-    POSSESSION_TICK_MAX = 10;
+    TURNOVER_CHANCE_MAX = 0.3;
     SHOOTING_DISTANCE_LINEAR = 0.08;
     SHOOTING_DISTANCE_EXPONENTIAL = 0.001;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
@@ -99,8 +99,6 @@ class Match {
             if(player.defenseProperty == "Any") {
                 player.defensePriorityTarget = "Any";
             }
-            console.log("Offense prio: ", player.name, player.id, player.offensePriority, player.offensePriorityTarget)
-            console.log("Defense prio: ", player.name, player.id, player.defensePriority, player.defensePriorityTarget)
         }
     }
 
@@ -158,7 +156,6 @@ class Match {
 
     startGame(challengeId, type) {
         this.players = this.homeTeam.players.concat(this.awayTeam.players);
-        console.log("Teams: ", this.homeTeam)
         const self = this;
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, challenge_id,`
@@ -203,6 +200,11 @@ class Match {
         console.log("Game over!");
         console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
 
+        console.log("Possession lengths: ", this.possessionLengths)
+        console.log("Average: ", this.possessionLengths.length 
+            ? this.possessionLengths.reduce((sum, val) => sum + val, 0) / this.possessionLengths.length 
+            : 0);
+
         // Update match_history
         const self = this;
         db.run(`UPDATE match_history SET home_team_score = ?, away_team_score = ? WHERE id = ?`,
@@ -226,9 +228,10 @@ class Match {
             });
 
             Promise.all(updatePromises).then(() => {
-                console.log("Teams: ", this.offenseTeam.id, this.defenseTeam.id)
-                db.run(`UPDATE players SET health = MIN(100, health + (25 + (abs(random())/9223372036854775807.0)*50)) WHERE team_id = ? OR team_id = ?`,
-                    [this.offenseTeam.teamId, this.defenseTeam.teamId], function(err) {
+                console.log("Healing Teams: ", this.offenseTeam.id, this.defenseTeam.id)
+                const randHpIncrease = 25 + Math.random()*50;
+                db.run(`UPDATE players SET health = MIN(100, health + ?) WHERE team_id = ? OR team_id = ?`,
+                    [randHpIncrease, this.offenseTeam.teamId, this.defenseTeam.teamId], function(err) {
                         if(err) {
                             console.log("Error regaining health ", err)
                         }
@@ -266,15 +269,20 @@ class Match {
         this.turnedover = false;
 
         if(this.offenseTeam.full_dead) {
+            console.log("TURNOVER BC DEAD")
             this.turnover();
         }
 
         this.possessionTicks++;
         this.gameTicks++;
+        console.log("TICK:", this.gameTicks, "\n")
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
         
         for(const player of this.players) {
+            if(player.name == "Tudo Cole") {
+                console.log("Tudo trickiness: ", player.trickiness)
+            }
             player.quirk.tickEffect(player, this);
         }
 
@@ -297,6 +305,7 @@ class Match {
             if (healthyPlayer) {
                 this.playerWithPossession = healthyPlayer;
             } else {
+                console.log("TURNOVER BC UNHEALTHY")
                 this.turnover();
             }
         }
@@ -311,6 +320,7 @@ class Match {
         )
 
         if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
+            console.log("HALF TIME \n")
             for(const player of this.players) {
                 player.quirk.halftimeEffect(this, player);
             }
@@ -387,6 +397,8 @@ class Match {
             player.finesse = Math.max(0.5, player.baseFinesse * (player.hp / player.maxHp));
             player.height = Math.max(0.5, player.baseHeight * (player.hp / player.maxHp));
             player.strength = Math.max(0.5, player.baseStrength * (player.hp / player.maxHp));
+            player.focus = player.baseFocus;
+            player.trickiness = player.baseTrickiness;
         }
     }
 
@@ -451,6 +463,7 @@ class Match {
                         case "Attack":
                             if(typeof player.offensePriorityTarget == "object" && player.offensePriorityTarget != null && player.offensePriorityTarget.knockedOut) {
                                 console.log("First attck")
+                                player.offensePriorityTarget = "Any";
                                 this.attack(player,this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]);
                             }
                             else if(player.offensePriorityTarget == "Any") {
@@ -502,7 +515,12 @@ class Match {
                             }
                             break;
                         case "Attack":
-                            if(player.defensePriorityTarget == "Any") {
+                            if(typeof player.defensePriorityTarget == "object" && player.defensePriorityTarget != null && player.defensePriorityTarget.knockedOut) {
+                                console.log("Attacking knocked out player");
+                                player.defensePriorityTarget = "Any";
+                                this.attack(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
+                            }
+                            else if(player.defensePriorityTarget == "Any") {
                                 console.log("Attack any defense")
                                 this.attack(player,this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)]);
                             }
@@ -586,6 +604,7 @@ class Match {
                 for (const player of this.defenseTeam.players) {
                     if(player.defensePriority === "Defend_Advance") {
                         if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
+                            console.log(player.name, " was tricked by ", topAdvancer.name, topAdvancer.trickiness, player.focus)
                             db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                                 + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
                                 function(err) {
@@ -675,12 +694,19 @@ class Match {
             this.lastAdvance = netAdvance;
 
             // Calculate turnover chance
-            if(!this.defenseTeam.full_dead) {
-                let turnoverChance = (Math.min(this.possessionTicks, this.POSSESSION_TICK_MAX) * this.TURNOVER_CHANCE_INCREASE_PER_TICK * 
-                    (defendAmount / (advanceAmount + defendAmount)));
+            if(!this.defenseTeam.full_dead && this.possessionTicks > 2) {
+                let turnoverChance = (this.possessionTicks-this.last_turned_over) * this.TURNOVER_CHANCE_INCREASE_PER_TICK;
+                console.log("Turnover chance: ", this.possessionTicks, this.TURNOVER_CHANCE_INCREASE_PER_TICK)
                 if (turnoverChance > this.TURNOVER_CHANCE_MAX) {turnoverChance = this.TURNOVER_CHANCE_MAX;}
                 
-                if(Math.random() < turnoverChance) {
+                const rand = Math.random();
+                
+                if(rand < turnoverChance) {
+                    console.log("Turnover rand: ", rand)
+                    this.possessionLengths.push(this.possessionTicks);
+                    if(topDefender == null) {
+                        topDefender = this.defenseTeam.players[Math.floor(Math.random() * this.defenseTeam.players.length)]
+                    }
                     if(topDefender != null) {
                         this.playerWithPossession = topDefender;
                         db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
@@ -696,15 +722,18 @@ class Match {
                     for (const possibleShooter of this.offenseTeam.players) {
                         possibleShooter.range += 5; //if the ball is being stolen then start shooting from further
                     }
+                    console.log("Stolen")
                     this.turnover();
                 }
             }
         }
         else {
             if(advancing == -1 && !this.defenseTeam.full_dead) { //if -1 advancement, automatic turnover
+                console.log("Advancing -1 \n \n");
                 this.turnover();
             }
             else {
+                console.log("Increasing position by:", advancing)
                 this.position += advancing;
             }
         }
@@ -724,6 +753,7 @@ class Match {
                             }
                         });
                         this.position = this.FIELD_LENGTH / 2;
+                        console.log("Blitzed")
                         this.turnover();
                         return;
                     }
@@ -737,18 +767,19 @@ class Match {
             return;
         } else if(this.breakAway <= 0){ //check for trying to score
             for (const player of this.offenseTeam.players) {
-                if(player.offensePriority === "Score" && Math.random()/2 < this.position/this.FIELD_LENGTH) { //scorers have ~30% chance of attempting a shot
+                if(player.offensePriority === "Score" && (Math.random() < this.position/this.FIELD_LENGTH || player.offenseProperty === "Close")) { //scorers have ~30% chance of attempting a shot
+                    console.log("Scoring randomness passed for player: ", player.name)
                     let range = 0;
                     let minRange;
                     if(player.offenseProperty === "Close") {
                         minRange = 0;
                     }
                     else { // dont shoot if youre on track to make a blitz
-                        minRange = this.lastAdvance*Math.max(this.POSSESSION_TICK_MAX-this.possessionTicks,0); 
+                        minRange = this.lastAdvance*Math.max(5-this.possessionTicks,0); 
                         console.log("Player: ", player.name, " has a min range of: ", minRange)
                     }
                     if(this.gameTicks > this.GAME_LENGTH - 10) { //last second shot
-                        if(this.offenseTeam.score == this.defenseTeam.score - 3) { //have to blitz
+                        if(this.offenseTeam.score == 1+this.defenseTeam.score - this.offenseTeam.players.length) { //have to blitz
                             minRange = 100;                            
                         }
                         else if(this.offenseTeam.score == this.defenseTeam.score - 1) { //have to regular score
@@ -757,16 +788,20 @@ class Match {
                     }
                     if (player.offenseProperty in this.RANGE_DICTIONARY) {
                         range = player.range;
+                        console.log(player.name, " range:", range)
                     } else if(Math.random() < 0.1) {
                         range = 10 + player.finesse * 5 +Math.random() * 20;
                         this.defenseTeam.players.forEach((defender) => {
                             if(defender.defensePriority === "Defend_Score") {
-                                range -= defender.bulk*5;
+                                range -= defender.height*5;
                             }
                         });
                     }
+                    console.log("position:", this.position)
+                    console.log(this.position + range >= this.FIELD_LENGTH, 100-this.position >= minRange)
                     if(this.position + range >= this.FIELD_LENGTH && 100-this.position >= minRange) { //if player is in range to shoot
-                        if(player.lastShotTick < this.gameTicks - 10) {
+                        console.log(player.lastShotTick)
+                        if(player.lastShotTick < this.gameTicks - 8) {
                             console.log("Shot from: ", this.position);
                             console.log("Shot Breakaway: ", this.breakAway);
                             this.shoot(player, false); //shoot
@@ -778,8 +813,9 @@ class Match {
     }
 
     turnover() { 
+        console.log("TURNOVER\n");
+        this.last_turned_over = 0;
         this.turnedover = true;
-        this.possessionLengths.push(this.possessionTicks);
         this.possessionTicks = 0;
         this.position = this.FIELD_LENGTH - this.position;
         const tempTeam = this.offenseTeam;
@@ -801,7 +837,8 @@ class Match {
         let numShooters = 0;
         let numBlockers = 0;
         let dedicatedShooterBonus = 0;
-        if(shooter.offensePriority == "Score") {
+        if(!blitz) {
+            console.log("Dedicated shooter")
             dedicatedShooterBonus = 1.5;
         }
         for (const player of this.offenseTeam.players) { //count number of shooters
@@ -814,7 +851,7 @@ class Match {
         console.log(shooter.name + " is shooting!");
         console.log(shooter.finesse + " + " + shooter.tempFinesse);
         let score = this.weather.scoreEffect(shooter, this.offenseTeam, this.defenseTeam, this.position);
-        let blocker_id = null;
+        let blocker_ids = [];
         const range = Math.max(Math.round(this.FIELD_LENGTH - this.position),0);
         if(score == null) { //no weather effect, handle scoring as usual
             let shooting = Math.random() * (shooter.finesse + shooter.tempFinesse + shooter.PLAYER_SHOOTING_BONUS + dedicatedShooterBonus)
@@ -837,11 +874,13 @@ class Match {
                         );
                     }
                     else {
-                        let defendAmount = (Math.random() * (player.bulk + player.tempBulk));
+                        let defendAmount = (Math.random() * (player.height + player.tempHeight));
+                        console.log(player.name, " temp height: ", player.height,  player.tempHeight)
+                        console.log(player.name, " providided this much defend: ", defendAmount)
                         if(numBlockers > 1) {defendAmount -= defendAmount*numBlockers*this.MULTIPLE_BLOCKER_REDUCTION}
 
                         if(defendAmount > shooting+this.SHOOTING_BONUS) { //block
-                            blocker_id = player.id;
+                            blocker_ids.push(player.id);
                         }
                         if(!blitz) {
                             defendAmount /= Math.max(numShooters,1); //defenders split defense among all the shooters
@@ -872,6 +911,10 @@ class Match {
             console.log("Game winning shot")
         }
         if(suspense < 0) {suspense = 0;}
+        let blocker_id = null;
+        if(blocker_ids.length > 0) {
+            blocker_id = blocker_ids[Math.floor(Math.random()*blocker_ids.length)]
+        }
         db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense, blitzer_id, blocker_id, points_worth) `
             + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense, 
                 this.blitzerId, blocker_id, blitz==false ? 2 : 1],
@@ -893,7 +936,11 @@ class Match {
             console.log("Shot missed!\n");
         }
         if(!blitz) {
+            console.log("Field goal")
             this.turnover();
+            if(!score) { //missed shot gives 3 turnover free ticks
+                this.last_turned_over = 3;
+            }
         }
     }
 

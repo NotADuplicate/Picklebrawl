@@ -303,6 +303,129 @@ db.serialize(() => {
       ) + 1;
     END;
     `);
+
+    db.run(`DROP VIEW match_stats `)
+
+
+    db.run(`
+        CREATE VIEW match_stats AS
+        WITH scoring AS (
+            SELECT 
+                shooter_id AS player_id,
+                match_id,
+                SUM(successful_score * points_worth) AS points_scored,
+                SUM(CASE WHEN successful_score AND blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_successful,
+                SUM(CASE WHEN blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_attempted,
+                SUM(CASE WHEN successful_score AND blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_successful,
+                SUM(CASE WHEN blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_attempted
+            FROM scoring_history
+            GROUP BY shooter_id, match_id
+        ),
+        blitzes AS (
+            SELECT 
+                blitzer_id AS player_id,
+                match_id,
+                COUNT(DISTINCT tick) AS blitzes
+            FROM scoring_history
+            WHERE blitzer_id IS NOT NULL
+            GROUP BY blitzer_id, match_id
+        ),
+        blocks AS (
+            SELECT
+                blocker_id AS player_id,
+                match_id,
+                SUM(points_worth) AS points_blocked
+            FROM scoring_history
+            WHERE blocker_id IS NOT NULL
+            GROUP BY blocker_id, match_id
+        ),
+        tricks AS (
+            SELECT 
+                tricker_id AS player_id, 
+                match_id,
+                COUNT(*) AS tricks
+            FROM match_trick_history
+            GROUP BY tricker_id, match_id
+        ),
+        damage AS (
+            SELECT 
+                attacking_player_id AS player_id,
+                match_id,
+                SUM(damage_done) AS damage_done
+            FROM attack_history
+            GROUP BY attacking_player_id, match_id
+        ),
+        damage_taken AS (
+            SELECT 
+                attacked_player_id AS player_id,
+                match_id,
+                SUM(damage_done) AS damage_taken
+            FROM attack_history
+            GROUP BY attacked_player_id, match_id
+        ),
+        advancements AS (
+            SELECT 
+                player_id,
+                match_id,
+                SUM(CASE WHEN "type" = 'Advance' THEN advancement ELSE 0 END) AS advancements,
+                SUM(CASE WHEN "type" = 'Steal' THEN 1 ELSE 0 END) AS steals,
+                SUM(CASE WHEN "type" = 'Defend' THEN advancement ELSE 0 END) AS defense
+            FROM advancement_history
+            GROUP BY player_id, match_id
+        )
+        SELECT 
+            p.name,
+            p.id AS player_id,
+            match_history.id AS match_id,
+            match_history.type AS match_type,
+            ph.offensive_role,
+            ph.defensive_role,
+            ph.offense_action_property,
+            ph.defense_action_property,
+            offense_target.name AS offensive_target,
+            defense_target.name AS defensive_target,
+            COALESCE(s.field_goals_attempted, 0) AS field_goals_attempted,
+            COALESCE(s.field_goals_successful, 0) AS field_goals_successful,
+            COALESCE(s.blitz_goals_attempted, 0) AS blitz_goals_attempted,
+            COALESCE(s.blitz_goals_successful, 0) AS blitz_goals_successful,
+            p.team_id AS team_id,
+            COALESCE(s.points_scored, 0) AS points_scored,
+            COALESCE(t.tricks, 0) AS tricks,
+            COALESCE(b.blitzes, 0) AS blitzes,
+            COALESCE(a.advancements, 0) AS advancements,
+            COALESCE(a.defense, 0) AS defense,
+            COALESCE(d.damage_done, 0) AS damage,
+            COALESCE(bl.points_blocked, 0) AS points_blocked,
+            COALESCE(a.steals, 0) AS steals,
+            COALESCE(dt.damage_taken, 0) AS damage_taken
+        FROM player_history ph
+        JOIN match_history ON match_history.id = ph.match_id
+        JOIN players p ON ph.player_id = p.id
+        LEFT JOIN scoring s ON ph.player_id = s.player_id AND ph.match_id = s.match_id
+        LEFT JOIN blitzes b ON ph.player_id = b.player_id AND ph.match_id = b.match_id
+        LEFT JOIN tricks t ON ph.player_id = t.player_id AND ph.match_id = t.match_id
+        LEFT JOIN advancements a ON ph.player_id = a.player_id AND ph.match_id = a.match_id
+        LEFT JOIN damage d ON ph.player_id = d.player_id AND ph.match_id = d.match_id
+        LEFT JOIN blocks bl ON ph.player_id = bl.player_id AND ph.match_id = bl.match_id
+        LEFT JOIN players offense_target ON ph.offensive_target_id = offense_target.id
+        LEFT JOIN players defense_target ON ph.defensive_target_id = defense_target.id
+        LEFT JOIN damage_taken dt ON ph.player_id = dt.player_id AND ph.match_id = dt.match_id
+        GROUP BY 
+            ph.player_id, 
+            p.name, 
+            p.team_id, 
+            s.points_scored, 
+            s.field_goals_successful,
+            s.field_goals_attempted,
+            s.blitz_goals_successful,
+            s.blitz_goals_attempted,
+            t.tricks, 
+            b.blitzes,
+            a.advancements,
+            d.damage_done,
+            bl.points_blocked
+    `);
+
 });
 
 export { db };

@@ -249,10 +249,10 @@ setTimeout(() => {
     });
 }, 3000);*/
 
-/*setTimeout(() => {
+setTimeout(() => {
     const season = new Season(1);
     season.scheduleOnStartup();
-}, 3000);*/
+}, 3000);
 
 
 

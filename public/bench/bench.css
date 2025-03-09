@@ -367,3 +367,80 @@ ul {
     border-radius: 3px;
     transition: width 0.3s ease;
 }
+
+/* Mobile Styles for bench page */
+@media (max-width: 768px) {
+    .player {
+        width: 97%;
+    }
+
+  /* When player has show-priority, reduce sizes and constrain the details to 50% width so it wraps */
+  .player.show-priority .player-details {
+    flex: 0 0 40%;  /* Do not grow/shrink and reserve 60% of container’s width */
+    display: block;
+    white-space: normal;
+    font-size: 10px;
+    margin-left: 2px;
+  }
+  .quirk {
+    font-size: 12px;
+  }
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Adjust the gap as needed for spacing */
+    justify-content: flex-start;
+}
+
+        .player.show-priority .player-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        /* Optionally adjust the priority menu container to take up more space */
+        .player.show-priority .priority-menu {
+            flex: 0 0 40%;                 /* Reserve enough room for the select */
+            font-size: 10px;               /* Ensure it's not too big */
+        }
+        
+        /* You can also adjust overall player size if needed */
+        .player.show-priority {
+            padding: 1px;                  /* Reduce padding */
+        }
+
+    /* Style mobile team tabs */
+    #mobile-team-tabs {
+        display: flex;
+        justify-content: space-around;
+        background-color: #2c3e50;
+        padding: 10px;
+    }
+    #mobile-team-tabs .team-tab {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        padding: 10px;
+        cursor: pointer;
+    }
+    #mobile-team-tabs .team-tab.active {
+        border-bottom: 2px solid #27ae60;
+    }
+    
+    /* Hide both team sections by default */
+    .container .team {
+        display: none !important;
+        width: 100%;
+    }
+    /* Only display the active team section */
+    .container .team.active {
+        display: block !important;
+    }
+
+    .stat:hover .tooltip,
+    .priority-menu:hover .tooltip,
+    .quirk:hover .tooltip {
+        opacity: 0;
+    }
+}

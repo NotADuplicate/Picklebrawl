@@ -56,7 +56,7 @@ class Player {
     ATTACK_MODIFIER = 1;
     advance = 0;
     assisters = 0;
-    lastShotTick = -5;
+    lastShotTick = -8;
     knockedOut = false;
     breakAwayChance = 0.04;
 
@@ -217,7 +217,6 @@ class Player {
     }
 
     attack(match, target) {
-        console.log(this.name, " attacks ", target.name)
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
             const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
@@ -225,7 +224,6 @@ class Player {
             if (finalDamage < 0) {
                 return;
             }
-            target.tempInjury += finalDamage;
 
             const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1;
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
@@ -256,8 +254,8 @@ class Player {
         target.tempStrength = Math.min(this.strength, target.tempStrength);
 
         //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
-        target.tempTrickiness = Math.min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
-        target.tempFocus = Math.max(this.focus, target.tempFocus); 
+        //target.tempTrickiness = Math.min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
+        //target.tempFocus = Math.max(this.focus, target.tempFocus); 
     }
 
     knockout(match) {

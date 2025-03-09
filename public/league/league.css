@@ -349,13 +349,41 @@ footer {
     padding: 20px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    #content {
-        flex-direction: column;
-    }
+#mobile-tab-buttons {
+    display: none;
+}
 
-    section {
-        flex: 1 1 100%;
+/* Mobile Styles */
+@media (max-width: 1000px) {
+    /* Style for the mobile tabs */
+    #mobile-tab-buttons {
+        display: flex;
+        justify-content: space-around;
+        background-color: #2c3e50;
+        padding: 10px;
+        color: #fff;
+    }
+    #mobile-tab-buttons .tab-button {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 16px;
+        padding: 10px;
+        cursor: pointer;
+    }
+    #mobile-tab-buttons .tab-button.active {
+        border-bottom: 2px solid #27ae60;
+    }
+    /* Force mobile layout */
+    #horizontal-container {
+        display: block !important;
+    }
+    /* Hide all sections by default */
+    #horizontal-container section {
+        display: none !important;
+    }
+    /* Only display the active section */
+    #horizontal-container section.active {
+        display: block !important;
     }
 }

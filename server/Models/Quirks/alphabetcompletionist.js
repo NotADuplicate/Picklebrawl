@@ -26,9 +26,11 @@ export class AlphabetCompletionist extends Quirk {
         // Make string of all names
         let allNames = '';
         match.players.forEach(otherPlayer => {
-            allNames.concat(otherPlayer.name);
+            console.log(otherPlayer.name)
+            allNames = allNames.concat(otherPlayer.name);
         });
         allNames = allNames.toLowerCase();
+        console.log(allNames)
 
         // Use set to count independent letters
         let letterSet = new Set();
@@ -36,7 +38,9 @@ export class AlphabetCompletionist extends Quirk {
             letterSet.add(allNames[i])
         }
 
-        let missingLetters = 26 - letterSet.size
+        console.log(letterSet)
+        let missingLetters = 27 - letterSet.size
+        console.log("Alphabet completionist missing letters: ", missingLetters)
 
         // Change stats based on missing letters
         player.baseBulk -= missingLetters;
@@ -65,7 +69,7 @@ export class AlphabetCompletionist extends Quirk {
 
         console.log(letterSet);
 
-        let missingLetters = 26 - letterSet.size
+        let missingLetters = 27 - letterSet.size
 
         // Change stats based on missing letters
         player.bulk -= missingLetters;
