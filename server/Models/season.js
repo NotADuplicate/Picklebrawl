@@ -312,8 +312,8 @@ export class Season {
             console.log("Inserting action:", action);
             db.run(
             `UPDATE challenge_players SET offense_action = ?, offense_target_id = ?, offense_property = ?, defense_action = ?, defense_target_id = ?, defense_property = ? 
-              WHERE player_id = ? AND challenge_id = ?`,
-            [action.offense_action, action.offense_target_id, action.offense_property, action.defense_action, action.defense_target_id, action.defense_property, action.player_id, challenge_id], (err) => {
+              WHERE player_id = ? AND challenge_id = ? AND team_id=?`,
+            [action.offense_action, action.offense_target_id, action.offense_property, action.defense_action, action.defense_target_id, action.defense_property, action.player_id, challenge_id, team_id], (err) => {
               pending--;
               if (err) {
                 console.error("Error creating action:", err);

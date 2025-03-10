@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Stats</title>
+  <link rel="stylesheet" href="/player/player.css">
+</head>
+<body>
+  <header>
+    <h1>Player Profile</h1>
+  </header>
+  <main>
+    <section class="player-info">
+      <div class="player-details">
+        <h2 id="player-name">Player Name</h2>
+        <p id="player-team">Team: [Team Name]</p>
+        <p id="matches-played">Matches Played: <span>0</span></p>
+      </div>
+    </section>
+    <section class="stats-container">
+      <div class="stats-header">
+        <h2>Statistics</h2>
+        <div class="view-toggle">
+          <button id="view-total" class="active">Total</button>
+          <button id="view-average">Average per Match</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <h3>Points</h3>
+          <p id="points-value">0</p>
+        </div>
+        <div class="stat-item">
+            <h3>Field Goals</h3>
+            <p id="field-goals">0/0</p>
+          </div>
+          <div class="stat-item">
+            <h3>Blitz Goals</h3>
+            <p id="blitz-goals">0/0</p>
+          </div>
+        <div class="stat-item">
+          <h3>Points Blocked</h3>
+          <p id="points-blocked-value">0</p>
+        </div>
+        <div class="stat-item">
+          <h3>Meters Advanced</h3>
+          <p id="meters-advanced-value">0</p>
+        </div>
+        <div class="stat-item">
+          <h3>Meters Defended</h3>
+          <p id="meters-defended-value">0</p>
+        </div>
+        <div class="stat-item">
+          <h3>Damage Dealt</h3>
+          <p id="damage-dealt-value">0</p>
+        </div>
+        <div class="stat-item">
+          <h3>Steals</h3>
+          <p id="steals-value">0</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/player/player.js"></script>
+</body>
+</html>

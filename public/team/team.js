@@ -29,7 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             players.forEach(player => {
                 const playerCard = document.importNode(playerCardTemplate, true);
 
-                playerCard.querySelector('.player-name').textContent = player.name;
+                const playerNameElement = playerCard.querySelector('.player-name');
+                const nameLink = document.createElement('a');
+                nameLink.href = `/player/player.html?playerId=${player.id}`;
+                nameLink.textContent = player.name;
+                // Remove default blue hyperlink styling
+                nameLink.style.color = 'inherit';
+                nameLink.style.textDecoration = 'none';
+                playerNameElement.innerHTML = '';
+                playerNameElement.appendChild(nameLink);
                 playerCard.querySelector('.player-bulk').textContent = player.bulk;
                 playerCard.querySelector('.player-finesse').textContent = player.finesse;
                 playerCard.querySelector('.player-height').textContent = player.height;
