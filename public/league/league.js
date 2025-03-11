@@ -178,6 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backButton.addEventListener('click', () => {
         window.location.href = `../home/home.html`;
     });
+
+    const leagueStatsButton = document.getElementById('league-stats-button');
+    leagueStatsButton.addEventListener('click', () => {
+        const leagueId = localStorage.getItem('leagueId');
+        window.location.href = `/league-stats/league-stats.html?leagueId=${leagueId}`;
+    });
 });
 
 function timeAgo(date) {

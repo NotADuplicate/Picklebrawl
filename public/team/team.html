@@ -26,10 +26,44 @@
         <section id="team-details-section">
             <!-- You can add team-specific details here if needed -->
         </section>
+        <!-- Tabs Navigation -->
+        <nav id="tabs">
+            <button id="players-tab" class="active">Players</button>
+            <button id="stats-tab">Stats</button>
+        </nav>
 
+        <!-- Players Section -->
         <section id="players-section">
             <h2>Players</h2>
             <div id="players-container"></div>
+        </section>
+
+        <!-- Stats Section (hidden by default) -->
+        <section id="stats-section" style="display: none;">
+            <h2>Stats</h2>
+            <div>
+                <button id="total-stats-button" class="active">Total Stats</button>
+                <button id="average-stats-button">Average Stats</button>
+            </div>
+            <table id="stats-table">
+                <thead>
+                    <tr>
+                        <th>Player Name</th>
+                        <th class="sortable" data-stat="matches">Matches Played</th>
+                        <th class="sortable" data-stat="total_points">Points</th>
+                        <th class="sortable" data-stat="total_FG_makes">Field Goals</th>
+                        <th class="sortable" data-stat="total_blitz_makes">Blitz Goals</th>
+                        <th class="sortable" data-stat="total_blocks">Points Blocked</th>
+                        <th class="sortable" data-stat="total_advance">Meters Advanced</th>
+                        <th class="sortable" data-stat="total_defense">Meters Defended</th>
+                        <th class="sortable" data-stat="total_dmg">Damage Dealt</th>
+                        <th class="sortable" data-stat="total_steals">Steals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Stats rows will be populated here -->
+                </tbody>
+            </table>
         </section>
     </main>
 

@@ -794,4 +794,6 @@ function rerunMatch(match_id, friendly) {
         });
 }
 
+runMatch(23, false);
+
 export default router;

@@ -1,6 +1,8 @@
 import { db } from '../database.js';
 import { scheduleJob } from "node-schedule";
 import { runMatch, recommendActions, recommendPlayers } from "../Routes/challenges.js";
+import { BracketsManager } from 'brackets-manager';
+import { InMemoryDatabase } from 'brackets-memory-db';
 import moment from 'moment-timezone';
 
 export class Season {
@@ -246,12 +248,28 @@ export class Season {
           problems++;
           this.setActions(challenge_id, challenge.challenger_team_id, () => {
             problems--;
+            db.run(`UPDATE challenges SET challenger_actions_set=TRUE WHERE id=${challenge_id}`, (err) => {
+              if(err) {
+                console.log("Error updating challenger players set:", err);
+              }
+              else {
+                console.log("Updated challenger players set!")
+              }
+            });
           });
         }
         if(challenge.challenged_actions_set === 0) {
           problems++;
           this.setActions(challenge_id, challenge.challenged_team_id, () => {
             problems--;
+            db.run(`UPDATE challenges SET challenger_actions_set=TRUE WHERE id=${challenge_id}`, (err) => {
+              if(err) {
+                console.log("Error updating challenger players set:", err);
+              }
+              else {
+                console.log("Updated challenger players set!")
+              }
+            });
           });
         }
         const checkInterval = setInterval(() => {
@@ -276,37 +294,44 @@ export class Season {
           console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
           return;
         }
-        let problems = 0;
         if(challenge.challenger_players_set === 0) {
-          problems++;
           this.setPlayers(challenge_id, challenge.challenger_team_id, () => {
-            problems--;
-            db.run(`UPDATE challenges set challenger_players_set=true WHERE id=${challenge_id}`);
+            console.log("Set players")
+            db.run(`UPDATE challenges SET challenger_players_set=TRUE WHERE id=${challenge_id}`, (err) => {
+              if(err) {
+                console.log("Error updating challenger players set:", err);
+              }
+              else {
+                console.log("Updated challenger players set!")
+              }
+            });
           });
         }
         if(challenge.challenged_players_set === 0) {
-          problems++;
           this.setPlayers(challenge_id, challenge.challenged_team_id, () => {
-            problems--;
-            db.run(`UPDATE challenges set challenged_players_set=true WHERE id=${challenge_id}`);
+            console.log("Set players")
+            db.run(`UPDATE challenges SET challenged_players_set=TRUE WHERE id=${challenge_id}`, (err) => {
+              if(err) {
+                console.log("Error updating challenged players set:", err);
+              }
+              else {
+                console.log("Updated challenged players set!")
+              }
+            });
           });
         }
-        const checkInterval = setInterval(() => {
-          if (problems === 0) {
-            clearInterval(checkInterval);
-          }
-        }, 50);
       });
     }
 
     setActions(challenge_id, team_id, callback) {
-      db.all("SELECT * FROM challenge_players, players where players.team_id = ? AND players.id = player_id", [team_id], (err, rows) => {
+      db.all("SELECT * FROM challenge_players, players where challenge_players.team_id = ? AND players.id = challenge_players.player_id AND challenge_id=?", [team_id, challenge_id], (err, rows) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ error: 'Internal server error' });
         }
         const actions = recommendActions(rows);
-        let pending = actions.length;
+        const actionArray = [...actions];
+        let pending = actionArray.length;
         db.serialize(() => {
           actions.forEach((action) => {
             console.log("Inserting action:", action);
@@ -317,16 +342,13 @@ export class Season {
               pending--;
               if (err) {
                 console.error("Error creating action:", err);
+              }
+              if(pending == 0) {
+                callback();
               } 
             });
           });
         });
-        const checkInterval = setInterval(() => {
-          if (pending === 0) {
-            clearInterval(checkInterval);
-            callback();
-          }
-        }, 50);
       });
     }
 
@@ -337,25 +359,26 @@ export class Season {
             return res.status(500).json({ error: 'Internal server error' });
         }
         const players = recommendPlayers(rows);
-        let pending = players.length;
+        const playersArray = [...players];
+        let pending = playersArray.length;
+        console.log("Pending start:", pending)
         db.serialize(() => {
-          players.forEach((player) => {
+          playersArray.forEach((player) => {
             console.log("Inserting player:", player);
             db.run(
             'INSERT INTO challenge_players (challenge_id, team_id, player_id) VALUES (?, ?, ?)', [challenge_id, team_id, player], function (err) {
               pending--;
+              console.log("Pending:", pending)
               if (err) {
                 console.error("Error creating player:", err);
-              } 
+              }
+              if (pending === 0) {
+                console.log("No more pending")
+                callback();
+              }
             });
           });
         });
-        const checkInterval = setInterval(() => {
-          if (pending === 0) {
-            clearInterval(checkInterval);
-            callback();
-          }
-        }, 50);
       });
     }
 
@@ -371,5 +394,173 @@ export class Season {
         }
       })
     }
-      
+
+    getNearestPowerOfTwo(input) {
+      return Math.pow(2, Math.ceil(Math.log2(input)));
+    }
+
+    /**
+     * Generates a tournament bracket based on the match history.
+     * Seeds teams based on their wins and losses.
+     *
+     * @param {function(Error, any):void} callback
+     */
+    generateTournamentBracket(callback) {
+        console.log("Generating tournament bracket for league id:", this.leagueId);
+        if (!this.leagueId) {
+            return callback(new Error("leagueId is not set"));
+        }
+
+        // Retrieve all teams in the league along with their win/loss records
+        db.all(`
+            SELECT teams.id, teams.name, 
+             SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
+            OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 1 ELSE 0 END) AS wins,
+             SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
+            OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
+            FROM teams
+            LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
+            WHERE teams.league_id = ?
+            GROUP BY teams.id
+            ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
+        `, [this.leagueId], async (err, teams) => {
+            if (err) {
+              console.log(err)
+                return callback(err);
+            }
+            
+
+            // Seed teams based on their win/loss records
+            const seededTeams = teams.map((team, index) => ({
+                seed: index + 1,
+                teamId: team.id,
+                teamName: team.name,
+                wins: team.wins,
+                losses: team.losses,
+                ratio: team.wins/(team.wins+team.losses+1)
+            }));
+            console.log("Seeded teams:", seededTeams)
+
+            const jDb = new InMemoryDatabase()
+            const manager = new BracketsManager(jDb);
+
+            // Generate the bracket structure
+            await manager.create.stage({
+              tournamentId: 1,
+              name: 'Season 1 Playoffs',
+              type: 'single_elimination',
+              seeding: teams.map((team) => team.name),
+              settings: {
+                seedOrdering: ['inner_outer'],
+                size: this.getNearestPowerOfTwo(teams.length),
+              },
+            });
+            
+            await manager.update.match({
+              id: 1,
+              opponent1: { score: 5 , result:"win"},
+              opponent2: { score: 1, result:"loss" },
+            });
+            await manager.update.match({
+              id: 2,
+              opponent1: { score: 3, result:"loss" },
+              opponent2: { score: 9, result:"win" },
+            });
+
+            const data = await manager.get.stageData(0);
+            console.log("Tournament data:",data);
+            const realDats = {
+              stages: data.stage,
+              matches: data.match,
+              matchGames: data.match_game,
+              participants: data.participant,
+            };
+            console.log("Real dat:",realDats)
+            callback(realDats)
+            return realDats;
+
+            // Insert the bracket into the database
+            let pending = bracket.length;
+            db.serialize(() => {
+                bracket.forEach(({ round, matchNumber, teamA, teamB }) => {
+                    db.run(
+                        `INSERT INTO tournament_challenges 
+                         (league_id, round, challenge_id, team_a_id, team_b_id) 
+                         VALUES (?, ?, ?, ?, ?)`,
+                        [this.leagueId, round, matchNumber, teamA.teamId, teamB.teamId],
+                        function(insertErr) {
+                            if (insertErr) {
+                                console.error("Error creating tournament match:", insertErr.message);
+                            } else {
+                                console.log("Tournament match created with ID:", this.lastID);
+                            }
+                            pending--;
+                        }
+                    );
+                });
+            });
+
+            // Poll until all asynchronous db.run calls have finished.
+            const checkInterval = setInterval(() => {
+                if (pending === 0) {
+                    clearInterval(checkInterval);
+                    //callback(null, "Tournament bracket created");
+                }
+            }, 50);
+        });
+    }
+
+    /**
+     * Creates a bracket structure based on seeded teams.
+     * If there is an odd number of teams, the highest-seeded teams get a bye in the first round.
+     *
+     * @param {Array} seededTeams - Array of seeded teams
+     * @returns {Array} - Array of matches in the bracket
+     */
+    createBracket(seededTeams) {
+        const bracket = [];
+        let round = 1;
+        let matchNumber = 1;
+
+        while (seededTeams.length > 1) {
+            const roundMatches = [];
+            const numTeams = seededTeams.length;
+            const numMatches = Math.floor(numTeams / 2);
+            const numByes = numTeams % 2;
+
+            // Give byes to the highest-seeded teams if necessary
+            const byes = seededTeams.slice(0, numByes).map(team => ({
+                round,
+                matchNumber: matchNumber++,
+                teamA: team,
+                teamB: null // No opponent, this team gets a bye
+            }));
+
+            // Create matches for the remaining teams
+            for (let i = numByes; i < numTeams; i += 2) {
+                const teamA = seededTeams[i];
+                const teamB = seededTeams[i + 1];
+                roundMatches.push({
+                    round,
+                    matchNumber: matchNumber++,
+                    teamA,
+                    teamB
+                });
+            }
+
+            bracket.push(...byes, ...roundMatches);
+            round++;
+
+            // Prepare for the next round: winners of this round advance
+            seededTeams = roundMatches.map(match => ({
+                seed: Math.min(match.teamA.seed, match.teamB ? match.teamB.seed : Infinity),
+                teamId: null, // Placeholder for the winner
+                teamName: null, // Placeholder for the winner
+                wins: 0,
+                losses: 0
+            })).concat(byes.map(match => match.teamA));
+        }
+
+        return bracket;
+    }
 }

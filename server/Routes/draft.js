@@ -290,18 +290,24 @@ function skipTurn(draftId, timer) {
                 console.log("Error getting teams: ", err);
                 return;
             }
-            const nextTurn = draft.turn+1;
-            draftQueue(teams, draftId, nextTurn, (turn) => {
-                const backwards = Math.floor(turn/teams.length) % 2;
-                const nextTeamIndex = !backwards ? turn % teams.length : teams.length - turn % teams.length - 1;
-                const nextTeamId = teams[nextTeamIndex].id;
-                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, turn, draftId], (err) => {
-                    if (err) {
-                        console.log("Error updating turn: ", err);
-                        return;
-                    }
+            const thisTurn = draft.turn;
+            draftQueue(teams,draftId,draft.turn, (turn) => {
+                if(turn != thisTurn) {
+                    console.log("Tried to skip someone with a queued draft")
+                    return;
+                }
+                draftQueue(teams, draftId, turn, (nextTurn) => {
+                    const backwards = Math.floor(nextTurn/teams.length) % 2;
+                    const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
+                    const nextTeamId = teams[nextTeamIndex].id;
+                    db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                        if (err) {
+                            console.log("Error updating turn: ", err);
+                            return;
+                        }
+                    });
                 });
-            });
+            })
         });
     });
 }

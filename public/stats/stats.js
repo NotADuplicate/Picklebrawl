@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const biggestStats = document.getElementById("biggest-stats")
     biggestStats.textContent = "hello"
     const data = setGameStats(teamId)
-
 });
 
 function setGameStats(teamId) {

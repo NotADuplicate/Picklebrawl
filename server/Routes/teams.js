@@ -103,4 +103,31 @@ router.get(`/teams/player/:playerId`, (req, res) => {
         })
 })
 
+router.get(`/teams/team-stats/:teamId`, (req, res) => {
+    const teamId = req.params.teamId;
+
+    console.log("Getting stats of team:", teamId)
+    db.all(`SELECT players.name AS player_name, teams.name AS team, 
+        SUM(field_goals_attempted) AS total_FG_attempts, AVG(field_goals_attempted) AS avg_FG_attempts,
+        SUM(field_goals_successful) AS total_FG_makes, AVG(field_goals_successful) AS avg_FG_makes,
+        SUM(blitz_goals_attempted) AS total_blitz_attempts, AVG(blitz_goals_attempted) AS avg_blitz_attempts,
+        SUM(blitz_goals_successful) AS total_blitz_makes, AVG(blitz_goals_successful) AS avg_blitz_makes,
+        SUM(points_scored) AS total_points, AVG(points_scored) AS avg_points,
+        SUM(advancements) AS total_advance, AVG(advancements) AS avg_advance,
+        SUM(defense) AS total_defense, AVG(defense) AS avg_defense,
+        SUM(points_blocked) AS total_blocks, AVG(points_blocked) AS avg_blocks,
+        SUM(damage) AS total_dmg, AVG(damage) AS avg_dmg, COUNT(*) AS matches_played,
+        SUM(steals) AS total_steals, AVG(steals) as avg_steals
+        FROM players JOIN teams on players.team_id=teams.id
+        LEFT JOIN match_stats ON player_id=players.id
+        WHERE players.team_id = ${teamId} AND match_stats.match_type != "friendly"
+        GROUP BY players.id
+        `, (err, rows) => {
+            if(err) {
+                console.log("Error getting player stats:",err)
+            }
+            res.json({rows})
+        })
+})
+
 export default router;

@@ -268,6 +268,11 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
     );`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS tournaments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        league_id INTEGER NOT NULL,
+        data TEXT )`)
+
     // Trigger to adjust order values after a row is deleted.
     db.run(`
     CREATE TRIGGER IF NOT EXISTS after_delete_draft_premove
@@ -304,11 +309,9 @@ db.serialize(() => {
     END;
     `);
 
-    db.run(`DROP VIEW match_stats `)
-
 
     db.run(`
-        CREATE VIEW match_stats AS
+        CREATE VIEW IF NOT EXISTS match_stats AS
         WITH scoring AS (
             SELECT 
                 shooter_id AS player_id,

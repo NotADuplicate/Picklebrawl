@@ -231,9 +231,48 @@ router.get('/league/upcoming', authenticator.authenticateToken, (req, res) => {
             return res.status(500).json({ message: 'Error fetching upcoming matches!' });
         }
 
+        console.log("Matches:",matches)
         res.json(matches);
     });
 });
+
+router.get(`/league/league-stats/:leagueId`, (req, res) => {
+    const leagueId = req.params.leagueId;
+
+    console.log("Getting stats of league:", leagueId)
+    console.log("League ID from params:", leagueId);
+    db.all(`SELECT players.name AS player_name, teams.name AS team, 
+        COALESCE(SUM(field_goals_attempted),0) AS total_FG_attempts, COALESCE(AVG(field_goals_attempted),0) AS avg_FG_attempts,
+        COALESCE(SUM(field_goals_successful),0) AS total_FG_makes, COALESCE(AVG(field_goals_successful),0) AS avg_FG_makes,
+        COALESCE(SUM(blitz_goals_attempted),0) AS total_blitz_attempts, COALESCE(AVG(blitz_goals_attempted),0) AS avg_blitz_attempts,
+        COALESCE(SUM(blitz_goals_successful),0) AS total_blitz_makes, COALESCE(AVG(blitz_goals_successful),0) AS avg_blitz_makes,
+        COALESCE(SUM(points_scored),0) AS total_points, COALESCE(AVG(points_scored),0) AS avg_points,
+        COALESCE(SUM(advancements),0) AS total_advance, COALESCE(AVG(advancements),0) AS avg_advance,
+        COALESCE(SUM(defense),0) AS total_defense, COALESCE(AVG(defense),0) AS avg_defense,
+        COALESCE(SUM(points_blocked),0) AS total_blocks, COALESCE(AVG(points_blocked),0) AS avg_blocks,
+        COALESCE(SUM(damage),0) AS total_dmg, COALESCE(AVG(damage),0) AS avg_dmg, COUNT(*) AS matches_played,
+        COALESCE(SUM(steals),0) AS total_steals, COALESCE(AVG(steals),0) as avg_steals
+        FROM players JOIN teams on players.team_id = teams.id
+        LEFT JOIN match_stats ON player_id = players.id
+        WHERE teams.league_id = ?
+        AND match_stats.match_type != "friendly"
+        GROUP BY players.id
+        `, [leagueId], (err, rows) => {
+            if(err) {
+                console.log("Error getting player stats:", err)
+            }
+            res.json({ rows })
+        })
+})
+
+router.get(`/leagues/tournament`, async (req, res) => {
+    const season = new Season(1);
+    //season.scheduleOnStartup();
+    season.generateTournamentBracket((data) => {
+        console.log("Torny:",data)
+        res.json({data})
+    });
+})
 
 /*/Reset stats
 setTimeout(() => {

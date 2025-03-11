@@ -742,6 +742,12 @@ class Match {
     doScoring() {
         if(this.position >= this.FIELD_LENGTH) { //attempt touchdown
             this.position = this.FIELD_LENGTH;
+            for (const player of this.offenseTeam.players) { //a close shooter might shoot it
+                if(player.offensePriority==="Score" && player.offenseProperty === "Close" && Math.random()>0.35) {
+                    this.shoot(player,false);
+                    return;
+                }
+            }
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance" && !this.turnedover) { //on touchdown, the player who is advancing will try to score
                     if(player.offenseProperty === "Blitz") {
@@ -775,7 +781,7 @@ class Match {
                         minRange = 0;
                     }
                     else { // dont shoot if youre on track to make a blitz
-                        minRange = this.lastAdvance*Math.max(5-this.possessionTicks,0); 
+                        minRange = Math.min(this.lastAdvance*Math.max(5-this.possessionTicks,0),18); 
                         console.log("Player: ", player.name, " has a min range of: ", minRange)
                     }
                     if(this.gameTicks > this.GAME_LENGTH - 10) { //last second shot

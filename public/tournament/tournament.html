@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tournament</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/Drarig29/brackets-viewer.js@09a5e578e4e6bd76db06b380e79ef2a3bedb8e92/dist/brackets-viewer.min.css"
+    />
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/gh/Drarig29/brackets-viewer.js@09a5e578e4e6bd76db06b380e79ef2a3bedb8e92/dist/brackets-viewer.min.js"
+    ></script>
+
+    <style type="text/css">
+      /* Make sure the content takes the whole page */
+      .brackets-viewer {
+        width: 100vw;
+        height: 100vh;
+        overflow: auto;
+      }
+
+      body {
+        width: 90%;
+        height: 90%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .elimination {
+        width: 90%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .bracket {
+        width: 90%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .rounds {
+        width: 90%;
+        height: 90%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .opponents {
+        width: 90%;
+        height: 130px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .participant {
+        width: 90%;
+        height: 45%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .brackets-viewer .match {
+        margin-top: 30px;
+      }
+
+      .name.bye {
+        font-style: italic;
+        color: var(--hint-color);
+      }
+
+      /* Prevent round headers to wrap */
+      h3 {
+        white-space: nowrap;
+      }
+
+      /* Let matches grow in width */
+      .round {
+        flex-grow: 1;
+        min-width: 150px;
+        /* max-width: var(--match-width); */
+      }
+
+      /* Get rid of the fixed match width */
+      .match {
+        width: unset !important;
+      }
+
+      /* Force backgrounds */
+      * {
+        -webkit-print-color-adjust: exact !important;
+      }
+
+      /* Front page */
+      @page :right {
+        size: legal landscape;
+        margin: 0;
+      }
+
+      /* Back page */
+      @page :left {
+        size: legal landscape;
+        margin: 0.6cm 0 0 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <script type="module" src="/tournament/tournament.js"></script>
+    <div class="brackets-viewer"></div>
+  </body>
+</html>
