@@ -52,6 +52,8 @@ db.serialize(() => {
         league_id INTEGER NOT NULL,
         owner_id TEXT NOT NULL,
         in_season BOOLEAN DEFAULT FALSE,
+        dubloons INT DEFAULT 0,
+        draft_picks INT DEFAULT 0,
         FOREIGN KEY (league_id) REFERENCES leagues(id),
         FOREIGN KEY (owner_id) REFERENCES users(id),
         UNIQUE(league_id, name),
@@ -268,10 +270,14 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
     );`);
 
+    db.run(`DROP TABLE tournaments`)
     db.run(`CREATE TABLE IF NOT EXISTS tournaments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INTEGER NOT NULL,
-        data TEXT )`)
+        stages TEXT,
+        matches TEXT,
+        match_games TEXT,
+        participants TEXT )`)
 
     // Trigger to adjust order values after a row is deleted.
     db.run(`

@@ -14,7 +14,7 @@
   "dependencies": {
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
-    "brackets-manager": "github:Drarig29/brackets-manager.js",
+    "brackets-manager": "^1.0.0",
     "brackets-memory-db": "^1.0.5",
     "brackets-storage": "github:Drarig29/brackets-storage",
     "brackets-viewer": "^1.6.2",

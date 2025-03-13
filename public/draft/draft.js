@@ -18,6 +18,8 @@ let draftQueue = [];
 
 let currentDraftIndex = 0;
 
+let draftPicks = 0;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     draftId = urlParams.get('draftId');
@@ -38,6 +40,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         teams = teamsInfo;
         console.log("Teams: ", teams);
         leagueName = teamsInfo[0].league_name;
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        teams.forEach((team, index) => {
+            if(team.owner == loggedInUser) {
+                draftPicks = team.draft_picks;
+            }
+        });
 
         fetchData(`/draft/players?draftId=${draftId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (res) => {
             const players = res.prospects;
@@ -87,7 +95,7 @@ function displayPlayers(playerList) {
         const currentTeam = teams[currentDraftIndex];
     
         const draftButtonContainer = playerCard.querySelector('.draft-button-container');
-        if (currentTeam.owner == loggedInUser) {
+        if (currentTeam.owner == loggedInUser || draftPicks > 0) {
             draftButtonContainer.innerHTML = `<button class="draft-button" onclick="draftPlayer('${player.id}')">Draft</button>`;
         } else {
             const preMoveIndex = draftQueue.indexOf(player.id);
@@ -189,6 +197,9 @@ function displayDraftOrder() {
 
         if (team.owner === loggedInUser) {
             listItem.innerHTML += ' (Your Team)';
+            if(team.draft_picks > 0) {
+                listItem.innerHTML += `<br> You have ${team.draft_picks} draft picks to make.`
+            }
         }
 
         // Add event listener to the card

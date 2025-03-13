@@ -1,7 +1,7 @@
 import { fetchData } from "../api.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchData(`/leagues/tournament`, 'GET', {}, null, (stages) => {
+    fetchData(`/leagues/tournament/1`, 'GET', {}, null, (stages) => {
         console.log("Torny data:",stages)
         window.bracketsViewer.addLocale('en', {
             common: {

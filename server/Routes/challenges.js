@@ -526,6 +526,20 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
             console.log(player.name, player.quirk.title)
             player.quirk.challengeStatModification(players, player);
         });
+        players.forEach(player => {
+            if(player.offensePriority == "Rest") {
+                player.bulk *= 1.5;
+                player.finesse *= 1.5;
+                player.height *= 1.5;
+                player.strength *= 1.5;
+            }
+            if(player.defensePriority == "Rest") {
+                player.bulk *= 1.5;
+                player.finesse *= 1.5;
+                player.height *= 1.5;
+                player.strength *= 1.5;
+            }
+        });
         res.json(players);
     });
 });
@@ -793,7 +807,5 @@ function rerunMatch(match_id, friendly) {
             console.error('Error during deletion process:', err);
         });
 }
-
-runMatch(23, false);
 
 export default router;

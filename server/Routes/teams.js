@@ -23,7 +23,7 @@ router.get('/teams', (req, res) => {
 router.get('/active-teams', (req, res) => {
     console.log("Getting teams");
     const leagueId = req.query.leagueId;
-    db.all(`SELECT teams.id, leagues.name AS league_name, teams.name, league_id, username AS owner FROM teams
+    db.all(`SELECT teams.id, teams.draft_picks, leagues.name AS league_name, teams.name, league_id, username AS owner FROM teams
         LEFT JOIN users on users.id = teams.owner_id
         LEFT JOIN leagues on leagues.id = teams.league_id
         WHERE league_id = ? AND in_season = TRUE`, [leagueId], (err, teams) => {

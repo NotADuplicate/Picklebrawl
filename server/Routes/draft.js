@@ -296,7 +296,12 @@ function skipTurn(draftId, timer) {
                     console.log("Tried to skip someone with a queued draft")
                     return;
                 }
-                draftQueue(teams, draftId, turn, (nextTurn) => {
+                db.run(`UPDATE teams, drafts SET draft_picks=draft_picks+1 WHERE teams.id = drafts.currently_drafting_team_id AND drafts.id=?`, [draftId], (err) => {
+                    if(err) {
+                        console.log("Error giving a team a draft pick:", err)
+                    }
+                })
+                draftQueue(teams, draftId, turn+1, (nextTurn) => {
                     const backwards = Math.floor(nextTurn/teams.length) % 2;
                     const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
                     const nextTeamId = teams[nextTeamIndex].id;

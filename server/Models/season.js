@@ -420,7 +420,7 @@ export class Season {
             OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
             FROM teams
             LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
-            WHERE teams.league_id = ?
+            WHERE teams.league_id = ? AND teams.in_season = TRUE
             GROUP BY teams.id
             ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
         `, [this.leagueId], async (err, teams) => {
@@ -439,33 +439,41 @@ export class Season {
                 losses: team.losses,
                 ratio: team.wins/(team.wins+team.losses+1)
             }));
-            console.log("Seeded teams:", seededTeams)
+            //console.log("Seeded teams:", seededTeams)
 
             const jDb = new InMemoryDatabase()
             const manager = new BracketsManager(jDb);
 
             // Generate the bracket structure
             await manager.create.stage({
-              tournamentId: 1,
-              name: 'Season 1 Playoffs',
+              tournamentId: 3,
+              name: 'Season 2 Playoffs',
               type: 'single_elimination',
               seeding: teams.map((team) => team.name),
+              matchesChildCount: 3,
               settings: {
                 seedOrdering: ['inner_outer'],
                 size: this.getNearestPowerOfTwo(teams.length),
               },
             });
+
+            manager.update.matchChildCount("stage",0, 3);
+
+            const matches = await manager.get.currentMatches(0)
+            console.log(matches)
+            const matchGame = await manager.get.matchGames(matches)
+            console.log(matchGame)
             
-            await manager.update.match({
+            await manager.update.updateMatchGame({
               id: 1,
               opponent1: { score: 5 , result:"win"},
               opponent2: { score: 1, result:"loss" },
             });
-            await manager.update.match({
-              id: 2,
-              opponent1: { score: 3, result:"loss" },
-              opponent2: { score: 9, result:"win" },
-            });
+            // await manager.update.matchGame({
+            //   id: 2,
+            //   opponent1: { score: 3, result:"loss" },
+            //   opponent2: { score: 9, result:"win" },
+            // });
 
             const data = await manager.get.stageData(0);
             console.log("Tournament data:",data);
@@ -475,92 +483,20 @@ export class Season {
               matchGames: data.match_game,
               participants: data.participant,
             };
-            console.log("Real dat:",realDats)
-            callback(realDats)
-            return realDats;
 
-            // Insert the bracket into the database
-            let pending = bracket.length;
-            db.serialize(() => {
-                bracket.forEach(({ round, matchNumber, teamA, teamB }) => {
-                    db.run(
-                        `INSERT INTO tournament_challenges 
-                         (league_id, round, challenge_id, team_a_id, team_b_id) 
-                         VALUES (?, ?, ?, ?, ?)`,
-                        [this.leagueId, round, matchNumber, teamA.teamId, teamB.teamId],
-                        function(insertErr) {
-                            if (insertErr) {
-                                console.error("Error creating tournament match:", insertErr.message);
-                            } else {
-                                console.log("Tournament match created with ID:", this.lastID);
-                            }
-                            pending--;
-                        }
-                    );
-                });
-            });
-
-            // Poll until all asynchronous db.run calls have finished.
-            const checkInterval = setInterval(() => {
-                if (pending === 0) {
-                    clearInterval(checkInterval);
-                    //callback(null, "Tournament bracket created");
-                }
-            }, 50);
+            db.run(`INSERT INTO tournaments (stages, matches, match_games, participants, league_id) values (?, ?, ?, ?, ?)`, 
+              [
+              JSON.stringify(realDats.stages), 
+              JSON.stringify(realDats.matches), 
+              JSON.stringify(realDats.matchGames), 
+              JSON.stringify(realDats.participants), 
+              this.leagueId
+              ], (err) => {
+              if(err) {
+              console.log("Error inserting tournament:", err);
+              }
+            })
+            callback(realDats);
         });
-    }
-
-    /**
-     * Creates a bracket structure based on seeded teams.
-     * If there is an odd number of teams, the highest-seeded teams get a bye in the first round.
-     *
-     * @param {Array} seededTeams - Array of seeded teams
-     * @returns {Array} - Array of matches in the bracket
-     */
-    createBracket(seededTeams) {
-        const bracket = [];
-        let round = 1;
-        let matchNumber = 1;
-
-        while (seededTeams.length > 1) {
-            const roundMatches = [];
-            const numTeams = seededTeams.length;
-            const numMatches = Math.floor(numTeams / 2);
-            const numByes = numTeams % 2;
-
-            // Give byes to the highest-seeded teams if necessary
-            const byes = seededTeams.slice(0, numByes).map(team => ({
-                round,
-                matchNumber: matchNumber++,
-                teamA: team,
-                teamB: null // No opponent, this team gets a bye
-            }));
-
-            // Create matches for the remaining teams
-            for (let i = numByes; i < numTeams; i += 2) {
-                const teamA = seededTeams[i];
-                const teamB = seededTeams[i + 1];
-                roundMatches.push({
-                    round,
-                    matchNumber: matchNumber++,
-                    teamA,
-                    teamB
-                });
-            }
-
-            bracket.push(...byes, ...roundMatches);
-            round++;
-
-            // Prepare for the next round: winners of this round advance
-            seededTeams = roundMatches.map(match => ({
-                seed: Math.min(match.teamA.seed, match.teamB ? match.teamB.seed : Infinity),
-                teamId: null, // Placeholder for the winner
-                teamName: null, // Placeholder for the winner
-                wins: 0,
-                losses: 0
-            })).concat(byes.map(match => match.teamA));
-        }
-
-        return bracket;
     }
 }

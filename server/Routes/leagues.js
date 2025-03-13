@@ -181,15 +181,15 @@ router.get('/matches', (req, res) => {
         LEFT JOIN
             scoring_history ON match_history.id = scoring_history.match_id AND scoring_history.tick*friendly_tick_secs < (strftime('%s', 'now') - strftime('%s', created_at))
         WHERE 
-            match_history.league_id = ${leagueId}
+            match_history.league_id = ?
         GROUP BY 
             match_history.id
         ORDER BY
             created_at DESC
     `;
 
-    db.all(query, (err, matches) => {
-        if (err) {
+    db.all(query, [leagueId], (err, matches) => {
+        if ("Error getting matches:",err) {
             console.log(err);
             return res.status(500).json({ message: 'Error fetching matches!' });
         }
@@ -265,33 +265,26 @@ router.get(`/league/league-stats/:leagueId`, (req, res) => {
         })
 })
 
-router.get(`/leagues/tournament`, async (req, res) => {
-    const season = new Season(1);
-    //season.scheduleOnStartup();
-    season.generateTournamentBracket((data) => {
-        console.log("Torny:",data)
-        res.json({data})
-    });
-})
-
-/*/Reset stats
-setTimeout(() => {
-    db.all(`SELECT id FROM players WHERE team_id IS NOT NULL`, (err, rows) => {
-        if (err) {
-            console.log('Error fetching player ids:', err);
-            return;
+router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
+    const leagueId = req.params.leagueId;
+    db.get(`SELECT * FROM tournaments WHERE league_id=? ORDER BY id DESC`, [leagueId], (err, row) => {
+        if(err) {
+            console.log("Error getting tournament:", err)
         }
-        rows.forEach(element => {
-            const player = new Player()
-            player.reset_stats(element.id)
-        });
-    });
-}, 3000);*/
+        const data = {
+            stages: JSON.parse(row.stages),
+            matches: JSON.parse(row.matches),
+            matchGames: JSON.parse(row.match_games),
+            participants: JSON.parse(row.participants),
+        }
+        res.json({data});
+    })
+})
 
 setTimeout(() => {
     const season = new Season(1);
     season.scheduleOnStartup();
-}, 3000);
+}, 1000);
 
 
 
