@@ -183,8 +183,11 @@ class Player {
     generateName() {
         let name;
         const sample = arr => arr[Math.floor(Math.random() * arr.length)];
-        if(Math.random() < 0.6) { name = NameGenerator.generate(); }
+        if(Math.random() < 0.75) { name = NameGenerator.generate(); }
         else { name = NameGenerator.zacNameGeneration(); }
+        while(NameGenerator.slurs.includes(name)) {
+            name = NameGenerator.generate();
+        }
         let lastName = sample([
             'Smith', 'Johnson', 'Williams', 'Jones', 'Brown', 'Jones', 'Garcia',
             'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',

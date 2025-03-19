@@ -1,8 +1,6 @@
 import { db } from '../database.js';
 import { scheduleJob } from "node-schedule";
 import { runMatch, recommendActions, recommendPlayers } from "../Routes/challenges.js";
-import { BracketsManager } from 'brackets-manager';
-import { InMemoryDatabase } from 'brackets-memory-db';
 import moment from 'moment-timezone';
 
 export class Season {
@@ -399,104 +397,168 @@ export class Season {
       return Math.pow(2, Math.ceil(Math.log2(input)));
     }
 
+    generateBracket(numPlayers){
+      var rounds = Math.log(numPlayers)/Math.log(2)-1;
+      var pls = [1,2];
+      for(var i=0;i<rounds;i++){
+        pls = nextLayer(pls);
+      }
+      return pls;
+      function nextLayer(pls){
+        var out=[];
+        var length = pls.length*2+1;
+        pls.forEach(function(d){
+          out.push(d);
+          out.push(length-d);
+        });
+        return out;
+      }
+    }
+
     /**
      * Generates a tournament bracket based on the match history.
      * Seeds teams based on their wins and losses.
      *
      * @param {function(Error, any):void} callback
      */
-    generateTournamentBracket(callback) {
-        console.log("Generating tournament bracket for league id:", this.leagueId);
-        if (!this.leagueId) {
-            return callback(new Error("leagueId is not set"));
+    createTournament(callback) {
+      console.log("Generating tournament bracket for league id:", this.leagueId);
+      if (!this.leagueId) {
+        return callback(new Error("leagueId is not set"));
+      }
+
+      // Retrieve all teams in the league along with their win/loss records
+      db.all(`
+          SELECT teams.id, teams.name, 
+            SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
+          OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 1 ELSE 0 END) AS wins,
+            SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
+          OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
+          FROM teams
+          LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
+          WHERE teams.league_id = ? AND teams.in_season = TRUE
+          GROUP BY teams.id
+          ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
+      `, [this.leagueId], async (err, teams) => {
+        if (err) {
+          console.log(err)
+            return callback(err);
         }
 
-        // Retrieve all teams in the league along with their win/loss records
-        db.all(`
-            SELECT teams.id, teams.name, 
-             SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
-            OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 1 ELSE 0 END) AS wins,
-             SUM(CASE WHEN (match_history.home_team_id = teams.id AND match_history.home_team_score > match_history.away_team_score)
-            OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
-            FROM teams
-            LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
-            WHERE teams.league_id = ? AND teams.in_season = TRUE
-            GROUP BY teams.id
-            ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
-        `, [this.leagueId], async (err, teams) => {
-            if (err) {
-              console.log(err)
-                return callback(err);
-            }
-            
+        // Seed teams based on their win/loss records
+        const seededTeams = teams.map((team, index) => ({
+            seed: index + 1,
+            teamId: team.id,
+            teamName: team.name,
+            wins: team.wins,
+            losses: team.losses,
+            ratio: team.wins/(team.wins+team.losses+1)
+        }));
+        const bracket = this.generateBracket(seededTeams.length);
+        const newBracket = bracket.map(seed => seededTeams.find(team => team.seed === seed));
+        let promises = 0;
 
-            // Seed teams based on their win/loss records
-            const seededTeams = teams.map((team, index) => ({
-                seed: index + 1,
-                teamId: team.id,
-                teamName: team.name,
-                wins: team.wins,
-                losses: team.losses,
-                ratio: team.wins/(team.wins+team.losses+1)
-            }));
-            //console.log("Seeded teams:", seededTeams)
+        let autoWinners = {};
 
-            const jDb = new InMemoryDatabase()
-            const manager = new BracketsManager(jDb);
+        for(let i = 0; i < newBracket.length; i+=2) {
+          let first_team_id;
+          let second_team_id;
+          let winner_team_id;
 
-            // Generate the bracket structure
-            await manager.create.stage({
-              tournamentId: 3,
-              name: 'Season 2 Playoffs',
-              type: 'single_elimination',
-              seeding: teams.map((team) => team.name),
-              matchesChildCount: 3,
-              settings: {
-                seedOrdering: ['inner_outer'],
-                size: this.getNearestPowerOfTwo(teams.length),
-              },
-            });
-
-            manager.update.matchChildCount("stage",0, 3);
-
-            const matches = await manager.get.currentMatches(0)
-            console.log(matches)
-            const matchGame = await manager.get.matchGames(matches)
-            console.log(matchGame)
-            
-            await manager.update.updateMatchGame({
-              id: 1,
-              opponent1: { score: 5 , result:"win"},
-              opponent2: { score: 1, result:"loss" },
-            });
-            // await manager.update.matchGame({
-            //   id: 2,
-            //   opponent1: { score: 3, result:"loss" },
-            //   opponent2: { score: 9, result:"win" },
-            // });
-
-            const data = await manager.get.stageData(0);
-            console.log("Tournament data:",data);
-            const realDats = {
-              stages: data.stage,
-              matches: data.match,
-              matchGames: data.match_game,
-              participants: data.participant,
-            };
-
-            db.run(`INSERT INTO tournaments (stages, matches, match_games, participants, league_id) values (?, ?, ?, ?, ?)`, 
-              [
-              JSON.stringify(realDats.stages), 
-              JSON.stringify(realDats.matches), 
-              JSON.stringify(realDats.matchGames), 
-              JSON.stringify(realDats.participants), 
-              this.leagueId
-              ], (err) => {
+          if(newBracket[i] && newBracket[i+1]) {
+            console.log(newBracket[i].teamName, " VS ", newBracket[i+1].teamName)
+            first_team_id = newBracket[i].teamId;
+            second_team_id = newBracket[i+1].teamId;
+          }
+          else if(newBracket[i]){
+            console.log(newBracket[i].teamName, " gets a BYE")
+            first_team_id = newBracket[i].teamId;
+            second_team_id = null;
+            winner_team_id = first_team_id;
+            autoWinners[(i + newBracket.length)] = winner_team_id;
+          }
+          else if(newBracket[i+1]) {
+            console.log(newBracket[i+1].teamName, " gets a BYE")
+            first_team_id = null;
+            second_team_id = newBracket[i+1].teamId;
+            winner_team_id = second_team_id;
+            autoWinners[(i + newBracket.length)] = winner_team_id;
+          }
+          promises++;
+          db.run(`INSERT INTO tournament_matches (first_team_id, second_team_id, league_id, tournament_match, num_games, winning_team_id) 
+            VALUES (?, ?, ?, ?, ?, ?)`, [first_team_id, second_team_id, this.leagueId, i/2, 3, winner_team_id], (err) => {
               if(err) {
-              console.log("Error inserting tournament:", err);
+                console.log("Error inserting tournament game:", err)
               }
+              promises--;
             })
-            callback(realDats);
-        });
+        }
+        console.log(autoWinners)
+        //Add next rounds
+        let round = 2;
+        let i = newBracket.length/2-1;
+        let matchesInRound = 0;
+        while(2 ** round <= newBracket.length) {
+          i++;
+          matchesInRound++;
+          let first_team_id = null;
+          let second_team_id = null;
+          if(autoWinners[i*2]) {
+            first_team_id = autoWinners[i*2];
+          }
+          if(autoWinners[1+i*2]) {
+            second_team_id = autoWinners[1+i*2];
+          }
+
+          promises++;
+          console.log("Round:", round, " Match:", i, " Match in round:", matchesInRound)
+          db.run(`INSERT INTO tournament_matches (league_id, tournament_match, num_games, tournament_round, first_team_id, second_team_id) 
+            VALUES (?, ?, ?, ?, ?, ?)`, [this.leagueId, i, 3, round, first_team_id, second_team_id], (err) => {
+              if(err) {
+                round = 100;
+                console.log("Error inserting tournament game:", err)
+              }
+              promises--;
+            })
+            if(matchesInRound >= newBracket.length/(2**round)) {
+              matchesInRound = 0;
+              round++;
+            }
+        }
+        const interval = setInterval(() => {
+          if (promises === 0) {
+            clearInterval(interval);
+            callback();
+          }
+        }, 50);
+      });
+    }
+
+    scheduleTournamentMatches(round, season) {
+      db.all(`SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ?`,
+         [round, this.leagueId], (err, rows) => {
+          if(err) {
+            console.log("Error getting torny matches:", err)
+          }
+          console.log("Torny:", rows)
+          let minuteOffset = 0;
+          rows.forEach(match => {
+            if(match.first_team_id && match.second_team_id) {
+              let tournamentMatchTime = moment().tz("America/New_York").add(2, 'day').add(minuteOffset, "minutes");
+              for(let i = 0; i<1+Math.floor(match.num_games/2); i++) {
+                db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
+                   VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
+                  [match.first_team_id, match.second_team_id, tournamentMatchTime.toISOString(), this.leagueId, match.id], (err) => {
+                    if(err) {
+                      console.log("Err creating torny challenge:", err)
+                    }
+                  }
+                );
+                tournamentMatchTime = tournamentMatchTime.add(1, "day");
+              }
+              minuteOffset += 5;
+            }
+          });
+         })
     }
 }

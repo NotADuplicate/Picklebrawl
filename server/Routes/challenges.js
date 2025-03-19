@@ -752,7 +752,7 @@ export function recommendActions(challengePlayers) {
     return actions;
 }
 
-function rerunMatch(match_id, friendly) {
+function deleteMatch(match_id) {
     const tables = [
         'advancement_history',
         'player_history',
@@ -795,7 +795,7 @@ function rerunMatch(match_id, friendly) {
                         } else {
                             console.log(`Deleted row from match_history where id = ${match_id}`);
                             console.log(`Challenge ID of the deleted match: ${challenge_id}`);
-                            runMatch(challenge_id, friendly);
+                            //runMatch(challenge_id, friendly);
                         }
                     });
                 } else {
@@ -807,5 +807,8 @@ function rerunMatch(match_id, friendly) {
             console.error('Error during deletion process:', err);
         });
 }
+
+deleteMatch(65);
+deleteMatch(67);
 
 export default router;

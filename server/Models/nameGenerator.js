@@ -6,6 +6,10 @@ export class NameGenerator{
     static minWordLength = 0;
     static maxWordLength = 30;
     static startingWords = [];
+
+    static slurs = [
+        "nigga", "negro", "kike", "cunt", ""
+    ]
         
     static settings={mustCreateOnlyNewNames:false,mustKeepSmapleLength:true}
     //call this function let the generator find out the rules from the learning sample (which is array of strings)

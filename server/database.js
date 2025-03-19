@@ -110,6 +110,13 @@ db.serialize(() => {
         FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
         FOREIGN KEY (league_id) REFERENCES leagues(id)
     );`);
+    db.run(`ALTER TABLE challenges ADD COLUMN tournament_match INT`, (err) => {
+        if (err) {
+            console.error('Error adding column to challenges table:', err.message);
+        } else {
+            console.log('Added extra_info column to challenges table.');
+        }
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS challenge_players (
         challenge_id INT NOT NULL,
@@ -270,14 +277,21 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
     );`);
 
-    db.run(`DROP TABLE tournaments`)
-    db.run(`CREATE TABLE IF NOT EXISTS tournaments (
+    db.run(`DROP TABLE IF EXISTS tournament_matches`)
+    db.run(`CREATE TABLE IF NOT EXISTS tournament_matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        first_team_id INTEGER,
+        second_team_id INTEGER,
         league_id INTEGER NOT NULL,
-        stages TEXT,
-        matches TEXT,
-        match_games TEXT,
-        participants TEXT )`)
+        tournament_round INTEGER DEFAULT 1,
+        tournament_match INTEGER,
+        winning_team_id INTEGER,
+        num_games INTEGER,
+        season INTEGER,
+        FOREIGN KEY (league_id) REFERENCES leagues(id),
+        FOREIGN KEY (first_team_id) REFERENCES teams(id),
+        FOREIGN KEY (second_team_id) REFERENCES teams(id)
+        )`)
 
     // Trigger to adjust order values after a row is deleted.
     db.run(`
@@ -314,7 +328,6 @@ db.serialize(() => {
       ) + 1;
     END;
     `);
-
 
     db.run(`
         CREATE VIEW IF NOT EXISTS match_stats AS

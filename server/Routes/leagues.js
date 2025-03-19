@@ -267,23 +267,21 @@ router.get(`/league/league-stats/:leagueId`, (req, res) => {
 
 router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
     const leagueId = req.params.leagueId;
-    db.get(`SELECT * FROM tournaments WHERE league_id=? ORDER BY id DESC`, [leagueId], (err, row) => {
+    db.all(`SELECT first_team.name AS first_team, second_team.name AS second_team, num_games, tournament_match, tournament_round, 
+        winning_team_id, first_team.id AS first_team_id, second_team.id AS second_team_id
+        FROM tournament_matches LEFT JOIN teams AS first_team on first_team_id=first_team.id LEFT JOIN teams AS second_team on second_team_id=second_team.id 
+        WHERE tournament_matches.league_id=? ORDER BY tournament_match`, [leagueId], (err, rows) => {
         if(err) {
             console.log("Error getting tournament:", err)
         }
-        const data = {
-            stages: JSON.parse(row.stages),
-            matches: JSON.parse(row.matches),
-            matchGames: JSON.parse(row.match_games),
-            participants: JSON.parse(row.participants),
-        }
-        res.json({data});
+        res.json({rows});
     })
 })
 
 setTimeout(() => {
     const season = new Season(1);
-    season.scheduleOnStartup();
+    //season.scheduleOnStartup();
+    //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
 }, 1000);
 
 
