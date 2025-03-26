@@ -268,9 +268,22 @@ router.get(`/league/league-stats/:leagueId`, (req, res) => {
 router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
     const leagueId = req.params.leagueId;
     db.all(`SELECT first_team.name AS first_team, second_team.name AS second_team, num_games, tournament_match, tournament_round, 
-        winning_team_id, first_team.id AS first_team_id, second_team.id AS second_team_id
-        FROM tournament_matches LEFT JOIN teams AS first_team on first_team_id=first_team.id LEFT JOIN teams AS second_team on second_team_id=second_team.id 
+        winning_team_id, first_team.id AS first_team_id, second_team.id AS second_team_id,
+        (SELECT json_group_array(json_object(
+            'challenge_id', c.id,
+            'match_id', match_history.id,
+            'status', c.status,
+            'match', c.tournament_match,
+            'happening_at', c.happening_at,
+            'home_team', home_team_id,
+            'home_team_score', home_team_score,
+            'away_team_score', away_team_score
+        )) FROM challenges c LEFT JOIN match_history ON challenge_id= c.id WHERE c.tournament_match = tournament_matches.id) AS challenges
+        FROM tournament_matches 
+        LEFT JOIN teams AS first_team ON tournament_matches.first_team_id = first_team.id 
+        LEFT JOIN teams AS second_team ON tournament_matches.second_team_id = second_team.id 
         WHERE tournament_matches.league_id=? ORDER BY tournament_match`, [leagueId], (err, rows) => {
+        //console.log("Tournament match data:", rows);
         if(err) {
             console.log("Error getting tournament:", err)
         }
@@ -281,7 +294,7 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
 setTimeout(() => {
     const season = new Season(1);
     //season.scheduleOnStartup();
-    //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
+    season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
 }, 1000);
 
 

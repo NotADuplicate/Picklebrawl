@@ -17,20 +17,41 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         matches.forEach(match => {
-            let newMatch
-            if(false){//if(!(match.first_team && match.second_team) && match.tournament_round==1) {
-                newMatch = {
-                    participants: [ {name: match.first_team, isWinner: true}, 
-                        {name: "BYE", isWinner: false}],
-                    gameScores: []
-                }
+            if (typeof match.challenges === 'string') {
+              try {
+                match.challenges = JSON.parse(match.challenges);
+              } catch(e) {
+                console.error("Error parsing challenges:", e);
+                match.challenges = [];
+              }
             }
-            else {
-                newMatch = {
-                    participants: [ {name: match.first_team, isWinner: match.first_team_id == match.winning_team_id}, 
-                        {name: match.second_team, isWinner: match.second_team_id == match.winning_team_id}],
-                    gameScores: []
-                }
+            console.log("Match challenge:", match.challenges);
+            let gameScores = [[], []];
+
+            if(match.challenges.length != 0) { // if there are challenges, display them
+              let i = match.num_games;
+              match.challenges.forEach(challenge => {
+                  if(challenge.status == "upcoming") {
+                      gameScores[0].push(null);
+                      gameScores[1].push(null);
+                  } else {
+                      //let winnerIndex = challenge.winner_id == match.first_team_id ? 0 : 1;
+                      gameScores[0].push(challenge.home_team_score);
+                      gameScores[1].push(challenge.away_team_score);
+                  }
+                  i--;
+              });
+              while(i > 0) {
+                  gameScores[0].push(null);
+                  gameScores[1].push(null);
+                  i--;
+              }
+              console.log("Game scores:", gameScores)
+            }
+            let newMatch = {
+                participants: [ {name: match.first_team, isWinner: match.first_team_id == match.winning_team_id}, 
+                    {name: match.second_team, isWinner: match.second_team_id == match.winning_team_id}],
+                gameScores
             }
             if(!match.winning_team_id) {
                 newMatch.result="draw";
@@ -118,11 +139,11 @@ function createGameScoresElement(match, participantIndex) {
       }
       container.appendChild(scoreElem);
       // Add divider if not the last game:
-      if(gameIndex < scores.length - 1) {
+      /*if(gameIndex < scores.length - 1) {
         const divider = document.createElement('span');
         divider.className = 'score-divider';
         container.appendChild(divider);
-      }
+      }*/
     });
   }
   return container;
@@ -132,6 +153,7 @@ function renderBracket(data) {
   const container = document.getElementById('bracket-container');
   container.className = 'bracket';
   container.innerHTML = ""; // Clear existing content
+  console.log("Bracket data:", data);
 
   data.forEach(round => {
     const roundSection = document.createElement('section');

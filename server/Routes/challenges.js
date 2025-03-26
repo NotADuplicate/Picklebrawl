@@ -597,13 +597,14 @@ router.get('/challenges/:id/recommend-actions', (req, res) => {
     });
 });
 
-export function runMatch(challengeId, friendly) {
+export function runMatch(challengeId, friendly, tourny = false) {
     console.log("RUNNINGs")
     let id = challengeId;
     let type;
 
     if(!friendly) {
-        type = 'league';
+
+        type = tourny? 'tournament' : 'league';
     } else {
         type = 'friendly';
     }
@@ -807,8 +808,5 @@ function deleteMatch(match_id) {
             console.error('Error during deletion process:', err);
         });
 }
-
-deleteMatch(65);
-deleteMatch(67);
 
 export default router;

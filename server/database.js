@@ -93,6 +93,7 @@ db.serialize(() => {
         FOREIGN KEY (draft_id) REFERENCES drafts(id)
     )`);
 
+    //db.run("DROP TABLE IF EXISTS challenges");
     db.run(`CREATE TABLE IF NOT EXISTS challenges (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         challenger_team_id INT NOT NULL,
@@ -118,6 +119,7 @@ db.serialize(() => {
         }
     });
 
+    //db.run(`DROP TABLE IF EXISTS challenge_players`);
     db.run(`CREATE TABLE IF NOT EXISTS challenge_players (
         challenge_id INT NOT NULL,
         player_id INT NOT NULL,
@@ -136,6 +138,7 @@ db.serialize(() => {
     );`);
 
     // Make a table where each row contains a single historical match
+    //db.run(`DROP TABLE IF EXISTS match_history`);
     db.run(`CREATE TABLE IF NOT EXISTS match_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         league_id INT NOT NULL,
@@ -277,7 +280,7 @@ db.serialize(() => {
         FOREIGN KEY (team_id) REFERENCES teams(id)
     );`);
 
-    db.run(`DROP TABLE IF EXISTS tournament_matches`)
+    //db.run("DROP TABLE IF EXISTS tournament_matches");
     db.run(`CREATE TABLE IF NOT EXISTS tournament_matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         first_team_id INTEGER,

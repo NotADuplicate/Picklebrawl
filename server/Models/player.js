@@ -220,6 +220,10 @@ class Player {
     }
 
     attack(match, target) {
+        if(target == null) {
+            console.log("ATTACKING NULL")
+            return;
+        }
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
             const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
             const defense = Math.random() * (target.bulk + target.protectBulk);
@@ -262,7 +266,7 @@ class Player {
     }
 
     knockout(match) {
-        console.log("KNOCKED OUT")
+        console.log(this.name, "KNOCKED OUT")
         this.knockedOut = true;
         // Remove player from match players list
         const playerIndex = match.players.indexOf(this);
@@ -274,19 +278,21 @@ class Player {
         const offenseIndex = match.offenseTeam.players.indexOf(this);
         if (offenseIndex > -1) {
             match.offenseTeam.players.splice(offenseIndex, 1);
+            console.log("Players on team: ", match.offenseTeam.players.length)
         }
 
         // Remove player from defense team if present
         const defenseIndex = match.defenseTeam.players.indexOf(this);
         if (defenseIndex > -1) {
             match.defenseTeam.players.splice(defenseIndex, 1);
+            console.log("Players on team: ", match.defenseTeam.players.length)
         }
 
         // Check if any team is empty and end the game if so
         if (match.offenseTeam.players.length === 0) {
             match.offenseTeam.full_dead = true;
         }
-        else if (match.defenseTeam.players.length === 0) {
+        if (match.defenseTeam.players.length === 0) {
             match.defenseTeam.full_dead = true;
         }
     }

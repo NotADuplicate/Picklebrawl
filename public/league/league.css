@@ -327,6 +327,7 @@ button.view-button:hover {
     justify-content: space-between;
 }
 
+#tournament-button
 #calendar-button {
     margin-left: 10px;
     padding: 6px 12px;

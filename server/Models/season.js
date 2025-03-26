@@ -185,7 +185,7 @@ export class Season {
       return schedule;
     }
     
-    scheduleMatch(happening_at, challenge_id, runMatch) {
+    scheduleMatch(happening_at, challenge_id, runMatch, tourny = false) {
       const estCurrentTime = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
       console.log(`Current time (EST): ${estCurrentTime}`);
       const estTime = moment.tz(happening_at, "America/New_York").toDate();
@@ -203,7 +203,7 @@ export class Season {
         try {
           console.log(`Running match for challenge ${challenge_id}`);
           self.verifyMatch(challenge_id, async () => {
-            await runMatch(challenge_id, false);
+            await runMatch(challenge_id, false, tourny);
           });
         } catch (err) {
           console.error(`Error processing challenge ${challenge_id}:`, err);
@@ -227,7 +227,7 @@ export class Season {
       
     }
 
-    verifyMatch(challenge_id, callback) {
+    async verifyMatch(challenge_id, callback) {
       db.get(`SELECT * FROM challenges WHERE id = ?`, [challenge_id], async (err, challenge) => {
         if (err) {
           console.error(`Error fetching challenge ${challenge_id}:`, err);
@@ -240,6 +240,9 @@ export class Season {
         if (challenge.status !== "upcoming") {
           console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
           return;
+        }
+        if(challenge.challenger_players_set === 0 || challenge.challenged_players_set === 0) { //last minute set players
+          await this.verifyPlayersSet(challenge_id);
         }
         let problems = 0;
         if(challenge.challenger_actions_set === 0) {
@@ -278,46 +281,72 @@ export class Season {
         }, 50);  });
     }
 
-    verifyPlayersSet(challenge_id) {
-      db.get(`SELECT * FROM challenges WHERE id = ?`, [challenge_id], async (err, challenge) => {
+    async verifyPlayersSet(challenge_id) {
+      return new Promise((resolve, reject) => {
+      db.get(`SELECT * FROM challenges WHERE id = ?`, [challenge_id], (err, challenge) => {
         if (err) {
-          console.error(`Error fetching challenge ${challenge_id}:`, err);
-          return;
+        console.error(`Error fetching challenge ${challenge_id}:`, err);
+        return reject(err);
         }
-        if(!challenge) {
-          console.error(`Challenge ${challenge_id} not found.`);
-          return;
+        if (!challenge) {
+        console.error(`Challenge ${challenge_id} not found.`);
+        return resolve();
         }
         if (challenge.status !== "upcoming") {
-          console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
-          return;
+        console.log(`Challenge ${challenge_id} is not upcoming; skipping.`);
+        return resolve();
         }
-        if(challenge.challenger_players_set === 0) {
+    
+        const tasks = [];
+    
+        if (challenge.challenger_players_set === 0) {
+        tasks.push(new Promise((res, rej) => {
           this.setPlayers(challenge_id, challenge.challenger_team_id, () => {
-            console.log("Set players")
-            db.run(`UPDATE challenges SET challenger_players_set=TRUE WHERE id=${challenge_id}`, (err) => {
-              if(err) {
-                console.log("Error updating challenger players set:", err);
-              }
-              else {
-                console.log("Updated challenger players set!")
-              }
-            });
+          console.log("Set players for challenger");
+          db.run(
+            `UPDATE challenges SET challenger_players_set=TRUE WHERE id=?`,
+            [challenge_id],
+            (err) => {
+            if (err) {
+              console.log("Error updating challenger players set:", err);
+              return rej(err);
+            }
+            console.log("Updated challenger players set!");
+            res();
+            }
+          );
           });
+        }));
+        } else {
+        tasks.push(Promise.resolve());
         }
-        if(challenge.challenged_players_set === 0) {
+    
+        if (challenge.challenged_players_set === 0) {
+        tasks.push(new Promise((res, rej) => {
           this.setPlayers(challenge_id, challenge.challenged_team_id, () => {
-            console.log("Set players")
-            db.run(`UPDATE challenges SET challenged_players_set=TRUE WHERE id=${challenge_id}`, (err) => {
-              if(err) {
-                console.log("Error updating challenged players set:", err);
-              }
-              else {
-                console.log("Updated challenged players set!")
-              }
-            });
+          console.log("Set players for challenged");
+          db.run(
+            `UPDATE challenges SET challenged_players_set=TRUE WHERE id=?`,
+            [challenge_id],
+            (err) => {
+            if (err) {
+              console.log("Error updating challenged players set:", err);
+              return rej(err);
+            }
+            console.log("Updated challenged players set!");
+            res();
+            }
+          );
           });
+        }));
+        } else {
+        tasks.push(Promise.resolve());
         }
+    
+        Promise.all(tasks)
+        .then(() => resolve())
+        .catch((error) => reject(error));
+      });
       });
     }
 
@@ -387,7 +416,10 @@ export class Season {
         }
         else {
           rows.forEach(row => {
-            this.scheduleMatch(row.happening_at, row.id, runMatch);
+            const tourny = row.tournament_match ? true : false;
+            //const time = moment(row.happening_at).add(-2, 'day').add(1, "minutes").toDate();
+            //this.scheduleMatch(time, row.id, runMatch, tourny);
+            this.scheduleMatch(row.happening_at, row.id, runMatch, tourny);
           });
         }
       })
@@ -485,8 +517,9 @@ export class Season {
             autoWinners[(i + newBracket.length)] = winner_team_id;
           }
           promises++;
+          //Add first round
           db.run(`INSERT INTO tournament_matches (first_team_id, second_team_id, league_id, tournament_match, num_games, winning_team_id) 
-            VALUES (?, ?, ?, ?, ?, ?)`, [first_team_id, second_team_id, this.leagueId, i/2, 3, winner_team_id], (err) => {
+            VALUES (?, ?, ?, ?, ?, ?)`, [first_team_id, second_team_id, this.leagueId, i/2, 1, winner_team_id], (err) => {
               if(err) {
                 console.log("Error inserting tournament game:", err)
               }
@@ -535,30 +568,122 @@ export class Season {
     }
 
     scheduleTournamentMatches(round, season) {
+      const self = this;
+      db.run(`UPDATE players SET health=100`)
       db.all(`SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ?`,
          [round, this.leagueId], (err, rows) => {
           if(err) {
             console.log("Error getting torny matches:", err)
           }
           console.log("Torny:", rows)
-          let minuteOffset = 0;
+          let minuteOffset = 480;
           rows.forEach(match => {
             if(match.first_team_id && match.second_team_id) {
-              let tournamentMatchTime = moment().tz("America/New_York").add(2, 'day').add(minuteOffset, "minutes");
-              for(let i = 0; i<1+Math.floor(match.num_games/2); i++) {
+              let tournamentMatchTime = moment().tz("America/New_York").add(1, 'day').add(minuteOffset, "minutes");
+              for(let i = 0; i<1+Math.floor(match.num_games/2); i++) { //put 2 games for each one
+                const time = moment(tournamentMatchTime).toDate();
                 db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
                    VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
-                  [match.first_team_id, match.second_team_id, tournamentMatchTime.toISOString(), this.leagueId, match.id], (err) => {
+                  [match.first_team_id, match.second_team_id, tournamentMatchTime.toISOString(), this.leagueId, match.id], function(err) {
                     if(err) {
                       console.log("Err creating torny challenge:", err)
                     }
-                  }
-                );
+                    const challengeId = this.lastID;
+                    self.scheduleMatch(time, challengeId, runMatch, true);
+                  });
                 tournamentMatchTime = tournamentMatchTime.add(1, "day");
               }
-              minuteOffset += 5;
+              minuteOffset += 10;
             }
           });
          })
+    }
+
+    updateTournamentMatch(match_id, winner_id) {
+      const self = this;
+      db.get(
+        `SELECT tm.*, m.id AS mhid, m.created_at, m.home_team_id, m.away_team_id, (
+        SELECT COUNT(*)
+        FROM challenges c
+        JOIN match_history mh ON c.id = mh.challenge_id
+        WHERE c.tournament_match = tm.id
+         ) AS numMatches, (
+        SELECT COUNT(*)
+        FROM challenges c
+        JOIN match_history mh ON c.id = mh.challenge_id
+        WHERE c.tournament_match = tm.id AND mh.home_team_score > mh.away_team_score
+         ) AS homeWins
+         FROM tournament_matches tm, match_history m
+         WHERE tm.id = (
+        SELECT c.tournament_match
+        FROM challenges c
+        JOIN match_history mh ON c.id = mh.challenge_id
+        WHERE mh.id = ?
+         ) AND m.id=?`,
+        [match_id, match_id],
+        (err, row) => {
+          console.log("Row:", row)
+          if (err) {
+            console.log("Error getting tournament match for update:", err);
+            return
+          }
+          const num_games = row.num_games;
+          const numMatches = row.numMatches;
+          const homeWins = row.homeWins;
+          const awayWins = numMatches - homeWins;
+          let matchWinner = null;
+          if(homeWins > num_games/2) {
+            matchWinner = winner_id;
+          } else if(awayWins > num_games/2) {
+            matchWinner = winner_id;
+          }
+
+          if(matchWinner) {
+            const leagueId = this.leagueId;
+            console.log("Match winner:", matchWinner)
+            db.run(`UPDATE tournament_matches SET winning_team_id = ? WHERE id = ?`, [winner_id, row.id], (err) => {
+              if(err) {
+                console.log("Error updating tournament match:", err);
+              }
+              const autoWinner = row.tournament_match + 8; //fix this to work for other tourny sizes!
+              console.log("Autowinner:", autoWinner)
+              const teamColumn = autoWinner%2 == 0 ? "first_team_id" : "second_team_id";
+
+              db.run(`UPDATE tournament_matches SET ${teamColumn} = ? WHERE tournament_match = ? AND league_id = ?`, [winner_id, Math.floor(autoWinner/2), leagueId], (err) => {
+                if(err) {
+                  console.log("Error adding autowinner to match:", err);
+                }
+                //Check if all matches in the round have finished
+                db.all(
+                  `SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ?`,
+                  [row.tournament_round, leagueId],
+                  (err, matches) => {
+                  if (err) {
+                    console.log("Error fetching tournament matches:", err);
+                    return;
+                  }
+                  const allWinnersSet = matches.every(match => match.winning_team_id !== null);
+                  if (allWinnersSet) {
+                    self.scheduleTournamentMatches(row.tournament_round+1, 1);
+                  }
+                  }
+                );
+              });
+            });
+          } else if(row.num_games/2 < row.numMatches) { //theyve played more than half of the games, schedule another one
+            console.log("Making a new match:", row.num_games, row.numMatches)
+            const nextTime = moment(row.created_at).add(1, 'day').toISOString();
+            db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
+              VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
+             [row.first_team_id, row.second_team_id, nextTime, this.leagueId, row.id], function(err) {
+              if(err) {
+                console.log("Err creating torny challenge:", err)
+              }
+              const challengeId = this.lastID;
+              self.scheduleMatch(nextTime, challengeId, runMatch, true);
+            });
+          }
+        }
+      );
     }
 }
