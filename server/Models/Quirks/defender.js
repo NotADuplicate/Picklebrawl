@@ -14,10 +14,10 @@ export class Defender extends Quirk {
         if (match.defenseTeam.players.includes(player)) {
             player.baseFinesse += this.STAT_INCREASE;
             player.baseBulk += this.STAT_INCREASE;
-            player.baseFocus += this.STAT_INCREASE;
+            player.baseCardio += this.STAT_INCREASE;
             player.baseHeight += this.STAT_INCREASE;
             player.baseStrength += this.STAT_INCREASE;
-            player.baseTrickiness += this.STAT_INCREASE;
+            player.baseIntelligence += this.STAT_INCREASE;
         }
     }
 
@@ -25,17 +25,17 @@ export class Defender extends Quirk {
         if (match.defenseTeam.players.includes(player)) {
             player.baseFinesse += this.STAT_INCREASE;
             player.baseBulk += this.STAT_INCREASE;
-            player.baseFocus += this.STAT_INCREASE;
+            player.baseCardio += this.STAT_INCREASE;
             player.baseHeight += this.STAT_INCREASE;
             player.baseStrength += this.STAT_INCREASE;
-            player.baseTrickiness += this.STAT_INCREASE;
+            player.baseIntelligence += this.STAT_INCREASE;
         } else {
             player.baseFinesse -= this.STAT_INCREASE;
             player.baseBulk -= this.STAT_INCREASE;
-            player.baseFocus -= this.STAT_INCREASE;
+            player.baseCardio -= this.STAT_INCREASE;
             player.baseHeight -= this.STAT_INCREASE;
             player.baseStrength -= this.STAT_INCREASE;
-            player.baseTrickiness -= this.STAT_INCREASE;
+            player.baseIntelligence -= this.STAT_INCREASE;
         }
     }
 }

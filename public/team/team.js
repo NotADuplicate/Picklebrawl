@@ -89,8 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 playerCard.querySelector('.player-finesse').textContent = player.finesse;
                 playerCard.querySelector('.player-height').textContent = player.height;
                 playerCard.querySelector('.player-strength').textContent = player.strength;
-                playerCard.querySelector('.player-trickiness').textContent = player.trickiness;
-                playerCard.querySelector('.player-focus').textContent = player.focus;
+                playerCard.querySelector('.player-intelligence').textContent = player.intelligence;
+                playerCard.querySelector('.player-cardio').textContent = player.cardio;
                 playerCard.querySelector('.tooltip').textContent = player.quirk_title;
                 playerCard.querySelector('.tooltip').setAttribute('data-tooltip', player.quirk_description);
             

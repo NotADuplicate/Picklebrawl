@@ -15,10 +15,10 @@ export class Selfish extends Quirk {
             if(otherPlayer.team === player.team && otherPlayer !== player) {
             otherPlayer.baseFinesse -= this.STAT_DECREASE;
             otherPlayer.baseBulk -= this.STAT_DECREASE;
-            otherPlayer.baseFocus -= this.STAT_DECREASE;
+            otherPlayer.baseCardio -= this.STAT_DECREASE;
             otherPlayer.baseHeight -= this.STAT_DECREASE;
             otherPlayer.baseStrength -= this.STAT_DECREASE;
-            otherPlayer.baseTrickiness -= this.STAT_DECREASE;
+            otherPlayer.baseIntelligence -= this.STAT_DECREASE;
             }
         });
     }
@@ -28,10 +28,10 @@ export class Selfish extends Quirk {
             if(otherPlayer.team === player.team && otherPlayer !== player) {
                 otherPlayer.finesse -= this.STAT_DECREASE;
                 otherPlayer.bulk -= this.STAT_DECREASE;
-                otherPlayer.focus -= this.STAT_DECREASE;
+                otherPlayer.cardio -= this.STAT_DECREASE;
                 otherPlayer.height -= this.STAT_DECREASE;
                 otherPlayer.strength -= this.STAT_DECREASE;
-                otherPlayer.trickiness -= this.STAT_DECREASE;
+                otherPlayer.intelligence -= this.STAT_DECREASE;
             }
         });
     }

@@ -809,4 +809,6 @@ function deleteMatch(match_id) {
         });
 }
 
+runMatch(1, true);
+
 export default router;

@@ -9,14 +9,14 @@ export class Duplicitous extends Quirk {
     static APPEARS_IN_DRAFT = true;
 
     static trickEffect(player, target, match) {
-        if(player.trickiness > target.focus) {
-            return Math.random() < match.TRICK_CHANCE*1.5;
+        if(player.intelligence > target.intelligence) {
+            return Math.random() < 1.5*match.TRICK_CHANCE*(player.intelligence - target.intelligence);
         }
         return false;
     }
 
     static playerStatGenerationChanges(player, power) {
-        player.trickiness = Math.max(player.trickiness, 2);
+        player.intelligence = Math.max(player.intelligence, 2);
         return;
     }
 }

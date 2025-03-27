@@ -20,24 +20,24 @@ export class WildCard extends Quirk {
         console.log("GAME SEED: ", seed);
 
         // Calculate total stats
-        const totalStats = player.baseFinesse + player.baseBulk + player.baseHeight + player.baseStrength + player.baseTrickiness + player.baseFocus;
+        const totalStats = player.baseFinesse + player.baseBulk + player.baseHeight + player.baseStrength + player.baseIntelligence + player.baseCardio;
 
         // Set all player stats to 0
         player.baseFinesse = 0;
         player.baseBulk = 0;
         player.baseHeight = 0;
         player.baseStrength = 0;
-        player.baseTrickiness = 0;
-        player.baseFocus = 0;
+        player.baseIntelligence = 0;
+        player.baseCardio = 0;
 
         // Redistribute stats randomly
-        const stats = ['baseFinesse', 'baseBulk', 'baseHeight', 'baseStrength', 'baseTrickiness', 'baseFocus'];
+        const stats = ['baseFinesse', 'baseBulk', 'baseHeight', 'baseStrength', 'baseIntelligence', 'baseCardio'];
 
         for (let i = 0; i < totalStats; i++) {
             player[stats[Math.floor(this.seededRandom(seed) * stats.length)]]++;
             seed++;
         }
-        console.log("Game Wild card player: ", player.baseBulk, " ", player.baseFocus, " ", player.baseHeight, " ", player.baseStrength, " ", player.baseTrickiness, " ", player.baseFinesse)
+        console.log("Game Wild card player: ", player.baseBulk, " ", player.baseCardio, " ", player.baseHeight, " ", player.baseStrength, " ", player.baseIntelligence, " ", player.baseFinesse)
     }
 
     static challengeStatModification(players, player) {
@@ -46,18 +46,18 @@ export class WildCard extends Quirk {
         console.log("Challenge SEED: ", seed);
 
         // Calculate total stats
-        const totalStats = player.baseFinesse + player.baseBulk + player.baseHeight + player.baseStrength + player.baseTrickiness + player.baseFocus;
+        const totalStats = player.baseFinesse + player.baseBulk + player.baseHeight + player.baseStrength + player.baseIntelligence + player.baseCardio;
 
         // Set all player stats to 0
         player.finesse = 0;
         player.bulk = 0;
         player.strength = 0;
         player.height = 0;
-        player.trickiness = 0;
-        player.focus = 0;
+        player.intelligence = 0;
+        player.cardio = 0;
 
         // Redistribute stats randomly
-        const stats = ['finesse', 'bulk', 'height', 'strength', 'trickiness', 'focus'];
+        const stats = ['finesse', 'bulk', 'height', 'strength', 'intelligence', 'cardio'];
 
         for (let i = 0; i < totalStats; i++) {
             player[stats[Math.floor(this.seededRandom(seed) * stats.length)]]++;

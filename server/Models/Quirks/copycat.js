@@ -30,8 +30,8 @@ export class Copycat extends Quirk {
                     player.baseFinesse = otherPlayer.baseFinesse
                     player.baseHeight = otherPlayer.baseHeight
                     player.baseStrength = otherPlayer.baseStrength
-                    player.baseFocus = otherPlayer.baseFocus
-                    player.baseTrickiness = otherPlayer.baseTrickiness
+                    player.baseCardio = otherPlayer.baseCardio
+                    player.baseIntelligence = otherPlayer.baseIntelligence
                 }
             }
         }
@@ -46,8 +46,8 @@ export class Copycat extends Quirk {
                     player.finesse = otherPlayer.finesse
                     player.height = otherPlayer.height
                     player.strength = otherPlayer.strength
-                    player.focus = otherPlayer.focus
-                    player.trickiness = otherPlayer.trickiness
+                    player.cardio = otherPlayer.cardio
+                    player.intelligence = otherPlayer.intelligence
                 }
             }
         }

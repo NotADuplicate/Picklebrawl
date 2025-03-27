@@ -17,8 +17,8 @@ export class AlphabetCompletionist extends Quirk {
         player.bulk += this.BASE_STAT_INCREASE;
         player.height += this.BASE_STAT_INCREASE;
         player.strength += this.BASE_STAT_INCREASE;
-        player.trickiness += this.BASE_STAT_INCREASE;
-        player.focus += this.BASE_STAT_INCREASE;
+        player.intelligence += this.BASE_STAT_INCREASE;
+        player.cardio += this.BASE_STAT_INCREASE;
         return;
     }
 
@@ -47,8 +47,8 @@ export class AlphabetCompletionist extends Quirk {
         player.baseFinesse -= missingLetters;
         player.baseHeight -= missingLetters;
         player.baseStrength -= missingLetters;
-        player.baseTrickiness -= missingLetters;
-        player.baseFocus -= missingLetters;
+        player.baseIntelligence -= missingLetters;
+        player.baseCardio -= missingLetters;
     }
 
     static challengeStatModification(players, player) {
@@ -76,8 +76,8 @@ export class AlphabetCompletionist extends Quirk {
         player.finesse -= missingLetters;
         player.height -= missingLetters;
         player.strength -= missingLetters;
-        player.trickiness -= missingLetters;
-        player.focus -= missingLetters;
+        player.intelligence -= missingLetters;
+        player.cardio -= missingLetters;
         return true;
     }
 }

@@ -12,8 +12,8 @@ export class WeakestLink extends Quirk {
     static playerStatGenerationChanges(player, power) {
         player.finesse = Math.round(player.finesse / 2);
         player.strength = Math.round(player.strength / 2);
-        player.trickiness = Math.round(player.trickiness / 2);
-        player.focus = Math.round(player.focus / 2);
+        player.intelligence = Math.round(player.intelligence / 2);
+        player.cardio = Math.round(player.cardio / 2);
         player.height = Math.round(player.height / 2);
         player.bulk = Math.round(player.bulk / 2);
     }
@@ -32,8 +32,8 @@ export class WeakestLink extends Quirk {
                 onlyPlayer = false;
                 lowestFinesse = Math.min(lowestFinesse, otherPlayer.baseFinesse);
                 lowestStrength = Math.min(lowestStrength, otherPlayer.baseStrength);
-                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.baseTrickiness);
-                lowestFocus = Math.min(lowestFocus, otherPlayer.baseFocus);
+                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.baseIntelligence);
+                lowestFocus = Math.min(lowestFocus, otherPlayer.baseCardio);
                 lowestHeight = Math.min(lowestHeight, otherPlayer.baseHeight);
                 lowestBulk = Math.min(lowestBulk, otherPlayer.baseBulk);
             }
@@ -42,15 +42,15 @@ export class WeakestLink extends Quirk {
             console.log("Lowest Stats:", {
                 finesse: lowestFinesse,
                 strength: lowestStrength,
-                trickiness: lowestTrickiness,
-                focus: lowestFocus,
+                intelligence: lowestTrickiness,
+                cardio: lowestFocus,
                 height: lowestHeight,
                 bulk: lowestBulk
             });
             player.baseFiness += lowestFinesse;
             player.baseStrength += lowestStrength;
-            player.baseTrickiness += lowestTrickiness;
-            player.baseFocus += lowestFocus;
+            player.baseIntelligence += lowestTrickiness;
+            player.baseCardio += lowestFocus;
             player.baseHeight += lowestHeight;
             player.baseBulk += lowestBulk;
         }
@@ -70,8 +70,8 @@ export class WeakestLink extends Quirk {
                 onlyPlayer = false;
                 lowestFinesse = Math.min(lowestFinesse, otherPlayer.finesse);
                 lowestStrength = Math.min(lowestStrength, otherPlayer.strength);
-                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.trickiness);
-                lowestFocus = Math.min(lowestFocus, otherPlayer.focus);
+                lowestTrickiness = Math.min(lowestTrickiness, otherPlayer.intelligence);
+                lowestFocus = Math.min(lowestFocus, otherPlayer.cardio);
                 lowestHeight = Math.min(lowestHeight, otherPlayer.height);
                 lowestBulk = Math.min(lowestBulk, otherPlayer.bulk);
             }
@@ -79,8 +79,8 @@ export class WeakestLink extends Quirk {
         if(!onlyPlayer) {
             player.finesse += lowestFinesse;
             player.strength += lowestStrength;
-            player.trickiness += lowestTrickiness;
-            player.focus += lowestFocus;
+            player.intelligence += lowestTrickiness;
+            player.cardio += lowestFocus;
             player.height += lowestHeight;
             player.bulk += lowestBulk;
         }

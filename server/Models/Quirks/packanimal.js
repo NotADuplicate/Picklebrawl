@@ -20,8 +20,8 @@ export class PackAnimal extends Quirk {
         player.baseBulk += teammatesWithQuirk;
         player.baseHeight += teammatesWithQuirk;
         player.baseStrength += teammatesWithQuirk;
-        player.baseTrickiness += teammatesWithQuirk;
-        player.baseFocus += teammatesWithQuirk;
+        player.baseIntelligence += teammatesWithQuirk;
+        player.baseCardio += teammatesWithQuirk;
     }
 
     static challengeStatModification(players, player) {
@@ -35,7 +35,7 @@ export class PackAnimal extends Quirk {
         player.bulk += teammatesWithQuirk;
         player.height += teammatesWithQuirk;
         player.strength += teammatesWithQuirk;
-        player.trickiness += teammatesWithQuirk;
-        player.focus += teammatesWithQuirk;
+        player.intelligence += teammatesWithQuirk;
+        player.cardio += teammatesWithQuirk;
     }
 }

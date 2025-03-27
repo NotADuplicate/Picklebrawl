@@ -44,7 +44,7 @@ class Match {
     SHOOTING_DISTANCE_LINEAR = 0.08;
     SHOOTING_DISTANCE_EXPONENTIAL = 0.001;
     INJURY_PERMANENCE_MODIFIER = 1;    // TODO: not implemented yet
-    TRICK_CHANCE = 1/3;
+    TRICK_CHANCE = 0.1;
     ASSIST_MODIFIER = 1;
     SHOOTING_BONUS = 1.5;
     ADVANCEMENT_MULTIPLIER = 1.3;
@@ -161,10 +161,10 @@ class Match {
         const self = this;
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, challenge_id,`
-                + `weather, type, season) VALUES (?, ?, ?, ?,?, ?, SELECT(season FROM leagues WHERE id = ${this.homeTeam.leagueId}))`, 
+                + `weather, type, season) VALUES (?, ?, ?, ?,?, ?, (SELECT season FROM leagues WHERE id = ${this.homeTeam.leagueId}))`, 
                 [this.homeTeam.leagueId, this.homeTeam.teamId, this.awayTeam.teamId, challengeId, this.weather.name, type], function(err) {
                 if (err) {
-                    //console.log('Error inserting match into match_history:', err.message);
+                    console.log('Error inserting match into match_history:', err.message);
                     reject(err);
                 }
                 self.match_id = this.lastID;
@@ -196,7 +196,7 @@ class Match {
                 // Re-add ghost players to the players list
                 self.players.push(...ghostPlayers);      
                 self.savePriorities();
-                
+
                 for(const player of self.players) {
                     player.quirk.thirdStartGameEffect(self, player);
                 }
@@ -392,8 +392,6 @@ class Match {
             player.tempFinesse = 0;
             player.tempHeight = 0;
             player.tempStrength = 0;
-            player.tempTrickiness = player.trickiness;
-            player.tempFocus = player.focus;
             player.assisters = 0;
             player.protectBulk = 0;
         }
@@ -407,8 +405,8 @@ class Match {
             player.finesse = Math.max(0.5, player.baseFinesse * (player.hp / player.maxHp));
             player.height = Math.max(0.5, player.baseHeight * (player.hp / player.maxHp));
             player.strength = Math.max(0.5, player.baseStrength * (player.hp / player.maxHp));
-            player.focus = player.baseFocus;
-            player.trickiness = player.baseTrickiness;
+            player.cardio = player.baseCardio;
+            player.intelligence = player.baseIntelligence;
         }
     }
 
@@ -573,12 +571,12 @@ class Match {
             // Loop through offense team, calculate amount advanced
             let numAdvancers = 0;
             let advanceAmount = 0;
-            let minTrickiness = 100; //if multiple advancers, its the least tricky advancer
+            let minInt = 100; //if multiple advancers, its the stupidest advancer
             let topAdvancer = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
             let topAdvancerAmount = -1;
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Advance" && this.turnedover == false) {
-                    if(player.trickiness < minTrickiness) {minTrickiness = player.trickiness;}
+                    if(player.intelligence < minInt) {minInt = player.intelligence;}
                     numAdvancers++;
                     player.advance = Math.random() * (player.strength + player.tempStrength) + player.strength / 4;
                     advanceAmount += player.advance;
@@ -594,7 +592,7 @@ class Match {
                 advanceAmount *= 1-(this.MULTIPLE_ADVANCERS_REDUCTION*numAdvancers);
             } 
             if(numAdvancers == 0) {//if no players are advancing, a little advancement occurs
-                minTrickiness = -1;
+                minInt = -1;
                 advanceAmount = Math.random() * this.NO_ADVANCERS_MAX_ADVANCEMENT;
             } 
             if(topAdvancer != null) {
@@ -602,7 +600,7 @@ class Match {
                     this.playerWithPossession = topAdvancer;
                 }
                 else {
-                    //console.log("TOP ADVANCER IS A DEFENDER??")
+                    console.log("TOP ADVANCER IS A DEFENDER??")
                 }
             }
 
@@ -614,8 +612,8 @@ class Match {
             if(!this.defenseTeam.full_dead) {
                 for (const player of this.defenseTeam.players) {
                     if(player.defensePriority === "Defend_Advance") {
-                        if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //trickiness check
-                            //console.log(player.name, " was tricked by ", topAdvancer.name, topAdvancer.trickiness, player.focus)
+                        if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //intelligence check
+                            //console.log(player.name, " was tricked by ", topAdvancer.name, topAdvancer.intelligence, player.cardio)
                             db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                                 + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
                                 function(err) {
@@ -877,9 +875,9 @@ class Match {
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend_Score") {
                     numBlockers++;
-                    //console.log("Shooter trickiness: ", shooter.tempTrickiness);
-                    //console.log("Defender focus: ", player.tempFocus);
-                    if(player.quirk.beTrickedEffect(player, shooter, this) && shooter.quirk.trickEffect(shooter, player, this)) { //trickiness check
+                    //console.log("Shooter intelligence: ", shooter.tempTrickiness);
+                    //console.log("Defender cardio: ", player.tempFocus);
+                    if(player.quirk.beTrickedEffect(player, shooter, this) && shooter.quirk.trickEffect(shooter, player, this)) { //intelligence check
                         //console.log(player.name + " was tricked!");
                         db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                             + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, player.id, "Score"],

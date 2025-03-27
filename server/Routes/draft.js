@@ -19,7 +19,7 @@ router.get('/draft/players', (req, res) => {
             return res.status(404).json({message: "Draft not found"})
         }
         const order = draft.turn;
-        db.all(`SELECT bulk, finesse, focus, height, strength, trickiness, power, players.id, title, description, name
+        db.all(`SELECT bulk, finesse, cardio, height, strength, intelligence, power, players.id, title, description, name
             FROM players JOIN quirks on players.quirk = quirks.id 
             WHERE players.draft_id = ? AND players.team_id IS NULL`, [draftId], (err, players) => {
             if (err) {

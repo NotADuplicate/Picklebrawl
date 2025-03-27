@@ -34,14 +34,14 @@ let defensePriorities = {
 };
 
 let prioritiesDescriptions = {
-    Advance: "Use strength to move the ball forward. Trickiness can help avoid defenders with lower focus.",
-    Score: "Use finesse to shoot the ball. Scoring is easier the further down the field you are. Multiple scorers split the defenders between scorers. Trickiness can help avoid defenders with lower focus.",
+    Advance: "Use strength to move the ball forward. Intelligence can help avoid defenders with lower intelligence.",
+    Score: "Use finesse to shoot the ball. Scoring is easier the further down the field you are. Multiple scorers split the defenders between scorers. Intelligence can help avoid defenders with lower intelligence.",
     Attack: "Use strength to attack an enemy.",
     Protect: "Use height to protect a teammate.",
     Assist: "Temporarily boost an ally's stats. All their stats are increased by the average of your finesse and the stat that you are increasing.",
     Rest: "Do nothing but increase the effectiveness of your other action",
-    Defend_Advance: "Use bulk to prevent the enemy from moving the ball forward. Focus can prevent tricky advancers from avoiding you.",
-    Defend_Score: "Use height to prevent the enemy from scoring. Focus can prevent tricky scorers from avoiding you."
+    Defend_Advance: "Use bulk to prevent the enemy from moving the ball forward. Intelligence can prevent advancers from tricking you.",
+    Defend_Score: "Use height to prevent the enemy from scoring. Intelligence can prevent scorers from tricking you."
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -149,8 +149,8 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
         Fin: stats.Fin,
         Ht: stats.Ht,
         Str: stats.Str,
-        Trk: stats.Trk,
-        Fcs: stats.Fcs
+        Int: stats.Int,
+        Car: stats.Car
     };
     
     Object.keys(playerStats).forEach(stat => {
@@ -168,8 +168,8 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
     player.dataset.finesse = stats.Fin;
     player.dataset.height = stats.Ht;
     player.dataset.strength = stats.Str;
-    player.dataset.trickiness = stats.Trk;
-    player.dataset.focus = stats.Fcs;
+    player.dataset.intelligence = stats.Int;
+    player.dataset.cardio = stats.Car;
     player.dataset.quirkTitle = playerQuirk;
     player.dataset.stats = JSON.stringify(stats);
 
@@ -306,8 +306,8 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                 Fin: player.finesse,
                 Ht: player.height,
                 Str: player.strength,
-                Trk: player.trickiness,
-                Fcs: player.focus
+                Int: player.intelligence,
+                Car: player.cardio
             }, player.id, player.quirk_title, player.quirk_description, player.health);
         });
         fetchData(`/teams/${otherTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
@@ -319,8 +319,8 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                         Fin: player.finesse,
                         Ht: player.height,
                         Str: player.strength,
-                        Trk: player.trickiness,
-                        Fcs: player.focus
+                        Int: player.intelligence,
+                        Car: player.cardio
                     }, player.id, player.quirk_title, player.quirk_description, player.health);
                 });
                 checkChallengeFlags();
@@ -715,8 +715,8 @@ function applyQuirkStats() {
                 Fin: player.finesse,
                 Ht: player.height,
                 Str: player.strength,
-                Trk: player.trickiness,
-                Fcs: player.focus
+                Int: player.intelligence,
+                Car: player.cardio
             };
             Object.keys(playerStats).forEach(stat => {
                 const statElement = playerElement.querySelector(`.stat[data-stat="${stat}"] .stat-value`);

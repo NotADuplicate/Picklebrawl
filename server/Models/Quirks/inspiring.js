@@ -17,8 +17,8 @@ export class Inspiring extends Quirk {
                 otherPlayer.baseBulk += bonus;
                 otherPlayer.baseHeight += bonus;
                 otherPlayer.baseStrength += bonus;
-                otherPlayer.baseTrickiness += bonus;
-                otherPlayer.baseFocus += bonus;
+                otherPlayer.baseIntelligence += bonus;
+                otherPlayer.baseCardio += bonus;
             }
         }
     }
@@ -31,8 +31,8 @@ export class Inspiring extends Quirk {
                 otherPlayer.bulk += bonus
                 otherPlayer.height += bonus
                 otherPlayer.strength += bonus
-                otherPlayer.trickiness += bonus
-                otherPlayer.focus += bonus
+                otherPlayer.intelligence += bonus
+                otherPlayer.cardio += bonus
             }
         }
     }

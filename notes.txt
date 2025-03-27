@@ -52,7 +52,7 @@ Offender: better on offense
 Defender: better on defense
 Alpha: comes first alphabetically, bonus if their name comes first alphabetically
 Curb stomper: if they attack someone who's shorter, deal double damage
-Sly: If trickiness is higher than focus, increase chance to juke
+Sly: If intelligence is higher than cardio, increase chance to juke
 
 INDIVIDUAL CHANGES (may rely on weather or other game stats, usually mean changing some stats or some magic numbers for that player)
 Streaky

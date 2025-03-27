@@ -14,13 +14,13 @@ export class SecondWind extends Quirk {
         player.height += this.STAT_BOOST;
         player.strength += this.STAT_BOOST;
         player.finesse += this.STAT_BOOST;
-        player.trickiness += this.STAT_BOOST;
-        player.focus += this.STAT_BOOST;
+        player.intelligence += this.STAT_BOOST;
+        player.cardio += this.STAT_BOOST;
         player.baseBulk += this.STAT_BOOST;
         player.baseHeight += this.STAT_BOOST;
         player.baseStrength += this.STAT_BOOST;
         player.baseFinesse += this.STAT_BOOST;
-        player.baseTrickiness += this.STAT_BOOST;
-        player.baseFocus += this.STAT_BOOST;
+        player.baseIntelligence += this.STAT_BOOST;
+        player.baseCardio += this.STAT_BOOST;
     }
 }

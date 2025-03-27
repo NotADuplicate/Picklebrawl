@@ -16,8 +16,8 @@ export class Codependent extends Quirk {
             bulk: player.bulk,
             height: player.height,
             strength: player.strength,
-            trickiness: player.trickiness,
-            focus: player.focus
+            intelligence: player.intelligence,
+            cardio: player.cardio
         };
 
         console.log(stats);
@@ -52,8 +52,8 @@ export class Codependent extends Quirk {
             bulk: player.baseBulk,
             height: player.baseHeight,
             strength: player.baseStrength,
-            trickiness: player.baseTrickiness,
-            focus: player.baseFocus
+            intelligence: player.baseIntelligence,
+            cardio: player.baseCardio
         };
 
         const highestValue = Math.max(Object.values(stats));
@@ -76,8 +76,8 @@ export class Codependent extends Quirk {
             bulk: player.bulk,
             height: player.height,
             strength: player.strength,
-            trickiness: player.trickiness,
-            focus: player.focus
+            intelligence: player.intelligence,
+            cardio: player.cardio
         };
         console.log("Not in a pack")
 

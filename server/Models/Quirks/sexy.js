@@ -12,7 +12,7 @@ export class Sexy extends Quirk {
     static challengeStatModification(players, player) {
         players.forEach((otherPlayer) => {
             if (otherPlayer.team !== player.team && otherPlayer.quirk.title !== "Ace") {
-                otherPlayer.focus -= 1;
+                otherPlayer.cardio -= 1;
             }
         });
     }
@@ -20,8 +20,8 @@ export class Sexy extends Quirk {
     static startGameEffect(match, player) {
         match.players.forEach((otherPlayer) => {
             if (otherPlayer.team !== player.team && otherPlayer.quirk.title !== "Ace") {
-                otherPlayer.baseFocus -= 1;
-                console.log(otherPlayer.name, " decreased focus to ", otherPlayer.baseFocus)
+                otherPlayer.baseCardio -= 1;
+                console.log(otherPlayer.name, " decreased cardio to ", otherPlayer.baseCardio)
             }
         });
     }

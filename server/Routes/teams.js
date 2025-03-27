@@ -124,7 +124,7 @@ router.get(`/teams/team-stats/:teamId`, (req, res) => {
         LEFT JOIN match_stats ON player_id=players.id
         WHERE players.team_id = ? AND match_stats.match_type != "friendly" AND match_stats.season = ?
         GROUP BY players.id
-        `[teamId, season], (err, rows) => {
+        `, [teamId, season], (err, rows) => {
             if(err) {
                 console.log("Error getting player stats:",err)
             }

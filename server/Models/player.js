@@ -15,15 +15,15 @@ class Player {
     finesse = 1;
     height = 1;
     strength = 1;
-    trickiness = 0; //trickiness is defaulted a little lower
-    focus = 1;
+    intelligence = 1;
+    cardio = 1;
 
     baseBulk = 1;
     baseFinesse = 1;
     baseHeight = 1;
     baseStrength = 1;
-    baseTrickiness = 1;
-    baseFocus = 1;
+    baseIntelligence = 1;
+    baseCardio = 1;
 
     offensePriority = "";
     defensePriority = "";
@@ -42,8 +42,6 @@ class Player {
     tempFinesse = 0;
     tempHeight = 0;
     tempStrength = 0;
-    tempTrickiness = 0; //im not sure how tricky/focus interacts with being assisted
-    tempFocus = 0;
     protectBulk = 0;
 
     tempInjury = 0;
@@ -67,19 +65,19 @@ class Player {
         this.name = this.generateName();
     }
 
-    setStats(bulk, finesse, height, strength, trickiness, focus, quirkId) {
+    setStats(bulk, finesse, height, strength, intelligence, cardio, quirkId) {
         this.bulk = bulk;
         this.finesse = finesse;
         this.height = height;
         this.strength = strength;
-        this.trickiness = trickiness;
-        this.focus = focus;
+        this.intelligence = intelligence;
+        this.cardio = cardio;
         this.baseBulk = bulk;
         this.baseFinesse = finesse;
         this.baseHeight = height;
         this.baseStrength = strength
-        this.baseTrickiness = trickiness;
-        this.baseFocus = focus;
+        this.baseIntelligence = intelligence;
+        this.baseCardio = cardio;
 
         this.quirkId = quirkId;
         this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId];
@@ -113,12 +111,12 @@ class Player {
     save(callback, otherId, draft) {
         let query;
         if(draft) {
-            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, trickiness, focus, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, intelligence, cardio, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         } else {
-            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, trickiness, focus, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, intelligence, cardio, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         }
         db.run(query, 
-            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus, this.quirkId, this.power], function(err) {
+            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio, this.quirkId, this.power], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return callback(err);
@@ -154,21 +152,15 @@ class Player {
         console.log("Quirk: ", this.quirkId, this.quirk.title)
         console.log(this.name, " setting points ", power, " quirk modifier of: ", this.quirk.POWER_MODIFIER)
 
-        const stats = [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus];
+        const stats = [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio];
 
         for (let i = 0; i < power; i++) {
-            const ran = Math.floor(Math.random()*(stats.length-1))
+            const ran = Math.floor(Math.random()*(stats.length))
             stats[ran] += 1;
         }
 
-        const extraStats = stats[4]; //trickiness and focus should split points between them
-        stats[4] = 0;
-        for(let i = 0; i < extraStats; i++) {
-            stats[4+Math.floor(Math.random()*2)] += 1;
-        }
-
-        [this.bulk, this.finesse, this.height, this.strength, this.trickiness, this.focus] = stats;
-        const totalStats = this.bulk + this.finesse + this.height + this.strength + this.trickiness + this.focus;
+        [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio] = stats;
+        const totalStats = this.bulk + this.finesse + this.height + this.strength + this.intelligence + this.cardio;
         console.log("Total stats: ", totalStats-5)
         if(totalStats-5 > power) {
             console.log(this.name, " IS UNFAIRLY GOOD! \n")
@@ -259,10 +251,6 @@ class Player {
         target.tempFinesse = Math.min(this.finesse, target.tempFinesse);
         target.tempHeight = Math.min(this.height, target.tempHeight);
         target.tempStrength = Math.min(this.strength, target.tempStrength);
-
-        //I think trickiness and focus should work differently since they are discrete stats where that its more important to understand the specific number
-        //target.tempTrickiness = Math.min(this.trickiness, target.tempTrickiness); //assisting should be bad for trickiness otherwise assisting scorers is really strong
-        //target.tempFocus = Math.max(this.focus, target.tempFocus); 
     }
 
     knockout(match) {
@@ -315,7 +303,7 @@ class Player {
                     self.hp = Math.floor(row.health);
                     this.name = row.name;
                     this.team = row.team_id;
-                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.trickiness, row.focus, row.quirk);
+                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.intelligence, row.cardio, row.quirk);
                     resolve(this); // Resolve with the player instance
                 } else {
                     // Handle case where no player is found
@@ -338,8 +326,8 @@ class Player {
             console.log(this.quirkId, this.quirk)
             console.log("Quirk id: ", this.quirkId, " quirk: ", this.quirk.title)
             this.randomize_stats(row.power);
-            db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, trickiness = ?, focus = ?
-                WHERE id = ?`, [this.finesse, this.height, this.strength, this.bulk, this.trickiness, this.focus, id])
+            db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, intelligence = ?, cardio = ?
+                WHERE id = ?`, [this.finesse, this.height, this.strength, this.bulk, this.intelligence, this.cardio, id])
             });
     }
 }

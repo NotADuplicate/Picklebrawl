@@ -20,10 +20,10 @@ export class Loner extends Quirk {
         player.baseBulk += bonus;
         player.baseHeight += bonus;
         player.baseStrength += bonus;
-        player.baseTrickiness += bonus;
-        player.baseFocus += bonus;
+        player.baseIntelligence += bonus;
+        player.baseCardio += bonus;
         console.log("Loner bonus: " + bonus);
-        console.log("Loner stats: ", player.baseFinesse, player.baseBulk, player.baseFocus, player.baseTrickiness)
+        console.log("Loner stats: ", player.baseFinesse, player.baseBulk, player.baseCardio, player.baseIntelligence)
     }
 
     static challengeStatModification(players, player) {
@@ -37,7 +37,7 @@ export class Loner extends Quirk {
         player.bulk += bonus;
         player.height += bonus;
         player.strength += bonus;
-        player.trickiness += bonus;
-        player.focus += bonus;
+        player.intelligence += bonus;
+        player.cardio += bonus;
     }
 }

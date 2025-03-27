@@ -5,14 +5,14 @@ export class ScissorSharp extends Quirk {
     static POWER_MODIFIER = -3;
     static likelihood = 3;
     static title = "Scissor Sharp";
-    static description = "When attacking players, attacks them as if their bulk is equal to their focus. Beware of rocks"
+    static description = "When attacking players, attacks them as if their bulk is equal to their cardio. Beware of rocks"
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 
     static attackEffect(player, target, match) {
         if(target.quirk.title !== "Paper Thin") {
             const damage = Math.random() * (player.strength + player.tempStrength)*3/4;
-            const defense = Math.random() * (target.focus + target.protectBulk);
+            const defense = Math.random() * (target.cardio + target.protectBulk);
             const finalDamage = (damage - defense)+0.25;
             if (finalDamage < 0) {
                 return;

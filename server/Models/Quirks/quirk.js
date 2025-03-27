@@ -79,8 +79,8 @@ export class Quirk {
     }
 
     static trickEffect(player, target, match) {
-        if(player.trickiness > target.focus) {
-            return Math.random() < match.TRICK_CHANCE;
+        if(player.intelligence > target.intelligence) {
+            return Math.random() < match.TRICK_CHANCE*(player.intelligence - target.intelligence);
         }
         return false;
     }

@@ -29,8 +29,8 @@ export class CultLeader extends Quirk {
         player.baseBulk += bonus;
         player.baseHeight += bonus;
         player.baseStrength += bonus;
-        player.baseTrickiness += bonus;
-        player.baseFocus += bonus;
+        player.baseIntelligence += bonus;
+        player.baseCardio += bonus;
     }
 
     static challengeStatModification(players, player) {
@@ -53,7 +53,7 @@ export class CultLeader extends Quirk {
         player.bulk += bonus;
         player.height += bonus;
         player.strength += bonus;
-        player.trickiness += bonus;
-        player.focus += bonus;
+        player.intelligence += bonus;
+        player.cardio += bonus;
     }
 }
