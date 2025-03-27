@@ -116,7 +116,7 @@ function draftPlayer(playerId) {
     const loggedInUser = localStorage.getItem('loggedInUser');
     const currentTeam = teams[currentDraftIndex];
 
-    if (currentTeam.owner !== loggedInUser) {
+    if (currentTeam.owner !== loggedInUser && draftPicks === 0) {
         alert("It's not your turn to draft!");
         return;
     }

@@ -7,7 +7,7 @@ export class CrazyShooter extends Quirk {
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static SHOT_CHANCE = 0.15;
-    static FINESSE_BONUS = 4;
+    static FINESSE_BONUS = 3;
 
     static tickEffect(player, match) {
         if (match.offenseTeam.players.includes(player) && Math.random() < this.SHOT_CHANCE) {

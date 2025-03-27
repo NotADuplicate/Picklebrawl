@@ -1,10 +1,10 @@
 import { Quirk } from './quirk.js';
 
 export class Librarian extends Quirk {
-    static POWER_MODIFIER = -1;
+    static POWER_MODIFIER = -2;
     static title = "Librarian";
     static description = ("Can silence players");
-    static likelihood = 10//2;
+    static likelihood = 2;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 0;

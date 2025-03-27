@@ -468,10 +468,10 @@ export class Season {
           OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
           FROM teams
           LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
-          WHERE teams.league_id = ? AND teams.in_season = TRUE
+          WHERE teams.league_id = ? AND teams.in_season = TRUE AND match_history.type = 'league' AND match_history.season = SELECT(season FROM leagues WHERE id = ?)
           GROUP BY teams.id
           ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
-      `, [this.leagueId], async (err, teams) => {
+      `, [this.leagueId, this.leagueId], async (err, teams) => {
         if (err) {
           console.log(err)
             return callback(err);

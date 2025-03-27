@@ -16,12 +16,12 @@ let actionsLocked = false;
 let friendly = false;
 
 let offensePriorities = {
-    Rest: "Target neither",
     Advance: "Target finishing",
     Attack: "Target enemy",
     Protect: "Target teammate",
     Assist: "Target teammate",
-    Score: "Target distance"
+    Score: "Target distance",
+    Rest: "Target neither"
 };
 
 let defensePriorities = {
@@ -235,6 +235,14 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
             const selectedPriority = event.target.value;
             updateTargetMenu(selectedPriority, offensePriorities[selectedPriority].split(' ')[1], offenseTargetMenu, offenseTargetSelect);
         });
+
+        offenseTargetSelect.addEventListener(`change`, (event => { 
+            applyQuirkStats();
+        }));
+
+        defenseTargetSelect.addEventListener(`change`, (event => {
+            applyQuirkStats();
+        }));
 
         offensePrioritySelect.addEventListener('mouseover', () => {
             const priorityMenu = player.querySelector('.priority-menu');
@@ -813,6 +821,7 @@ function updateTargetMenu(priority, targetType, targetMenu, targetSelect) {
         option.textContent = "Any";
         targetSelect.appendChild(option);
     }
+    applyQuirkStats();
 }
 
 function setAction(action, disabled) {
@@ -861,6 +870,7 @@ function setAction(action, disabled) {
     defensePrioritySelect.disabled = disabled;
     offenseTargetSelect.disabled = disabled;
     defenseTargetSelect.disabled = disabled;
+    console.log("Set action: ", action);
 }
 
 function recommendPlayers(teamId) {

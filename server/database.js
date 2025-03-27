@@ -43,6 +43,7 @@ db.serialize(() => {
         draft_timer_mins INT DEFAULT 300,
         friendly_tick_secs INT DEFAULT 1,
         competitive_tick_secs INT DEFAULT 2, 
+        season INT DEFAULT 1,
         FOREIGN KEY (founder_id) REFERENCES users(id)
     )`);
 
@@ -111,13 +112,6 @@ db.serialize(() => {
         FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
         FOREIGN KEY (league_id) REFERENCES leagues(id)
     );`);
-    db.run(`ALTER TABLE challenges ADD COLUMN tournament_match INT`, (err) => {
-        if (err) {
-            console.error('Error adding column to challenges table:', err.message);
-        } else {
-            console.log('Added extra_info column to challenges table.');
-        }
-    });
 
     //db.run(`DROP TABLE IF EXISTS challenge_players`);
     db.run(`CREATE TABLE IF NOT EXISTS challenge_players (
@@ -149,6 +143,7 @@ db.serialize(() => {
         away_team_score INT,
         weather TEXT NOT NULL,
         type TEXT DEFAULT 'friendly',
+        season INT,
         created_at DATETIME DEFAULT (datetime(CURRENT_TIMESTAMP, '+20 seconds')),
         FOREIGN KEY (home_team_id) REFERENCES teams(id),
         FOREIGN KEY (away_team_id) REFERENCES teams(id),
@@ -308,30 +303,6 @@ db.serialize(() => {
     END;
     `);
 
-    db.run(`CREATE TABLE IF NOT EXISTS season (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        league_id INTEGER NOT NULL,
-        num INT,
-        start_date DATETIME NOT NULL,
-        end_date DATETIME,
-        FOREIGN KEY (league_id) REFERENCES leagues(id)
-    );`);
-
-    // Trigger: before inserting a new season, if num is not provided,
-    // set it to one more than the current maximum for the same league.
-    db.run(`
-    CREATE TRIGGER IF NOT EXISTS set_season_num
-    BEFORE INSERT ON season
-    FOR EACH ROW
-    WHEN NEW.num IS NULL
-    BEGIN
-      SELECT NEW.num = COALESCE(
-          (SELECT MAX(num) FROM season WHERE league_id = NEW.league_id),
-          0
-      ) + 1;
-    END;
-    `);
-
     db.run(`
         CREATE VIEW IF NOT EXISTS match_stats AS
         WITH scoring AS (
@@ -403,6 +374,7 @@ db.serialize(() => {
             p.id AS player_id,
             match_history.id AS match_id,
             match_history.type AS match_type,
+            match_history.season AS season,
             ph.offensive_role,
             ph.defensive_role,
             ph.offense_action_property,

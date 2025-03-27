@@ -81,6 +81,7 @@ router.post('/teams/playerDelete/:playerId', (req, res) => {
 router.get(`/teams/player/:playerId`, (req, res) => {
     const playerId = req.params.playerId;
     console.log("Getting stats of player:", playerId)
+    const season = 1;
     db.get(`SELECT players.name AS player_name, teams.name AS team, 
         SUM(field_goals_attempted) AS total_FG_attempts, AVG(field_goals_attempted) AS avg_FG_attempts,
         SUM(field_goals_successful) AS total_FG_makes, AVG(field_goals_successful) AS avg_FG_makes,
@@ -94,8 +95,8 @@ router.get(`/teams/player/:playerId`, (req, res) => {
         SUM(steals) AS total_steals, AVG(steals) as avg_steals
         FROM players JOIN teams on players.team_id=teams.id
         LEFT JOIN match_stats ON player_id=players.id
-        WHERE players.id = ${playerId} AND match_stats.match_type != "friendly"
-        `, (err, rows) => {
+        WHERE players.id = ? AND match_stats.match_type != "friendly" AND match_stats.season = ?
+        ` [playerId, season], (err, rows) => {
             if(err) {
                 console.log("Error getting player stats:",err)
             }
@@ -107,6 +108,7 @@ router.get(`/teams/team-stats/:teamId`, (req, res) => {
     const teamId = req.params.teamId;
 
     console.log("Getting stats of team:", teamId)
+    const season = 1;
     db.all(`SELECT players.name AS player_name, teams.name AS team, 
         SUM(field_goals_attempted) AS total_FG_attempts, AVG(field_goals_attempted) AS avg_FG_attempts,
         SUM(field_goals_successful) AS total_FG_makes, AVG(field_goals_successful) AS avg_FG_makes,
@@ -120,9 +122,9 @@ router.get(`/teams/team-stats/:teamId`, (req, res) => {
         SUM(steals) AS total_steals, AVG(steals) as avg_steals
         FROM players JOIN teams on players.team_id=teams.id
         LEFT JOIN match_stats ON player_id=players.id
-        WHERE players.team_id = ${teamId} AND match_stats.match_type != "friendly"
+        WHERE players.team_id = ? AND match_stats.match_type != "friendly" AND match_stats.season = ?
         GROUP BY players.id
-        `, (err, rows) => {
+        `[teamId, season], (err, rows) => {
             if(err) {
                 console.log("Error getting player stats:",err)
             }

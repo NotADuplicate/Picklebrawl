@@ -36,9 +36,9 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
     const user = req.userId;
 
     console.log("", user, " is drafting player: ", playerId)
-    db.get(`SELECT teams.id FROM teams 
-    JOIN drafts on currently_drafting_team_id = teams.id
-    WHERE teams.owner_id = ? AND drafts.id = ?`, [user, draftId], (err, team) => {
+    //Check that team is either supposed to be drafting or has draft picks
+    db.get(`SELECT teams.id FROM teams, drafts
+    WHERE teams.owner_id = ? AND drafts.id = ? AND (drafts.currently_drafting_team_id = teams.id OR teams.draft_picks>0)`, [user, draftId], (err, team) => {
         console.log(team);
         if (err) {
             console.log("Error finding team: ", err);
@@ -74,34 +74,52 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
                         return res.json({ message: 'Team is at its max size!' });
                     }
                     
-                    db.run(`UPDATE players SET team_id = ? WHERE id = ?`, [team.id, playerId], (err) => {
+                    db.run(`UPDATE players SET team_id = ? WHERE id = ? AND team_id IS NULL AND draft_id = ?`, [team.id, playerId, draftId], function(err) {
                         if (err) {
                             console.log("Error updating player: ", err);
                             return res.status(400).json({ message: 'Error updating player!' });
                         }
+                        if (this.changes === 0) {
+                            console.log("No players were updated!");
+                            return res.status(400).json({ message: 'That player is not available' });
+                        }
                         console.log("Updated player ", playerId, " to team ", team.id)
 
-                        draftQueue(teams, draftId, nextTurn, (turn) => {
-                            nextTurn = turn;
-                            console.log("Next turn: ", nextTurn)
-                            //Calculate next team
-                            const backwards = Math.floor(nextTurn/teams.length) % 2;
-                            const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
-                            const nextTeamId = teams[nextTeamIndex].id;
+                        db.get(`SELECT teams.id, drafts.currently_drafting_team_id FROM teams, drafts
+                            WHERE teams.owner_id = ? AND drafts.id = ?`, [user, draftId], (err, row) => {
+                            if(err) {
+                                console.log("Error checking team draft_picks: ", err);
+                            }
+                            if(row.id != row.currently_drafting_team_id) {
+                                db.run(`UPDATE teams SET draft_picks=draft_picks-1 WHERE id = ?`, [row.id], (err) => {
+                                    if(err) {
+                                        console.log("Error decrementing draft picks: ", err);
+                                    }
+                                });
+                            } else {
+                            draftQueue(teams, draftId, nextTurn, (turn) => {
+                                nextTurn = turn;
+                                console.log("Next turn: ", nextTurn)
+                                //Calculate next team
+                                const backwards = Math.floor(nextTurn/teams.length) % 2;
+                                const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
+                                const nextTeamId = teams[nextTeamIndex].id;
 
-                            db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
-                                if (err) {
-                                    console.log("Error updating currently drafting team: ", err);
-                                    return res.status(400).json({ message: 'Error updating currently drafting team!' });
-                                }
-                                res.json({ message: 'Player updated successfully!' });
-                                if(scheduledDraftExpires[draftId]) {
-                                    clearTimeout(scheduledDraftExpires[draftId]);
-                                }
-                                scheduledDraftExpires[draftId] = setTimeout(() => {
-                                    skipTurn(draftId, draft_timer_ms);
-                                }, draft_timer_ms);
+                                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                                    if (err) {
+                                        console.log("Error updating currently drafting team: ", err);
+                                        return res.status(400).json({ message: 'Error updating currently drafting team!' });
+                                    }
+                                    res.json({ message: 'Player updated successfully!' });
+                                    if(scheduledDraftExpires[draftId]) {
+                                        clearTimeout(scheduledDraftExpires[draftId]);
+                                    }
+                                    scheduledDraftExpires[draftId] = setTimeout(() => {
+                                        skipTurn(draftId, draft_timer_ms);
+                                    }, draft_timer_ms);
+                                });
                             });
+                        }
                         });
                     });
                 });
@@ -296,7 +314,7 @@ function skipTurn(draftId, timer) {
                     console.log("Tried to skip someone with a queued draft")
                     return;
                 }
-                db.run(`UPDATE teams, drafts SET draft_picks=draft_picks+1 WHERE teams.id = drafts.currently_drafting_team_id AND drafts.id=?`, [draftId], (err) => {
+                db.run(`UPDATE teams SET draft_picks = draft_picks + 1 WHERE id = (SELECT currently_drafting_team_id FROM drafts WHERE id = ?)`, [draftId], (err) => {
                     if(err) {
                         console.log("Error giving a team a draft pick:", err)
                     }

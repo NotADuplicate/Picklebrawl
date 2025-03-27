@@ -3,7 +3,7 @@ import { Quirk } from './quirk.js';
 export class Alpha extends Quirk {
     static title = "Alpha";
     static description = ("+2 to physical stats if their name is first alphabetically on their team");
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -5;
     static STAT_CHANGE = 2
     static likelihood = 4;
     static APPEARS_IN_GENERATION = true;
@@ -49,7 +49,7 @@ export class Alpha extends Quirk {
 
     static nameGenerationChanges(player) {
         let tries = 5;
-        while((player.name <= 'B' || player.name >= 'J') && tries > 0) {
+        while((player.name <= 'C' || player.name >= 'N') && tries > 0) {
             player.name = player.generateName();
             console.log("Alpha generated name: ", player.name);
             tries--;

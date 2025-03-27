@@ -161,7 +161,7 @@ class Match {
         const self = this;
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, challenge_id,`
-                + `weather, type) VALUES (?, ?, ?, ?,?, ?)`, 
+                + `weather, type, season) VALUES (?, ?, ?, ?,?, ?, SELECT(season FROM leagues WHERE id = ${this.homeTeam.leagueId}))`, 
                 [this.homeTeam.leagueId, this.homeTeam.teamId, this.awayTeam.teamId, challengeId, this.weather.name, type], function(err) {
                 if (err) {
                     //console.log('Error inserting match into match_history:', err.message);
@@ -187,10 +187,19 @@ class Match {
                         player.range = self.RANGE_DICTIONARY[player.offenseProperty];
                     }
                 }
+                //do the second start effect
+                self.players.sort((a, b) => a.quirk.SECOND_START_EFFECT_ORDER - b.quirk.SECOND_START_EFFECT_ORDER);
+                for(const player of self.players) {
+                    player.quirk.secondStartGameEffect(self, player);
+                }
 
                 // Re-add ghost players to the players list
                 self.players.push(...ghostPlayers);      
                 self.savePriorities();
+                
+                for(const player of self.players) {
+                    player.quirk.thirdStartGameEffect(self, player);
+                }
                 self.runMatch();
                 resolve();
             });

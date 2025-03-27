@@ -255,9 +255,9 @@ router.get(`/league/league-stats/:leagueId`, (req, res) => {
         FROM players JOIN teams on players.team_id = teams.id
         LEFT JOIN match_stats ON player_id = players.id
         WHERE teams.league_id = ?
-        AND match_stats.match_type != "friendly"
+        AND match_stats.match_type != "friendly" AND match_stats.season = (SELECT season FROM leagues WHERE leagues.id = ?)
         GROUP BY players.id
-        `, [leagueId], (err, rows) => {
+        `, [leagueId, leagueId], (err, rows) => {
             if(err) {
                 console.log("Error getting player stats:", err)
             }
@@ -294,7 +294,7 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
 setTimeout(() => {
     const season = new Season(1);
     //season.scheduleOnStartup();
-    season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
+    //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
 }, 1000);
 
 

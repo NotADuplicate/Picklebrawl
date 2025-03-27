@@ -6,6 +6,7 @@ export class Quirk {
     static POWER_MODIFIER = 0; //changes how stats generate
     static likelihood = 7;
     static START_EFFECT_ORDER = 2;
+    static SECOND_START_EFFECT_ORDER = 2; //happens after 
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static DAMAGE_TAKEN_MODIFIER = 1;
@@ -16,11 +17,17 @@ export class Quirk {
     // which will do the alterations?
     static playerStatGenerationChanges(player, power) {
         return;
-        // Handles changes in stat generation that doesn't rely on match info
-        // e.g. alphabet completionist on avg generates with higher stats
     }
 
     static startGameEffect(match, player) {
+        return false;
+    }
+
+    static secondStartGameEffect(match, player) {
+        return false;
+    }
+
+    static thirdStartGameEffect(match, player) { //happens after resting bonus
         return false;
     }
 
@@ -29,9 +36,10 @@ export class Quirk {
     }
 
     static challengeStatModification(players, player) {
-        // Handles challenge-specific changes in stats
-        // e.g. the -2 to stats if the alphabet completionist only sees 24 letters in a challenge
-        //console.log("No quirk effects\n");
+        return;
+    }
+
+    static secondChallengeStatModification(players, player) {
         return;
     }
 

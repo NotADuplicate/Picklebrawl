@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class Offender extends Quirk {
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -7;
     static title = "Offender";
     static STAT_INCREASE = 2;
     static description = ("+" + this.STAT_INCREASE + " to all stats while on offense");
@@ -10,8 +10,7 @@ export class Offender extends Quirk {
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;
 
-    static startGameEffect(match, player) {
-        console.log(match.homeTeam.teamName);
+    static thirdStartGameEffect(match, player) {
         if (match.offenseTeam.players.includes(player)) {
             player.baseFinesse += this.STAT_INCREASE;
             player.baseBulk += this.STAT_INCREASE;

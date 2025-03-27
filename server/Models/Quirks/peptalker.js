@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class PepTalker extends Quirk {
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -5;
     static STAT_INCREASE = 2;
     static title = "Pep Talker";
     static description = ("Give +" + this.STAT_INCREASE + " to all teammates' physical stats if losing at half time");

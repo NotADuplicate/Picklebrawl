@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class AlliterationAddict extends Quirk {
-    static POWER_MODIFIER = -2;
+    static POWER_MODIFIER = -3;
     static title = "Alliteration Addict";
     static description = ("+1 to physical stats for every teammate with the same first letter of their name");
     static likelihood = 3;
