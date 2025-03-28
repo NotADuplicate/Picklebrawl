@@ -293,8 +293,7 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
 
 setTimeout(() => {
     const season = new Season(1);
-    //season.scheduleOnStartup();
-    //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
+    season.scheduleOnStartup();
 }, 1000);
 
 

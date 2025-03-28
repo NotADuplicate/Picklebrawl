@@ -161,7 +161,7 @@ class Match {
         const self = this;
         return new Promise((resolve, reject) => {
             db.run(`INSERT INTO match_history (league_id, home_team_id, away_team_id, challenge_id,`
-                + `weather, type, season) VALUES (?, ?, ?, ?,?, ?, SELECT(season FROM leagues WHERE id = ${this.homeTeam.leagueId}))`, 
+                + `weather, type) VALUES (?, ?, ?, ?, ?, ?)`, 
                 [this.homeTeam.leagueId, this.homeTeam.teamId, this.awayTeam.teamId, challengeId, this.weather.name, type], function(err) {
                 if (err) {
                     //console.log('Error inserting match into match_history:', err.message);
