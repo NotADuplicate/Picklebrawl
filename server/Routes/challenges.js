@@ -809,6 +809,6 @@ function deleteMatch(match_id) {
         });
 }
 
-runMatch(1, true);
+runMatch(1, false, false); //testing purposes
 
 export default router;

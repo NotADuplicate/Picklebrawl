@@ -368,6 +368,10 @@ ul {
     transition: width 0.3s ease;
 }
 
+#mobile-team-tabs {
+    display: none; /* Hide by default, will be shown in mobile view */
+}
+
 /* Mobile Styles for bench page */
 @media (max-width: 768px) {
     .player {
@@ -443,4 +447,14 @@ ul {
     .quirk:hover .tooltip {
         opacity: 0;
     }
+}
+
+.bench-slot {
+    border: 2px dashed #ccc;
+    width: 95%;
+    height: 80px;
+    margin: 5px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

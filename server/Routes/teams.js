@@ -69,7 +69,7 @@ router.get('/teams/:teamId/players', (req, res) => {
 router.post('/teams/playerDelete/:playerId', (req, res) => {
     const playerId = req.params.playerId;
     console.log("Deleting player:", playerId);
-    db.run(`UPDATE players SET team_id = NULL WHERE id = ?`, [playerId], (err) => {
+    db.run(`UPDATE players SET team_id = NULL AND draft_id = NULL WHERE id = ?`, [playerId], (err) => {
         if (err) {
             console.log("Error firing  player:", err);
             return res.status(500).json({ message: 'Error firing player!' });

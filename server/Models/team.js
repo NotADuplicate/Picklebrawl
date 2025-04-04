@@ -66,7 +66,7 @@ class Team {
         for (let i = 0; i < 6; i++) {
             const player = new Player();
             player.pickRandomQuirk(false);
-            player.randomize_stats(Math.floor(Math.random() * 3) + 11);
+            player.randomize_stats(Math.floor(Math.random() * 3) + 14);
             this.addPlayer(player);
         }
     }

@@ -9,7 +9,7 @@ export class Tenacious extends Quirk {
     static APPEARS_IN_DRAFT = true;
 
     static beTrickedEffect(player, tricker, match) {
-        if (player.cardio > tricker.intelligence) {
+        if (player.intelligence > tricker.intelligence) {
             console.log("Tenacious attacking\n");
             player.attack(match, tricker);
         }

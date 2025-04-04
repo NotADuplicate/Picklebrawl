@@ -118,6 +118,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // Set an initial active team tab on mobile (Your Team)
         switchTeam('your-team');
+
+    // Setup drag-and-drop for bench slots
+    const benchSlots = document.querySelectorAll('#your-team-bench .bench-slot');
+    benchSlots.forEach(slot => {
+        slot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            slot.style.backgroundColor = '#eef';
+        });
+        slot.addEventListener('dragleave', () => {
+            slot.style.backgroundColor = '';
+        });
+        slot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slot.style.backgroundColor = '';
+            const playerId = e.dataTransfer.getData('text/plain');
+            const player = playerDict[playerId];
+            if(player && player.dataset.team === 'your-team' && player.dataset.locked === 'false') {
+                let currentSlot = player.parentElement;
+                if(currentSlot.classList.contains('bench-slot')){
+                    currentSlot.removeChild(player);
+                }
+                else {
+                    selectPlayer(player, slot);
+                }
+                //slot.appendChild(player);
+                //player.dataset.location = 'bench';
+                //player.classList.add('selected');
+                //applyQuirkStats();
+            }
+        });
+    });
 });
 
 /**
@@ -183,6 +214,10 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
         healthbar.style.display = 'none';
     }
 
+    player.draggable = true;
+    player.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', player.dataset.playerId);
+    });
 
     player.addEventListener('click', () => {
         if(player.dataset.team === 'your-team') {
@@ -278,6 +313,29 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
     }
 }
 
+// New helper: return first bench slot element that is empty.
+function getEmptyBenchSlot(team, slot = null) {
+    let slots;
+    if(team === 'your-team') {
+        slots = document.querySelectorAll('#your-team-bench .bench-slot');
+    } else {
+        slots = document.querySelectorAll('#other-team-bench .bench-slot');
+    }
+    if(slot) {
+        if(slot.childElementCount === 0) {
+            return slot;
+        }
+    }
+    else {
+        for(let slot of slots) {
+            if(slot.childElementCount === 0) {
+                return slot;
+            }
+        }
+    }
+    return null;
+}
+
 // Fetch and display team details
 fetchData(`/teams/${myTeamId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (team) => {
     const teamNameElement = document.getElementById('your-team-name');
@@ -363,6 +421,7 @@ function checkChallengeFlags() {
         else if(response.flags.challengerPlayersSet && challenger || response.flags.challengedPlayersSet && !challenger) { //if your players are set
             for(let i = 0; i < playerIds.length; i++) {
                 const id = playerIds[i];
+                console.log("Setting player from challenge flag")
                 selectPlayer(playerDict[id]);
                 playerDict[id].dataset.locked = true;
                 playerDict[id].classList.add('locked');
@@ -463,17 +522,18 @@ function unlockStarters() {
     }
 }
 
-function selectPlayer(player) {
+// Modified selectPlayer to support fixed bench slots.
+function selectPlayer(player, slot = null) {
+    console.log("Selecting player: ", player);
     const currentTeam = player.dataset.team;
     if (player.dataset.locked === 'false') {
-        const benchList = document.getElementById(`${currentTeam}-bench`);
-        const teamList = document.getElementById(`${currentTeam}-list`);
-
         if (player.dataset.location === 'team') {
-            if (benchList.children.length < 4) {
-                // Move player to the bench
+            const benchSlot = getEmptyBenchSlot(currentTeam,slot);
+            if (benchSlot) {
+                // Move player to bench slot on click
+                const teamList = document.getElementById(`${currentTeam}-list`);
                 teamList.removeChild(player);
-                benchList.appendChild(player);
+                benchSlot.appendChild(player);
                 player.dataset.location = 'bench';
                 player.classList.add('selected');
                 applyQuirkStats();
@@ -481,16 +541,16 @@ function selectPlayer(player) {
                 alert('Bench is full!');
             }
         } else if (player.dataset.location === 'bench') {
-            console.log("Remove player from bench")
-            // Move player back to the team
-            benchList.removeChild(player);
+            // Remove player from its bench slot and return to team list
+            const teamList = document.getElementById(`${currentTeam}-list`);
+            player.parentElement.removeChild(player);
             teamList.appendChild(player);
             player.dataset.location = 'team';
-            const stats = JSON.parse(player.dataset.stats);
             player.classList.remove('selected');
             player.style.width = '';       // Reset inline width
             player.style.display = '';     // Reset inline display
             player.style.backgroundColor = ''; // Reset inline background-color
+            const stats = JSON.parse(player.dataset.stats);
             Object.keys(stats).forEach(stat => {
                 const statElement = player.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
                 statElement.textContent = stats[stat];
@@ -612,8 +672,10 @@ async function bothTeamsReady(playerIds, lockButton) {
     return new Promise(async (resolve) => {
         console.log("All players are set");
         let teamPlayerIds = [];
+        console.log("Player ids: ", playerIds);
         for(let i = 0; i < playerIds.length; i++) {
             const id = playerIds[i];
+            console.log("Both teams ready")
             selectPlayer(playerDict[id]);
             playerDict[id].dataset.locked = true;
             playerDict[id].classList.add('locked');
@@ -701,7 +763,7 @@ function applyQuirkStats() {
             offenseTargetId,
             defenseTargetId
         }
-        console.log("Player dict obj: ", playerDictObject)
+        //console.log("Player dict obj: ", playerDictObject)
         players.push(playerDictObject);
         teamIds.push(player.dataset.team);
     });

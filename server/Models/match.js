@@ -39,7 +39,7 @@ class Match {
     MAX_ADVANCEMENT_PER_TICK = null;
     NET_ADVANCEMENT_MODIFIER = 1.0;
     TURNOVER_CHANCE_INCREASE_PER_TICK = 0.015;
-    RANDOM_PRIORITY_CHANCE = .15;
+    RANDOM_PRIORITY_CHANCE = .25;
     TURNOVER_CHANCE_MAX = 0.3;
     SHOOTING_DISTANCE_LINEAR = 0.08;
     SHOOTING_DISTANCE_EXPONENTIAL = 0.001;
@@ -228,6 +228,9 @@ class Match {
                 const winnerId = self.homeTeam.score > self.awayTeam.score ? self.homeTeam.teamId : self.awayTeam.teamId;
                 const season = new Season(self.homeTeam.leagueId);
                 season.updateTournamentMatch(self.match_id, winnerId);
+            } else if(self.type == "league") {
+                const season = new Season(self.homeTeam.leagueId);
+                season.updateLeagueMatch(self.match_id);
             }
         });
         if(this.type != "friendly") { //do health things for friendly matches
@@ -295,6 +298,21 @@ class Match {
         ////console.log("TICK:", this.gameTicks, "\n")
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
+
+        //Do cardio
+        for(const player of this.players) { 
+            if(Math.random() < (10-player.cardio)/100) {
+                const staminaDamage = player.hp*0.08;
+                db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+                    + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks,
+                    player.id, player.id, staminaDamage, false, staminaDamage], function(err) {
+                        if (err) {
+                            console.error('Error inserting attack into attack_history:', err.message);
+                        }
+                });
+                player.hp -= staminaDamage;
+            }
+        }
 
         this.resetTempStats();
         this.setRandomPriorities(); //randomly change priorities

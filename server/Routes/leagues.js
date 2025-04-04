@@ -111,7 +111,8 @@ router.get('/leagues', authenticator.authenticateToken, (req, res) => {
 
 router.post('/start-league', authenticator.authenticateToken, (req, res) => {
     console.log("Starting league")
-    const { leagueName, startTime, draftTimeValue, friendlyTickValue, competitiveTickValue } = req.body;
+    const { leagueName, startDatetime, tournamentTime, playersSetTime, draftTimeValue, friendlyTickValue, competitiveTickValue,
+         numMatchesValue, timeBetweenMatchesValue, timeBetweenSamePlayerMatchesValue } = req.body;
     db.get(`SELECT * FROM leagues WHERE name = ?`, [leagueName], (err, league) => {
         if (err || !league) {
             console.log("Error or no league avilable: ", err);
@@ -128,26 +129,27 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             return res.status(400).json({ message: 'League already started!' });
         }
 
-        db.run(`UPDATE leagues SET started = ?, draft_timer_mins = ?, friendly_tick_secs = ?, competitive_tick_secs = ? WHERE id = ?`, [true, draftTimeValue, friendlyTickValue, competitiveTickValue, league.id], (err) => {
+        db.run(`UPDATE leagues SET started = ?, draft_timer_mins = ?, friendly_tick_secs = ?, players_set_time_minutes = ?, competitive_tick_secs = ?, tournament_start_time = ?
+             WHERE id = ?`, [true, draftTimeValue, friendlyTickValue, playersSetTime, competitiveTickValue, tournamentTime, league.id], (err) => {
             if (err) {
                 return res.status(400).json({ message: 'Error starting league!' });
             }
             res.json({ message: 'League started successfully!' });
-        });
 
-        db.run(`UPDATE teams SET in_season = ? WHERE league_id = ?`, [true, league.id], (err) => {
-            if (err) {
-                console.log('Error updating teams:', err);
-            }
-
-            const season = new Season(league.id);
-            console.log("Start time: ", startTime);
-            season.setMatches(new Date(startTime), (err) => {
+            db.run(`UPDATE teams SET in_season = ? WHERE league_id = ?`, [true, league.id], (err) => {
                 if (err) {
-                    console.log(err);
+                    console.log('Error updating teams:', err);
                 }
+    
+                const season = new Season(league.id);
+                console.log("Start time: ", startDatetime);
+                season.setMatches(startDatetime, numMatchesValue, timeBetweenMatchesValue, timeBetweenSamePlayerMatchesValue, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                });
+                const draft = new Draft(league.id);
             });
-            const draft = new Draft(league.id);
         });
     });
 });
@@ -231,7 +233,7 @@ router.get('/league/upcoming', authenticator.authenticateToken, (req, res) => {
             return res.status(500).json({ message: 'Error fetching upcoming matches!' });
         }
 
-        console.log("Matches:",matches)
+        //console.log("Upcoming Matches:",matches)
         res.json(matches);
     });
 });
@@ -282,6 +284,7 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
         FROM tournament_matches 
         LEFT JOIN teams AS first_team ON tournament_matches.first_team_id = first_team.id 
         LEFT JOIN teams AS second_team ON tournament_matches.second_team_id = second_team.id 
+        JOIN leagues ON tournament_matches.league_id = leagues.id AND leagues.season = tournament_matches.season
         WHERE tournament_matches.league_id=? ORDER BY tournament_match`, [leagueId], (err, rows) => {
         //console.log("Tournament match data:", rows);
         if(err) {
@@ -292,11 +295,16 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
 })
 
 setTimeout(() => {
+    console.log("Current timezone:", moment.tz.guess());
+    console.log("Now :", moment().format("YYYY-MM-DD HH:mm:ss"));
+    console.log("Now:", new Date().toISOString());
     const season = new Season(1);
-    //season.scheduleOnStartup();
+    season.scheduleOnStartup();
     //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
 }, 1000);
 
-
+console.log("2025-04-02T21:15:00.000Z")
+console.log(Date.parse("2025-04-02T21:15:00.000Z"))
+console.log(new Date("2025-04-02T21:15:00.000Z"))
 
 export default router;

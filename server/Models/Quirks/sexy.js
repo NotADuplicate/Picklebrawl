@@ -4,7 +4,7 @@ export class Sexy extends Quirk {
     static POWER_MODIFIER = -3;
     static title = "Sexy";
     static description = ("All opponents get -1 FOCUS");
-    static likelihood = 4;
+    static likelihood = 0;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 3;

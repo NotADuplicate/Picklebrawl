@@ -1,117 +1,68 @@
 import { fetchData } from "../api.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchData(`/leagues/tournament/1`, 'GET', {}, null, (data) => {
-        const matches = data.rows;
-        console.log("Tournament data:", matches);
-        const highestRoundMatch = matches.reduce((prev, current) => {
-            return (current.tournament_round > prev.tournament_round) ? current : prev;
+  const urlParams = new URLSearchParams(window.location.search);
+  const leagueId = urlParams.get('leagueId');
+  fetchData(`/leagues/tournament/${leagueId}`, 'GET', {}, null, (data) => {
+      const matches = data.rows;
+      console.log("Tournament data:", matches);
+      const highestRoundMatch = matches.reduce((prev, current) => {
+          return (current.tournament_round > prev.tournament_round) ? current : prev;
+      });
+      const numRounds = highestRoundMatch.tournament_round
+      console.log("Num rounds:", numRounds);
+      let bracketData = [];
+      for(let i = 0; i < numRounds; i++) {
+          bracketData.push({
+              roundName: `Round${i+1}`,
+              matches: []
         });
-        const numRounds = highestRoundMatch.tournament_round
-        console.log("Num rounds:", numRounds);
-
-        let bracketData = [ 
-            {roundName: "Quarterfinals", matches: []},
-            {roundName: "Semifinals", matches: []},
-            {roundName: "Finals", matches: []}
-        ];
-
-        matches.forEach(match => {
-            if (typeof match.challenges === 'string') {
-              try {
-                match.challenges = JSON.parse(match.challenges);
-              } catch(e) {
-                console.error("Error parsing challenges:", e);
-                match.challenges = [];
-              }
-            }
-            console.log("Match challenge:", match.challenges);
-            let gameScores = [[], []];
-
-            if(match.challenges.length != 0) { // if there are challenges, display them
-              let i = match.num_games;
-              match.challenges.forEach(challenge => {
-                  if(challenge.status == "upcoming") {
-                      gameScores[0].push(null);
-                      gameScores[1].push(null);
-                  } else {
-                      //let winnerIndex = challenge.winner_id == match.first_team_id ? 0 : 1;
-                      gameScores[0].push(challenge.home_team_score);
-                      gameScores[1].push(challenge.away_team_score);
-                  }
-                  i--;
-              });
-              while(i > 0) {
-                  gameScores[0].push(null);
-                  gameScores[1].push(null);
-                  i--;
-              }
-              console.log("Game scores:", gameScores)
-            }
-            let newMatch = {
-                participants: [ {name: match.first_team, isWinner: match.first_team_id == match.winning_team_id}, 
-                    {name: match.second_team, isWinner: match.second_team_id == match.winning_team_id}],
-                gameScores
-            }
-            if(!match.winning_team_id) {
-                newMatch.result="draw";
-            }
-            bracketData[match.tournament_round-1].matches.push(newMatch);
-        })
-        
-        renderBracket(bracketData);
-    });
-
-    // Dummy bracket data with a draw match added (result property).
-    /*const bracketData = [
-      {
-        roundName: "Quarterfinals",
-        matches: [
-          { 
-            participants: [ { name: "Uno", isWinner: true }, { name: "Ocho", isWinner: false } ],
-            gameScores: [ [2, 3, null], [1, 3, 2] ]
-          },
-          { 
-            // This match is a draw.
-            participants: [ { name: "Dos", isWinner: false }, { name: "Siete", isWinner: false } ],
-            gameScores: [ [1, null, 2], [2, 2, 3] ],
-            result: "draw"
-          },
-          { 
-            participants: [ { name: "Uno", isWinner: true }, { name: "Ocho", isWinner: false } ],
-            gameScores: [ [null, null, null], [null, null, null] ]
-          },
-          { 
-            participants: [ { name: "Dos", isWinner: false }, { name: "Siete", isWinner: true } ],
-            gameScores: [ [2, 1, 3], [1, 2, 3] ]
-          }
-        ]
-      },
-      {
-        roundName: "Semifinals",
-        matches: [
-          { 
-            participants: [ { name: "Uno", isWinner: true }, { name: "Dos", isWinner: false } ],
-            gameScores: [ [3, 1, 2], [2, 2, 2] ]
-          },
-          { 
-            participants: [ { name: "Seis", isWinner: true }, { name: "Cinco", isWinner: false } ],
-            gameScores: [ [2, 2, 3], [1, 3, 2] ]
-          }
-        ]
-      },
-      {
-        roundName: "Finals",
-        matches: [
-          { 
-            participants: [ { name: "Uno", isWinner: true }, { name: "Seis", isWinner: false } ],
-            gameScores: [ [3, 3, 2], [2, 2, 3] ]
-          }
-        ]
       }
-    ];
-    
-    renderBracket(bracketData);*/
+
+      matches.forEach(match => {
+          if (typeof match.challenges === 'string') {
+            try {
+              match.challenges = JSON.parse(match.challenges);
+            } catch(e) {
+              console.error("Error parsing challenges:", e);
+              match.challenges = [];
+            }
+          }
+          console.log("Match challenge:", match.challenges);
+          let gameScores = [[], []];
+
+          if(match.challenges.length != 0) { // if there are challenges, display them
+            let i = match.num_games;
+            match.challenges.forEach(challenge => {
+                if(challenge.status == "upcoming") {
+                    gameScores[0].push(null);
+                    gameScores[1].push(null);
+                } else {
+                    //let winnerIndex = challenge.winner_id == match.first_team_id ? 0 : 1;
+                    gameScores[0].push(challenge.home_team_score);
+                    gameScores[1].push(challenge.away_team_score);
+                }
+                i--;
+            });
+            while(i > 0) {
+                gameScores[0].push(null);
+                gameScores[1].push(null);
+                i--;
+            }
+            console.log("Game scores:", gameScores)
+          }
+          let newMatch = {
+              participants: [ {name: match.first_team, isWinner: match.first_team_id == match.winning_team_id}, 
+                  {name: match.second_team, isWinner: match.second_team_id == match.winning_team_id}],
+              gameScores
+          }
+          if(!match.winning_team_id) {
+              newMatch.result="draw";
+          }
+          bracketData[match.tournament_round-1].matches.push(newMatch);
+      })
+      renderBracket(bracketData);
+  });
 });
 
 function createGameScoresElement(match, participantIndex) {
@@ -158,10 +109,11 @@ function renderBracket(data) {
   data.forEach(round => {
     const roundSection = document.createElement('section');
     roundSection.classList.add('round');
-    roundSection.classList.add(round.roundName.toLowerCase());
-    
-    // For rounds like quarterfinals with many matches, split into groups for proper connector alignment
-    if (round.roundName.toLowerCase() === "quarterfinals" && round.matches.length > 2) {
+    // Use provided roundName or fallback to round index
+    roundSection.classList.add((round.roundName || 'round').toLowerCase());
+
+    if (round.matches.length > 2) {
+      // Split matches into two groups for proper connector alignment.
       const half = Math.ceil(round.matches.length / 2);
       const groups = [round.matches.slice(0, half), round.matches.slice(half)];
       groups.forEach(group => {
@@ -177,20 +129,16 @@ function renderBracket(data) {
           match.participants.forEach((participant, index) => {
             const participantDiv = document.createElement('div');
             participantDiv.classList.add('participant');
-            // Add "draw" class if match.result is draw, else winner/loser
             if(match.result === "draw") {
               participantDiv.classList.add('draw');
             } else {
               participantDiv.classList.add(participant.isWinner ? 'winner' : 'loser');
             }
-            // Use flex layout to push scores to the right:
             participantDiv.style.display = 'flex';
             participantDiv.style.justifyContent = 'space-between';
-            // Name span
             const nameSpan = document.createElement('span');
             nameSpan.textContent = participant.name;
             participantDiv.appendChild(nameSpan);
-            // Append game scores element:
             const scoresEl = createGameScoresElement(match, index);
             participantDiv.appendChild(scoresEl);
             participantsDiv.appendChild(participantDiv);
@@ -199,7 +147,7 @@ function renderBracket(data) {
           matchupsDiv.appendChild(matchupDiv);
         });
         winnersDiv.appendChild(matchupsDiv);
-        // Connector element as before
+        // Add connector region after the matchups
         const connectorDiv = document.createElement('div');
         connectorDiv.classList.add('connector');
         const mergerDiv = document.createElement('div');
@@ -212,7 +160,7 @@ function renderBracket(data) {
         roundSection.appendChild(winnersDiv);
       });
     } else {
-      // Single winners container code
+      // Single winners container for rounds with 1 or 2 matches.
       const winnersDiv = document.createElement('div');
       winnersDiv.classList.add('winners');
       const matchupsDiv = document.createElement('div');

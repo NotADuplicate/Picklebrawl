@@ -18,14 +18,14 @@ export class Season {
      * @param {string|Date} firstGameTime - the date/time for the first game (day 0)
      * @param {function(Error, any):void} callback
      */
-    setMatches(firstGameTime, callback) {
+    setMatches(firstGameTime, numMatches, matchSpacing, samePlayerSpacing, callback) {
         console.log("Setting matches for league id:", this.leagueId);
         if (!this.leagueId) {
             return callback(new Error("leagueId is not set"));
         }
 
         // Retrieve all teams in the league
-        db.all("SELECT id FROM teams WHERE league_id = ?", [this.leagueId], (err, teams) => {
+        db.all("SELECT t.id, l.players_set_time_minutes FROM teams t JOIN leagues l ON t.league_id=l.id WHERE t.league_id = ?", [this.leagueId], (err, teams) => {
             if (err) {
                 return callback(err);
             }
@@ -33,8 +33,11 @@ export class Season {
             // Sort team IDs for consistent ordering.
             teams.sort((a, b) => a.id - b.id);
             const teamIds = teams.map(team => team.id);
+            const players_set_time_minutes = teams[0].players_set_time_minutes;
 
-            const schedule = this.createGameSchedule(teamIds, 7, { startingRound: 1, startDate: firstGameTime });
+            console.log("First game time:", firstGameTime, typeof firstGameTime);
+
+            const schedule = this.createGameSchedule(teamIds, numMatches, { startingRound: 1, startDate: new Date(firstGameTime), matchSpacing, samePlayerSpacing });
             
             // Insert the scheduled challenges sequentially.
             let pending = schedule.length;
@@ -52,7 +55,7 @@ export class Season {
                           console.log("challenger_team_id:", challenger_team_id);
                         } else {
                           console.log("Challenge created with ID:", this);
-                          self.scheduleMatch(happening_at, this.lastID, runMatch);
+                          self.scheduleMatch(happening_at, this.lastID, runMatch, players_set_time_minutes);
                         }
                         pending--;
                       }
@@ -73,7 +76,10 @@ export class Season {
     createGameSchedule(teamIds, desiredGames, options = {}) {
       // Optional parameters: startingRound and startDate.
       const startingRound = options.startingRound !== undefined ? options.startingRound : 1;
-      const startDate = options.startDate ? new Date(options.startDate) : new Date();
+      const startDate = options.startDate;
+      console.log("Start date:", startDate)
+      const matchSpacing = options.matchSpacing || 5; // minutes between matches
+      const samePlayerSpacing = options.samePlayerSpacing || 1440; // minutes between same player matches
     
       // Initialize game counts for each team.
       const teamGameCounts = {};
@@ -95,7 +101,7 @@ export class Season {
       });
     
       const schedule = [];
-      let currentDayStart = new Date(startDate);
+      let currentDayStart = startDate;
       let round = startingRound;
     
       // Continue scheduling while at least two teams still need games.
@@ -170,14 +176,15 @@ export class Season {
         let matchTime = new Date(currentDayStart);
         roundMatches.forEach(match => {
           match.happening_at = matchTime.toISOString();
-          matchTime = new Date(matchTime.getTime() + 300000); // advance 5 minutes
+            matchTime = new Date(matchTime.getTime() + matchSpacing * 60 * 1000); // space out the matches
         });
     
         // Add round matches to overall schedule.
         schedule.push(...roundMatches);
     
         // Prepare for the next round: next day starts exactly 24 hours later.
-        currentDayStart = new Date(currentDayStart.getTime() + 24 * 60 * 60 * 1000);
+        console.log(currentDayStart, typeof currentDayStart)
+        currentDayStart = new Date(currentDayStart.getTime() + samePlayerSpacing * 60 * 1000);
         round++;
       }
     
@@ -185,21 +192,25 @@ export class Season {
       return schedule;
     }
     
-    scheduleMatch(happening_at, challenge_id, runMatch, tourny = false) {
-      const estCurrentTime = moment().tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
-      console.log(`Current time (EST): ${estCurrentTime}`);
-      const estTime = moment.tz(happening_at, "America/New_York").toDate();
-      const now = new Date();
-      console.log(`Scheduling match for challenge ${challenge_id} at ${estTime}`);
-      console.log(`Time until run match: ${Math.floor((estTime-now) / 1000 / 60)} minutes`);
-      if(estTime < now) {
+    scheduleMatch(happening_at, challenge_id, runMatch, players_time, tourny = false) {
+      /*const utcCurrentTime = moment.utc().format("YYYY-MM-DD HH:mm:ss");
+      console.log(`Current time (UTC): ${utcCurrentTime}`);
+      console.log(happening_at);
+      const match_time = moment.utc(happening_at);
+      const now = moment.utc();
+      console.log(now, match_time);
+      console.log(`Scheduling match for challenge ${challenge_id} at ${match_time}`);
+      console.log(`Time until run match: ${match_time.diff(now)/60000} minutes`);
+      if(match_time < now) {
         console.log("Match passed \n")
         return;
-      }
+      }*/
       
       // Schedule the job for the exact happening_at time.
       const self = this;
-      scheduleJob(estTime, async function() {
+      console.log(happening_at, typeof happening_at)
+      const happening_time = new Date(happening_at);
+      scheduleJob(happening_time, async function() {
         try {
           console.log(`Running match for challenge ${challenge_id}`);
           self.verifyMatch(challenge_id, async () => {
@@ -210,12 +221,12 @@ export class Season {
         }
       });
 
-      const happeningAtEST = moment.tz(happening_at, "America/New_York").toDate();
-      const verifyPlayersTime = new Date(happeningAtEST.getTime() - 90 * 60 * 1000);
-      console.log("Going to verify players at time (EST): ", verifyPlayersTime);
+      //const happeningAtEST = moment.tz(happening_at, "America/New_York").toDate();
+      const verifyPlayersTime = new Date(happening_time.getTime() - players_time * 60 * 1000);
+      console.log("Going to verify players at time (UTC): ", verifyPlayersTime);
 
-      const timeUntilVerify = verifyPlayersTime - now;
-      console.log(`Time until verify players: ${Math.floor(timeUntilVerify / 1000 / 60)} minutes`);
+      //const timeUntilVerify = verifyPlayersTime - now;
+      //console.log(`Time until verify players: ${Math.floor(timeUntilVerify / 1000 / 60)} minutes`);
       scheduleJob(verifyPlayersTime, async function() {
         try {
           console.log(`Verifying players set for challenge ${challenge_id}`);
@@ -410,16 +421,14 @@ export class Season {
     }
 
     scheduleOnStartup() {
-      db.all(`SELECT * from challenges where status = "upcoming"`, (err, rows) => {
+      db.all(`SELECT c.*, l.players_set_time_minutes from challenges c JOIN leagues l ON c.league_id = l.id where c.status = "upcoming"`, (err, rows) => {
         if(err) {
           console.log("Error scheduling on startup, row: ",rows, " err: ", err)
         }
         else {
           rows.forEach(row => {
             const tourny = row.tournament_match ? true : false;
-            //const time = moment(row.happening_at).add(-2, 'day').add(1, "minutes").toDate();
-            //this.scheduleMatch(time, row.id, runMatch, tourny);
-            this.scheduleMatch(row.happening_at, row.id, runMatch, tourny);
+            this.scheduleMatch(row.happening_at, row.id, runMatch, row.players_set_time_minutes, tourny);
           });
         }
       })
@@ -453,7 +462,7 @@ export class Season {
      *
      * @param {function(Error, any):void} callback
      */
-    createTournament(callback) {
+    createTournament(season, callback) {
       console.log("Generating tournament bracket for league id:", this.leagueId);
       if (!this.leagueId) {
         return callback(new Error("leagueId is not set"));
@@ -468,12 +477,12 @@ export class Season {
           OR (match_history.away_team_id = teams.id AND match_history.home_team_score < match_history.away_team_score) THEN 0 ELSE 1 END) AS losses
           FROM teams
           LEFT JOIN match_history ON teams.id IN (match_history.home_team_id, match_history.away_team_id)
-          WHERE teams.league_id = ? AND teams.in_season = TRUE AND match_history.type = 'league' AND match_history.season = SELECT(season FROM leagues WHERE id = ?)
+          WHERE teams.league_id = ? AND teams.in_season = TRUE AND match_history.type = 'league' AND match_history.season = ?
           GROUP BY teams.id
           ORDER BY (wins * 1.0) / (wins + losses + 1) DESC
-      `, [this.leagueId, this.leagueId], async (err, teams) => {
+      `, [this.leagueId, season], async (err, teams) => {
         if (err) {
-          console.log(err)
+          console.log("Error getting team wins n such:".err)
             return callback(err);
         }
 
@@ -518,15 +527,15 @@ export class Season {
           }
           promises++;
           //Add first round
-          db.run(`INSERT INTO tournament_matches (first_team_id, second_team_id, league_id, tournament_match, num_games, winning_team_id) 
-            VALUES (?, ?, ?, ?, ?, ?)`, [first_team_id, second_team_id, this.leagueId, i/2, 1, winner_team_id], (err) => {
+          db.run(`INSERT INTO tournament_matches (first_team_id, second_team_id, league_id, tournament_match, num_games, winning_team_id, season) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`, [first_team_id, second_team_id, this.leagueId, i/2, 1, winner_team_id, season], (err) => {
               if(err) {
                 console.log("Error inserting tournament game:", err)
               }
               promises--;
             })
         }
-        console.log(autoWinners)
+        console.log("Auto winners:",autoWinners)
         //Add next rounds
         let round = 2;
         let i = newBracket.length/2-1;
@@ -545,8 +554,8 @@ export class Season {
 
           promises++;
           console.log("Round:", round, " Match:", i, " Match in round:", matchesInRound)
-          db.run(`INSERT INTO tournament_matches (league_id, tournament_match, num_games, tournament_round, first_team_id, second_team_id) 
-            VALUES (?, ?, ?, ?, ?, ?)`, [this.leagueId, i, 3, round, first_team_id, second_team_id], (err) => {
+          db.run(`INSERT INTO tournament_matches (league_id, tournament_match, num_games, tournament_round, first_team_id, second_team_id, season) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.leagueId, i, 3, round, first_team_id, second_team_id, season], (err) => {
               if(err) {
                 round = 100;
                 console.log("Error inserting tournament game:", err)
@@ -567,42 +576,66 @@ export class Season {
       });
     }
 
-    scheduleTournamentMatches(round, season) {
+    scheduleTournamentMatches(round, startTime = null) {
       const self = this;
-      db.run(`UPDATE players SET health=100`)
-      db.all(`SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ?`,
-         [round, this.leagueId], (err, rows) => {
-          if(err) {
-            console.log("Error getting torny matches:", err)
-          }
-          console.log("Torny:", rows)
-          let minuteOffset = 480;
-          rows.forEach(match => {
-            if(match.first_team_id && match.second_team_id) {
-              let tournamentMatchTime = moment().tz("America/New_York").add(1, 'day').add(minuteOffset, "minutes");
-              for(let i = 0; i<1+Math.floor(match.num_games/2); i++) { //put 2 games for each one
-                const time = moment(tournamentMatchTime).toDate();
-                db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
-                   VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
-                  [match.first_team_id, match.second_team_id, tournamentMatchTime.toISOString(), this.leagueId, match.id], function(err) {
-                    if(err) {
-                      console.log("Err creating torny challenge:", err)
-                    }
-                    const challengeId = this.lastID;
-                    self.scheduleMatch(time, challengeId, runMatch, true);
-                  });
-                tournamentMatchTime = tournamentMatchTime.add(1, "day");
-              }
-              minuteOffset += 10;
+      db.run(`UPDATE players 
+          SET health=100 
+          WHERE team_id IN (SELECT id FROM teams WHERE league_id = ?)`, [this.leagueId], (err) => {
+            if(err) {
+              console.log("Error resetting players health:", err)
             }
-          });
-         })
+      });
+
+      db.get(`SELECT season, match_spacing_minutes, match_player_spacing_minutes FROM leagues WHERE id=?`, [this.leagueId], (err, row) => {
+        const season = row.season;
+        const matchSpacing = row.match_spacing_minutes;
+        const playerSpacing = row.match_player_spacing_minutes;
+        if(err) {
+          console.log("Error getting league info:", err)
+        }
+      
+        db.all(`SELECT t.*, leagues.players_set_time_minutes FROM tournament_matches t JOIN leagues ON t.league_id=leagues.id WHERE tournament_round = ? AND league_id = ? AND t.season = ?`,
+          [round, this.leagueId, season], (err, rows) => {
+            if(err) {
+              console.log("Error getting torny matches:", err)
+            }
+            console.log("Torny:", rows)
+            let minuteOffset = 0;
+            const players_set_time_minutes = rows[0].players_set_time_minutes;
+            if(!startTime) {
+              startTime = new Date(Date.now() + (playerSpacing + minuteOffset) * 60000);
+            } else {
+              startTime = new Date(startTime);
+              console.log(startTime, typeof startTime)
+            }
+
+            rows.forEach(match => {
+              if(match.first_team_id && match.second_team_id) {
+                let tournamentMatchTime = new Date(startTime.getTime() + minuteOffset * 60 * 1000);;
+                for(let i = 0; i<1+Math.floor(match.num_games/2); i++) { //put 2 games for each one
+                  const time = moment(tournamentMatchTime).toDate();
+                  db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
+                    VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
+                    [match.first_team_id, match.second_team_id, tournamentMatchTime.toISOString(), this.leagueId, match.id], function(err) {
+                      if(err) {
+                        console.log("Err creating torny challenge:", err)
+                      }
+                      const challengeId = this.lastID;
+                      self.scheduleMatch(time, challengeId, runMatch, players_set_time_minutes, true);
+                    });
+                  tournamentMatchTime = new Date(tournamentMatchTime.getTime() + playerSpacing * 60 * 1000);
+                }
+                minuteOffset += matchSpacing;
+              }
+            });
+          })
+        });
     }
 
     updateTournamentMatch(match_id, winner_id) {
       const self = this;
       db.get(
-        `SELECT tm.*, m.id AS mhid, m.created_at, m.home_team_id, m.away_team_id, (
+        `SELECT tm.*, l.players_set_time_minutes, m.id AS mhid, m.created_at, m.home_team_id, m.away_team_id, (
         SELECT COUNT(*)
         FROM challenges c
         JOIN match_history mh ON c.id = mh.challenge_id
@@ -613,8 +646,8 @@ export class Season {
         JOIN match_history mh ON c.id = mh.challenge_id
         WHERE c.tournament_match = tm.id AND mh.home_team_score > mh.away_team_score
          ) AS homeWins
-         FROM tournament_matches tm, match_history m
-         WHERE tm.id = (
+         FROM tournament_matches tm, match_history m, leagues l WHERE tm.league_id = l.id AND m.id = ? AND tm.league_id = ?
+         AND tm.id = (
         SELECT c.tournament_match
         FROM challenges c
         JOIN match_history mh ON c.id = mh.challenge_id
@@ -631,6 +664,7 @@ export class Season {
           const numMatches = row.numMatches;
           const homeWins = row.homeWins;
           const awayWins = numMatches - homeWins;
+          const players_set_time_minutes = row.players_set_time_minutes;
           let matchWinner = null;
           if(homeWins > num_games/2) {
             matchWinner = winner_id;
@@ -672,18 +706,45 @@ export class Season {
             });
           } else if(row.num_games/2 < row.numMatches) { //theyve played more than half of the games, schedule another one
             console.log("Making a new match:", row.num_games, row.numMatches)
-            const nextTime = moment(row.created_at).add(1, 'day').toISOString();
-            db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
-              VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
-             [row.first_team_id, row.second_team_id, nextTime, this.leagueId, row.id], function(err) {
+            db.get(`SELECT match_player_spacing_minutes FROM leagues WHERE id=?`, [this.leagueId], (err, row2) => {
               if(err) {
-                console.log("Err creating torny challenge:", err)
+                console.log("Error getting league info2:", err)
+                return;
               }
-              const challengeId = this.lastID;
-              self.scheduleMatch(nextTime, challengeId, runMatch, true);
+
+
+              const nextTime = moment(row.created_at).add(row2.match_player_spacing_minutes, 'minutes').toISOString();
+              db.run(`INSERT INTO challenges (challenger_team_id, challenged_team_id, status, happening_at, friendly, league_id, tournament_match) 
+                VALUES (?, ?, 'upcoming', ?, false, ?, ?)`,
+              [row.first_team_id, row.second_team_id, nextTime, this.leagueId, row.id], function(err) {
+                if(err) {
+                  console.log("Err creating torny challenge:", err)
+                }
+                const challengeId = this.lastID;
+                self.scheduleMatch(nextTime, challengeId, runMatch, players_set_time_minutes, true);
+              });
             });
           }
+        });
+    }
+
+    updateLeagueMatch(match_id) {
+      const self = this;
+      db.all(`SELECT * FROM challenges WHERE status = "upcoming" AND league_id = ?`, [this.leagueId], (err, rows) => {
+        if(err) {
+          console.log("Error getting upcoming matches after league match:", err)
         }
-      );
+        if(rows.length === 0) {
+          console.log("That was the last match")
+          db.get(`SELECT season, tournament_start_time FROM leagues WHERE id = ?`, [this.leagueId], (err, row) => {
+            if(err) {
+              console.log("Error getting league info:", err)
+            }
+            const season = row.season;
+            const tournamentStartTime = row.tournament_start_time;
+            self.createTournament(season, () => {self.scheduleTournamentMatches(1, tournamentStartTime)});
+          })
+        }
+      });
     }
 }

@@ -44,6 +44,10 @@ db.serialize(() => {
         friendly_tick_secs INT DEFAULT 1,
         competitive_tick_secs INT DEFAULT 2, 
         season INT DEFAULT 1,
+        players_set_time_minutes INT DEFAULT 90,
+        tournament_start_time DATETIME,
+        match_spacing_minutes INT DEFAULT 5,
+        match_player_spacing_minutes INT DEFAULT 1440,
         FOREIGN KEY (founder_id) REFERENCES users(id)
     )`);
 
@@ -107,10 +111,12 @@ db.serialize(() => {
         friendly BOOLEAN DEFAULT TRUE,
         happening_at DATETIME,
         league_id INT,
+        tournament_match INT,
 
         FOREIGN KEY (challenger_team_id) REFERENCES teams(id),
         FOREIGN KEY (challenged_team_id) REFERENCES teams(id),
-        FOREIGN KEY (league_id) REFERENCES leagues(id)
+        FOREIGN KEY (league_id) REFERENCES leagues(id),
+        FOREIGN KEY (tournament_match) REFERENCES tournament_matches(id)
     );`);
 
     //db.run(`DROP TABLE IF EXISTS challenge_players`);
@@ -303,6 +309,7 @@ db.serialize(() => {
     END;
     `);
 
+    db.run(`DROP VIEW IF EXISTS match_stats`);
     db.run(`
         CREATE VIEW IF NOT EXISTS match_stats AS
         WITH scoring AS (
@@ -348,7 +355,7 @@ db.serialize(() => {
                 attacking_player_id AS player_id,
                 match_id,
                 SUM(damage_done) AS damage_done
-            FROM attack_history
+            FROM attack_history WHERE attacking_player_id != attacked_player_id
             GROUP BY attacking_player_id, match_id
         ),
         damage_taken AS (

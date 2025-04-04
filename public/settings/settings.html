@@ -4,35 +4,77 @@
     <meta charset="UTF-8">
     <title>League Settings</title>
     <link rel="stylesheet" href="/settings/settings.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
     <div class="container">
         <h1>League Settings</h1>
+        <!-- Tab Headers -->
+        <div class="tabs">
+            <button type="button" class="tab-button" data-tab="general-tab">General</button>
+            <button type="button" class="tab-button" data-tab="scheduling-tab">Scheduling</button>
+        </div>
         <form id="settings-form">
-            <div class="form-group">
-                <label for="start-datetime">First Match Starting Time:</label>
-                <!-- Using datetime-local for both date and time -->
-                <input type="datetime-local" id="start-datetime" name="startDatetime" required>
-            </div>
-            <div class="form-group">
-                <label for="draft-time">Draft Time Limit (minutes):</label>
-                <!-- Default value set to 300 -->
-                <input type="number" id="draft-time" name="draftTime" min="1" value="300" required>
-            </div>
-            <div class="form-group">
-                <label for="friendly-tick">Friendly Match Tick Time (seconds):</label>
-                <!-- Default value set to 1 -->
-                <input type="number" id="friendly-tick" name="friendlyTick" min="0.1" step="0.1" value="1" required>
-            </div>
-            <div class="form-group">
-                <label for="competitive-tick">Competitive Match Tick Time (seconds):</label>
-                <!-- Default value set to 2 -->
-                <input type="number" id="competitive-tick" name="competitiveTick" min="0.1" step="0.1" value="2" required>
+            <div class="tab-content">
+                <!-- General Tab -->
+                <div id="general-tab" class="tab-pane">
+                    <div class="form-group">
+                        <label for="draft-time">Draft Time Limit (minutes):</label>
+                        <input type="number" id="draft-time" name="draftTime" min="1" value="300" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="friendly-tick">Friendly Match Tick Time (seconds):</label>
+                        <input type="number" id="friendly-tick" name="friendlyTick" min="0.1" step="0.1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="competitive-tick">Competitive Match Tick Time (seconds):</label>
+                        <input type="number" id="competitive-tick" name="competitiveTick" min="0.1" step="0.1" value="2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="players-set-time">Time before match to lock in players (minutes):</label>
+                        <input type="number" id="players-set-time" name="playerTime" min="1" step="1" value="90" required>
+                    </div>
+                </div>
+                <!-- Scheduling Tab -->
+                <div id="scheduling-tab" class="tab-pane">
+                    <div class="form-group">
+                        <label for="start-datetime">First Match Starting Time:</label>
+                        <input type="datetime-local" id="start-datetime" name="startDatetime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tournament-datetime">Tournament Starting Time:</label>
+                        <input type="datetime-local" id="tournament-datetime" name="tournamentTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-matches">Number of Matches:</label>
+                        <input type="number" id="num-matches" name="num-matches" min="1" max="15" value="7" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="time-between-matches">Time Between Matches (minutes):</label>
+                        <input type="number" id="time-between-matches" name="time-between-matches" min="1" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time Between Matches of Same Player:</label>
+                        <div>
+                            <label for="time-between-same-player-days">Days:</label>
+                            <input type="number" id="time-between-same-player-days" name="time-between-same-player-days" min="0" value="1" required>
+                        </div>
+                        <div>
+                            <label for="time-between-same-player-hours">Hours:</label>
+                            <input type="number" id="time-between-same-player-hours" name="time-between-same-player-hours" min="0" value="0" required>
+                        </div>
+                        <div>
+                            <label for="time-between-same-player-minutes">Minutes:</label>
+                            <input type="number" id="time-between-same-player-minutes" name="time-between-same-player-minutes" min="0" value="0" required>
+                        </div>
+                    </div>
+                </div>
             </div>
             <button type="submit">Save Settings</button>
         </form>
         <div id="message"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script type="module" src="/settings/settings.js"></script>
 </body>
 </html>

@@ -162,7 +162,7 @@ class Player {
         [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio] = stats;
         const totalStats = this.bulk + this.finesse + this.height + this.strength + this.intelligence + this.cardio;
         console.log("Total stats: ", totalStats-5)
-        if(totalStats-5 > power) {
+        if(totalStats-6 > power) {
             console.log(this.name, " IS UNFAIRLY GOOD! \n")
         }
         else if(totalStats-5 < power) {
@@ -217,14 +217,15 @@ class Player {
             return;
         }
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
-            const damage = Math.random() * (this.strength + this.tempStrength)*3/4;
+            const damage = Math.random() * (this.strength + this.tempStrength);
             const defense = Math.random() * (target.bulk + target.protectBulk);
             const finalDamage = (damage - defense)+0.25;
             if (finalDamage < 0) {
                 return;
             }
+            target.tempInjury += finalDamage;
 
-            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER) + 1;
+            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER);
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {

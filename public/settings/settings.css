@@ -61,3 +61,67 @@ button[type="submit"]:hover {
     font-size: 14px;
     color: red;
 }
+
+.tabs {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.flatpickr-day.regular-season {
+    background-color: #fef9e7 !important;
+    position: relative;
+  }
+
+  .flatpickr-day.before-season {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    color: #df9991;
+    font-size: 1em;
+  }
+
+  
+  .flatpickr-day.regular-season::after {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    color: #e74c3c;
+    font-size: 1em;
+  }
+
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: #f1f1f1;
+    color: #333;
+    font-size: 16px;
+    border-radius: 5px 5px 0 0;
+    margin-right: 5px;
+}
+
+.tab-button.active {
+    background-color: #007bff;
+    color: #fff;
+    font-weight: bold;
+}
+
+.tab-button:hover {
+    background-color: #ddd;
+}
+
+.tab-content {
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 5px 5px 5px;
+    padding: 20px;
+    background-color: #fff;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}

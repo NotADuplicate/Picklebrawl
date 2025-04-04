@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const tournamentButton = document.getElementById('tournament-button');
             tournamentButton.addEventListener('click', () => {
-                window.location.href = `../tournament/tournament.html`;
+                window.location.href = `../tournament/tournament.html?leagueId=${league.id}`;
             });
             leagueFounderElement.textContent = league.founder;
             // Disable the start league button if the league has already started or if the logged-in user is not the founder
