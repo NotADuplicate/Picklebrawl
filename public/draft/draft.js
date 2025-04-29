@@ -20,6 +20,10 @@ let currentDraftIndex = 0;
 
 let draftPicks = 0;
 
+let draftTimerMinutes;
+let lastDraftTime;
+let timerInterval;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     draftId = urlParams.get('draftId');
@@ -50,6 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         fetchData(`/draft/players?draftId=${draftId}`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (res) => {
             const players = res.prospects;
             const backwards = Math.floor(res.turn/teams.length) % 2;
+            lastDraftTime = (new Date(res.lastDraftTime + ' UTC').getTime());
+            draftTimerMinutes = res.time_limit;
+            startCountdownTimer();
+
             turn = res.turn;
             currentDraftIndex = !backwards ? turn % teams.length : teams.length - turn % teams.length - 1;
             displayDraftOrder();
@@ -237,6 +245,59 @@ function displayDraftOrder() {
 function goToLeague() {
     window.location.href = `/league/league.html?league=${leagueName}`;
 }
+
+// Function to start the countdown timer
+function startCountdownTimer() {
+    if (!lastDraftTime || !draftTimerMinutes) return;
+    
+    // Parse the lastDraftTime from server
+    const lastDraftDateTime = new Date(lastDraftTime);
+    
+    // Calculate the target end time by adding the time limit
+    const targetTime = new Date(lastDraftDateTime);
+    targetTime.setMinutes(targetTime.getMinutes() + draftTimerMinutes);
+    
+    updateTimer(targetTime);
+    
+    // Update the timer every second
+    timerInterval = setInterval(() => {
+        updateTimer(targetTime);
+    }, 1000);
+}
+
+// Function to update the timer display
+function updateTimer(targetTime) {
+    const now = new Date();
+    const timeDiff = targetTime - now;
+    
+    // If time has expired, reload the page
+    if (timeDiff <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('timer').textContent = "00:00:00";
+        location.reload();
+        return;
+    }
+    
+    // Calculate hours, minutes, seconds
+    let hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    let minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+    
+    // Format with leading zeros
+    hours = hours.toString().padStart(2, '0');
+    minutes = minutes.toString().padStart(2, '0');
+    seconds = seconds.toString().padStart(2, '0');
+    
+    // Update the timer text
+    document.getElementById('timer').textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+// Clean up timer when page is unloaded
+window.addEventListener('beforeunload', () => {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+});
 
 window.goToLeague = goToLeague;
 window.sortPlayers = sortPlayers;

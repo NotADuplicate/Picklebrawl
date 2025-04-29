@@ -40,6 +40,7 @@ db.serialize(() => {
         password TEXT NOT NULL,
         founder_id INT NOT NULL,
         started BOOLEAN NOT NULL,
+        state TEXT DEFAULT 'unstarted',
         draft_timer_mins INT DEFAULT 300,
         friendly_tick_secs INT DEFAULT 1,
         competitive_tick_secs INT DEFAULT 2, 
@@ -266,6 +267,7 @@ db.serialize(() => {
         league_id INTEGER NOT NULL,
         turn INT NOT NULL DEFAULT 0,
         active BOOLEAN NOT NULL DEFAULT TRUE,
+        last_draft_time DATETIME DEFAULT CURRENT_TIMESTAMP,
         currently_drafting_team_id INT,
         FOREIGN KEY (league_id) REFERENCES leagues(id)
         FOREIGN KEY (currently_drafting_team_id) REFERENCES teams(id)

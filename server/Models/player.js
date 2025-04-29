@@ -219,13 +219,13 @@ class Player {
         if(this.quirk.attackEffect(this, target, match) == null) { //if its not null then use the quirk attack effect
             const damage = Math.random() * (this.strength + this.tempStrength);
             const defense = Math.random() * (target.bulk + target.protectBulk);
-            const finalDamage = (damage - defense)+0.25;
+            const finalDamage = (damage - defense)*2;
             if (finalDamage < 0) {
                 return;
             }
             target.tempInjury += finalDamage;
 
-            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER);
+            /*const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER);
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {
@@ -236,7 +236,7 @@ class Player {
             target.hp = Math.max(0,target.hp-hpDamage);
             if(target.hp == 0) {
                 target.knockout(match);
-            }
+            }*/
         }
     }
 

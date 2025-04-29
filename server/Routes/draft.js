@@ -10,7 +10,7 @@ let scheduledDraftExpires = {};
 router.get('/draft/players', (req, res) => {
     const { draftId } = req.query;
     console.log("Getting draft players from draftId ", draftId);
-    db.get('SELECT * FROM drafts WHERE id = ? AND active = TRUE', [draftId], (err, draft) => {
+    db.get('SELECT * FROM drafts, leagues WHERE drafts.id = ? AND drafts.league_id=leagues.id AND drafts.active = TRUE', [draftId], (err, draft) => {
         if(err) {
             console.log(err);
             return res.status(400).json({message: "Error finding draft"})
@@ -26,7 +26,7 @@ router.get('/draft/players', (req, res) => {
                 console.log("Draft error: ", err)
                 return res.status(400).json({ message: 'Error getting players!' });
             }
-            res.json({prospects: players, turn: order});
+            res.json({prospects: players, turn: order, lastDraftTime: draft.last_draft_time, time_limit: draft.draft_timer_mins});
         });
     });
 });

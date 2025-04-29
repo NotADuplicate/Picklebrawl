@@ -87,14 +87,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const league = leagues[0]; // Since we are fetching by league name, there should be only one league
         if (league) {
             localStorage.setItem("leagueId", league.id);
+
             const calendarButton = document.getElementById('calendar-button');
-            calendarButton.addEventListener('click', () => {
-                window.location.href = `../calendar/calendar.html?leagueId=${league.id}`;
-            });
+            if(league.started) {
+                calendarButton.addEventListener('click', () => {
+                    window.location.href = `../calendar/calendar.html?leagueId=${league.id}`;
+                });
+            } else {
+                calendarButton.style.display = "none";
+                calendarButton.disabled = true;
+            }
+
             const tournamentButton = document.getElementById('tournament-button');
-            tournamentButton.addEventListener('click', () => {
-                window.location.href = `../tournament/tournament.html?leagueId=${league.id}`;
-            });
+            if(league.tournament_exists) {
+                tournamentButton.addEventListener('click', () => {
+                    window.location.href = `../tournament/tournament.html?leagueId=${league.id}`;
+                });
+            } else {
+                tournamentButton.style.display = "none";
+                tournamentButton.disabled = true;
+            }
             leagueFounderElement.textContent = league.founder;
             // Disable the start league button if the league has already started or if the logged-in user is not the founder
             if (league.started || loggedInUser !== league.founder) {
@@ -164,6 +176,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     teamsContainer.appendChild(teamCard);
                 });
                 getChallenges(challengeButtons);
+                const leagueStatsButton = document.getElementById('league-stats-button');
+                if(league.started) {
+                    leagueStatsButton.addEventListener('click', () => {
+                        const leagueId = localStorage.getItem('leagueId');
+                        window.location.href = `/league-stats/league-stats.html?leagueId=${leagueId}`;
+                    });
+                } else {
+                    leagueStatsButton.style.display = "none";
+                    leagueStatsButton.disabled = true;
+                }
+                
             }, (error) => {
                 console.error('Error fetching teams:', error);
                 messageDiv.innerText = 'Error fetching teams!';
@@ -181,12 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backButton.addEventListener('click', () => {
         window.location.href = `../home/home.html`;
-    });
-
-    const leagueStatsButton = document.getElementById('league-stats-button');
-    leagueStatsButton.addEventListener('click', () => {
-        const leagueId = localStorage.getItem('leagueId');
-        window.location.href = `/league-stats/league-stats.html?leagueId=${leagueId}`;
     });
 });
 

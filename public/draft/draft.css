@@ -24,6 +24,20 @@ header p {
     margin-top: 10px;
 }
 
+#countdown-timer {
+    font-size: 24px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    border-radius: 5px;
+}
+
+#timer {
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
 #back-button {
     position: absolute;
     top: 20px;

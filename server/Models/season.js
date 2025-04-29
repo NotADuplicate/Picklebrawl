@@ -600,6 +600,10 @@ export class Season {
               console.log("Error getting torny matches:", err)
             }
             console.log("Torny:", rows)
+            if(rows.length == 0) {
+              console.log("NO TORNY ROUNDS\n\n\n")
+              return;
+            }
             let minuteOffset = 0;
             const players_set_time_minutes = rows[0].players_set_time_minutes;
             if(!startTime) {
@@ -645,7 +649,10 @@ export class Season {
         FROM challenges c
         JOIN match_history mh ON c.id = mh.challenge_id
         WHERE c.tournament_match = tm.id AND mh.home_team_score > mh.away_team_score
-         ) AS homeWins
+         ) AS homeWins, (
+          SELECT COUNT(*) FROM tournament_matches t, match_history mh
+          WHERE t.league_id=mh.league_id AND t.season=mh.season AND t.tournament_round = tm.tournament_round AND mh.id = ?) 
+          AS num_matches_in_round
          FROM tournament_matches tm, match_history m, leagues l WHERE tm.league_id = l.id AND m.id = ? AND tm.league_id = ?
          AND tm.id = (
         SELECT c.tournament_match
@@ -653,7 +660,7 @@ export class Season {
         JOIN match_history mh ON c.id = mh.challenge_id
         WHERE mh.id = ?
          ) AND m.id=?`,
-        [match_id, match_id],
+        [match_id, match_id, self.leagueId, match_id, match_id],
         (err, row) => {
           console.log("Row:", row)
           if (err) {
@@ -683,14 +690,14 @@ export class Season {
               console.log("Autowinner:", autoWinner)
               const teamColumn = autoWinner%2 == 0 ? "first_team_id" : "second_team_id";
 
-              db.run(`UPDATE tournament_matches SET ${teamColumn} = ? WHERE tournament_match = ? AND league_id = ?`, [winner_id, Math.floor(autoWinner/2), leagueId], (err) => {
+              db.run(`UPDATE tournament_matches SET ${teamColumn} = ? WHERE tournament_match = ? AND league_id = ? AND season = ?`, [winner_id, Math.floor(autoWinner/2), leagueId, row.season], (err) => {
                 if(err) {
                   console.log("Error adding autowinner to match:", err);
                 }
                 //Check if all matches in the round have finished
                 db.all(
-                  `SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ?`,
-                  [row.tournament_round, leagueId],
+                  `SELECT * FROM tournament_matches WHERE tournament_round = ? AND league_id = ? AND season = ?`,
+                  [row.tournament_round, leagueId, row.season],
                   (err, matches) => {
                   if (err) {
                     console.log("Error fetching tournament matches:", err);
@@ -698,6 +705,10 @@ export class Season {
                   }
                   const allWinnersSet = matches.every(match => match.winning_team_id !== null);
                   if (allWinnersSet) {
+                    if(row.num_matches_in_round == 1) { //season is over
+                      this.endSeason();
+                      return;
+                    }
                     self.scheduleTournamentMatches(row.tournament_round+1, 1);
                   }
                   }
@@ -742,9 +753,22 @@ export class Season {
             }
             const season = row.season;
             const tournamentStartTime = row.tournament_start_time;
+            db.run(`UPDATE leagues SET state = "tournament" WHERE id = ?`, [this.leagueId], (err) => {
+              if(err) {
+                console.log("Updating league state to tournament:", err)
+              }
+            });
             self.createTournament(season, () => {self.scheduleTournamentMatches(1, tournamentStartTime)});
           })
         }
       });
+    }
+
+    endSeason() {
+      db.run(`UPDATE leagues SET season = season + 1, state = "offseason" WHERE id = ?`, [this.leagueId], (err) => {
+        if(err) {
+          console.log("Error ending season:", err)
+        }
+      })
     }
 }

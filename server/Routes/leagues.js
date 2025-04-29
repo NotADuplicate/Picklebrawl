@@ -79,7 +79,8 @@ router.get('/leagues', authenticator.authenticateToken, (req, res) => {
     console.log("Getting leagues for user id:", req.userId);
     const { leagueName } = req.query;
     let query = `
-        SELECT leagues.id, leagues.name AS leagueName, leagues.started, username AS founder
+        SELECT leagues.id, leagues.name AS leagueName, leagues.started, username AS founder, leagues.state,
+        (SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM tournament_matches WHERE league_id = leagues.id) AS tournament_exists
         FROM leagues
         LEFT JOIN league_users ON leagues.id = league_users.league_id
         LEFT JOIN users ON leagues.founder_id = users.id
@@ -129,7 +130,7 @@ router.post('/start-league', authenticator.authenticateToken, (req, res) => {
             return res.status(400).json({ message: 'League already started!' });
         }
 
-        db.run(`UPDATE leagues SET started = ?, draft_timer_mins = ?, friendly_tick_secs = ?, players_set_time_minutes = ?, competitive_tick_secs = ?, tournament_start_time = ?
+        db.run(`UPDATE leagues SET started = ?, state="season", draft_timer_mins = ?, friendly_tick_secs = ?, players_set_time_minutes = ?, competitive_tick_secs = ?, tournament_start_time = ?
              WHERE id = ?`, [true, draftTimeValue, friendlyTickValue, playersSetTime, competitiveTickValue, tournamentTime, league.id], (err) => {
             if (err) {
                 return res.status(400).json({ message: 'Error starting league!' });

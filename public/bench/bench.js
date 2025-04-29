@@ -136,8 +136,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const player = playerDict[playerId];
             if(player && player.dataset.team === 'your-team' && player.dataset.locked === 'false') {
                 let currentSlot = player.parentElement;
-                if(currentSlot.classList.contains('bench-slot')){
-                    currentSlot.removeChild(player);
+                if(slot.childElementCount > 0) {
+                    const currentPlayer = slot.querySelector('.player');
+                    selectPlayer(currentPlayer);
+                    if(currentSlot.classList.contains('bench-slot')){
+                        selectPlayer(player);
+                        selectPlayer(player, slot);
+                        selectPlayer(currentPlayer, currentSlot);
+                    } else {
+                        selectPlayer(player, slot);
+                    }
+
+                } else if(currentSlot.classList.contains('bench-slot')){
+                    console.log("Removing player from bench slot")
+                    selectPlayer(player);
+                    selectPlayer(player, slot);
                 }
                 else {
                     selectPlayer(player, slot);
