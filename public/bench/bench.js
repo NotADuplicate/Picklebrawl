@@ -194,7 +194,8 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
         Ht: stats.Ht,
         Str: stats.Str,
         Int: stats.Int,
-        Car: stats.Car
+        Car: stats.Car,
+        Mag: stats.Mag,
     };
     
     Object.keys(playerStats).forEach(stat => {
@@ -214,6 +215,7 @@ function addPlayerToTeam(teamId, playerName, stats, playerId, playerQuirk, quirk
     player.dataset.strength = stats.Str;
     player.dataset.intelligence = stats.Int;
     player.dataset.cardio = stats.Car;
+    player.dataset.magic = stats.Mag;
     player.dataset.quirkTitle = playerQuirk;
     player.dataset.stats = JSON.stringify(stats);
 
@@ -378,7 +380,8 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                 Ht: player.height,
                 Str: player.strength,
                 Int: player.intelligence,
-                Car: player.cardio
+                Car: player.cardio,
+                Mag: player.magic
             }, player.id, player.quirk_title, player.quirk_description, player.health);
         });
         fetchData(`/teams/${otherTeamId}/players`, 'GET', { 'Authorization': `Bearer ${token}` }, null, (players) => {
@@ -391,7 +394,8 @@ fetchData(`/teams/${myTeamId}/players`, 'GET', { 'Authorization': `Bearer ${toke
                         Ht: player.height,
                         Str: player.strength,
                         Int: player.intelligence,
-                        Car: player.cardio
+                        Car: player.cardio,
+                        Mag: player.magic
                     }, player.id, player.quirk_title, player.quirk_description, player.health);
                 });
                 checkChallengeFlags();
@@ -550,6 +554,7 @@ function selectPlayer(player, slot = null) {
                 player.dataset.location = 'bench';
                 player.classList.add('selected');
                 applyQuirkStats();
+                updateTeamSorcery(); 
             } else {
                 alert('Bench is full!');
             }
@@ -791,7 +796,8 @@ function applyQuirkStats() {
                 Ht: player.height,
                 Str: player.strength,
                 Int: player.intelligence,
-                Car: player.cardio
+                Car: player.cardio,
+                Mag: player.magic
             };
             Object.keys(playerStats).forEach(stat => {
                 const statElement = playerElement.querySelector(`.stat[data-stat="${stat}"] .stat-value`);
@@ -1001,4 +1007,39 @@ async function showConfirmModal() {
             resolve(false);
         };
     });
+}
+
+// Add this function to calculate average sorcery (magic)
+function updateTeamSorcery() {
+    // Calculate for your team
+    const yourTeamPlayers = document.querySelectorAll('#your-team-bench .player');
+    let yourTeamMagicSum = 0;
+    let yourTeamCount = 0;
+    
+    yourTeamPlayers.forEach(player => {
+        if (player.dataset.magic) {
+            yourTeamMagicSum += parseInt(player.dataset.magic);
+            yourTeamCount++;
+        }
+    });
+    
+    const yourTeamSorceryElement = document.getElementById('your-team-sorcery');
+    yourTeamSorceryElement.textContent = yourTeamCount > 0 ? 
+        Math.floor(yourTeamMagicSum / yourTeamCount) : 0;
+    
+    // Calculate for other team
+    const otherTeamPlayers = document.querySelectorAll('#other-team-bench .player');
+    let otherTeamMagicSum = 0;
+    let otherTeamCount = 0;
+    
+    otherTeamPlayers.forEach(player => {
+        if (player.dataset.magic) {
+            otherTeamMagicSum += parseInt(player.dataset.magic);
+            otherTeamCount++;
+        }
+    });
+    
+    const otherTeamSorceryElement = document.getElementById('other-team-sorcery');
+    otherTeamSorceryElement.textContent = otherTeamCount > 0 ? 
+        Math.round(otherTeamMagicSum / otherTeamCount) : 0;
 }

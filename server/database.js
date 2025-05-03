@@ -89,6 +89,7 @@ db.serialize(() => {
         strength INTEGER NOT NULL,
         intelligence INTEGER NOT NULL,
         cardio INTEGER NOT NULL,
+        magic INTEGER NOT NULL,
         power INTEGER NOT NULL, 
         team_id INTEGER,
         quirk INT NOT NULL,

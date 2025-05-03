@@ -41,6 +41,7 @@
                 <button class="toggle-button" data-target="your-team-bench">▼</button>
                 <button id="lock-button">Lock In Starters</button>
                 <button id="reccomend-button">Recommend Starters</button>
+                <div class="sorcery-display">Sorcery: <span id="your-team-sorcery">0</span></div>
             </div>
             <ul id="your-team-bench">
                 <li class="bench-slot" data-slot="1"></li>
@@ -58,6 +59,7 @@
             </ul>
             <h3>Starters</h3>
             <button class="toggle-button" data-target="other-team-bench">▼</button>
+            <div class="sorcery-display">Sorcery: <span id="other-team-sorcery">0</span></div>
             <ul id="other-team-bench">
                 <li class="bench-slot" data-slot="1"></li>
                 <li class="bench-slot" data-slot="2"></li>
@@ -97,6 +99,9 @@
                     </div>
                     <div class="stat" data-stat="Car">Car: <span class="stat-value"></span>
                         <div class="tooltip">Cardio: Determines how much stamina you lose in a match</div>
+                    </div>
+                    <div class="stat" data-stat="Mag">Mag: <span class="stat-value"></span>
+                        <div class="tooltip">Magic: Average team magic impacts many quirks</div>
                     </div>
                 </div>
             </div>

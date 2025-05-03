@@ -91,7 +91,7 @@ function displayPlayers(playerList) {
         playerCard.querySelector('.player-strength').textContent = player.strength;
         playerCard.querySelector('.player-intelligence').textContent = player.intelligence;
         playerCard.querySelector('.player-cardio').textContent = player.cardio;
-        //playerCard.querySelector('.player-power').textContent = player.power;
+        playerCard.querySelector('.player-magic').textContent = player.magic;
         playerCard.querySelector('.tooltip').textContent = player.title;
         playerCard.querySelector('.tooltip').setAttribute('data-tooltip', player.description);
         playerCard.power = player.power;

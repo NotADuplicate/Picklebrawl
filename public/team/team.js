@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 playerCard.querySelector('.player-strength').textContent = player.strength;
                 playerCard.querySelector('.player-intelligence').textContent = player.intelligence;
                 playerCard.querySelector('.player-cardio').textContent = player.cardio;
+                playerCard.querySelector('.player-magic').textContent = player.magic;
                 playerCard.querySelector('.tooltip').textContent = player.quirk_title;
                 playerCard.querySelector('.tooltip').setAttribute('data-tooltip', player.quirk_description);
             

@@ -17,6 +17,7 @@ class Player {
     strength = 1;
     intelligence = 1;
     cardio = 1;
+    magic = 0;
 
     baseBulk = 1;
     baseFinesse = 1;
@@ -24,6 +25,7 @@ class Player {
     baseStrength = 1;
     baseIntelligence = 1;
     baseCardio = 1;
+    baseMagic = 0;
 
     offensePriority = "";
     defensePriority = "";
@@ -65,13 +67,14 @@ class Player {
         this.name = this.generateName();
     }
 
-    setStats(bulk, finesse, height, strength, intelligence, cardio, quirkId) {
+    setStats(bulk, finesse, height, strength, intelligence, cardio, magic, quirkId) {
         this.bulk = bulk;
         this.finesse = finesse;
         this.height = height;
         this.strength = strength;
         this.intelligence = intelligence;
         this.cardio = cardio;
+        this.magic = magic;
         this.baseBulk = bulk;
         this.baseFinesse = finesse;
         this.baseHeight = height;
@@ -111,12 +114,12 @@ class Player {
     save(callback, otherId, draft) {
         let query;
         if(draft) {
-            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, intelligence, cardio, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (draft_id, name, bulk, finesse, height, strength, intelligence, cardio, magic, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         } else {
-            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, intelligence, cardio, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            query = `INSERT INTO players (team_id, name, bulk, finesse, height, strength, intelligence, cardio, magic, quirk, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         }
         db.run(query, 
-            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio, this.quirkId, this.power], function(err) {
+            [otherId, this.name, this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio, this.magic, this.quirkId, this.power], function(err) {
             if (err) {
                 console.log("Error saving player: " + err);
                 return callback(err);
@@ -126,11 +129,6 @@ class Player {
     }
 
     pickRandomQuirk(draft = false) {
-        /*const quirkKeys = Object.keys(quirks);
-        const selectedQuirkKey = QuirkGenerator.pickRandomQuirk(draft);
-        const quirkClass = quirks[selectedQuirkKey];
-        this.quirkId = quirkKeys.indexOf(selectedQuirkKey);
-        this.quirk = quirkClass;*/
         this.quirkId = QuirkGenerator.pickRandomQuirk(draft);
         this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId]
         console.log(this.name, " Pikced random quirk: ", this.quirkId, this.quirk.title)
@@ -152,15 +150,15 @@ class Player {
         console.log("Quirk: ", this.quirkId, this.quirk.title)
         console.log(this.name, " setting points ", power, " quirk modifier of: ", this.quirk.POWER_MODIFIER)
 
-        const stats = [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio];
+        const stats = [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio, this.magic];
 
         for (let i = 0; i < power; i++) {
             const ran = Math.floor(Math.random()*(stats.length))
             stats[ran] += 1;
         }
 
-        [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio] = stats;
-        const totalStats = this.bulk + this.finesse + this.height + this.strength + this.intelligence + this.cardio;
+        [this.bulk, this.finesse, this.height, this.strength, this.intelligence, this.cardio, this.magic] = stats;
+        const totalStats = this.bulk + this.finesse + this.height + this.strength + this.intelligence + this.cardio + this.magic;
         console.log("Total stats: ", totalStats-5)
         if(totalStats-6 > power) {
             console.log(this.name, " IS UNFAIRLY GOOD! \n")
@@ -304,7 +302,7 @@ class Player {
                     self.hp = Math.floor(row.health);
                     this.name = row.name;
                     this.team = row.team_id;
-                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.intelligence, row.cardio, row.quirk);
+                    this.setStats(row.bulk, row.finesse, row.height, row.strength, row.intelligence, row.cardio, row.magic, row.quirk);
                     resolve(this); // Resolve with the player instance
                 } else {
                     // Handle case where no player is found
@@ -327,8 +325,8 @@ class Player {
             console.log(this.quirkId, this.quirk)
             console.log("Quirk id: ", this.quirkId, " quirk: ", this.quirk.title)
             this.randomize_stats(row.power);
-            db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, intelligence = ?, cardio = ?
-                WHERE id = ?`, [this.finesse, this.height, this.strength, this.bulk, this.intelligence, this.cardio, id])
+            db.run(`UPDATE players SET finesse = ?, height = ?, strength = ?, bulk = ?, intelligence = ?, cardio = ?, magic = ?
+                WHERE id = ?`, [this.finesse, this.height, this.strength, this.bulk, this.intelligence, this.cardio, this.magic, id])
             });
     }
 }

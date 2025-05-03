@@ -143,7 +143,7 @@
                         <li>
                             <strong>Intelligence:</strong> This stat determines if an offender will trick their defender. If this player is on offense 
                             (advancing or scoring) and they're being defended by a player with lower intelligence
-                            , then this player has a chance to juke out the 
+                            , then this player has a chance to trick the 
                             defender and advance/score as if they were not defended at all. The greater the difference in intelligence, the higher the chance to trick.
                         </li>
                         <li>
@@ -243,10 +243,10 @@
                 </p>
                 <ul>
                     <li>
-                        <strong>Friendlies:</strong> These are casual matches that allow teams to test strategies and get familiar with gameplay.
+                        <strong>Friendlies:</strong> These are casual matches that allow teams to test strategies and get familiar with gameplay. Friendlies are not counted towards league standings and can be played at any time. There will be no lasting consequences (health, injuries etc) from friendlies.
                     </li>
                     <li>
-                        <strong>Tournaments:</strong> Competitive matches where teams face off in a structured format to determine the league champion. (Note: Tournaments are under development.)
+                        <strong>Tournaments:</strong> Competitive matches where teams face off in a structured format to determine the league champion.
                     </li>
                 </ul>
                 <p>
@@ -353,10 +353,15 @@
                 <h4>Stat Interactions</h4>
                 <ul>
                     <li>
-                        <strong>Trickiness vs. Focus:</strong> Determines the likelihood of juking. If the offensive player's Trickiness exceeds the defensive player's Focus, the offensive player has a chance to bypass the defender.
+                        <strong>Intelligence:</strong> Determines the likelihood of tricking. If the offensive player's intelligence exceeds the defensive player's, the offensive player has a chance to bypass the defender. The greater the disparity in intelligence, the higher the chance for 
+                        the offensive player to trick the defender.
                     </li>
                     <li>
-                        <strong>Damage Effects:</strong> Players who have taken damage perform at reduced capacity, affecting their stats until the end of the match. If a player is reduced to 0 hp they are knocked out and cannot do anything.
+                        <strong>Damage Effects:</strong> Players love health while playing based on their cardio, players with higher cardio lose less health from exertion.
+                        Players who have taken damage perform at reduced capacity, affecting their stats until the end of the match. If a player is reduced to 0 hp they are knocked out and cannot do anything.
+                    </li>
+                    <li>
+                        <strong>Magic:</strong> Magic is a stat that doesn't do anything on its own but contributes to the team magic. The team magic is equal to the average of all players' magic rounded down. The team magic is used to determine the strength of certain quirks. Not all quirks use magic, but those that do will be more effective with a higher team magic.
                     </li>
                 </ul>
             </section>
