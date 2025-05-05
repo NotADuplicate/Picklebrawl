@@ -520,11 +520,36 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
             players.push(player);
         });
     })).then(() => {
+        
+        // Separate players by team
+        const teamPlayers = {};
+
+        // Group players by team_id
+        players.forEach(player => {
+            if (!teamPlayers[player.team]) {
+                teamPlayers[player.team] = [];
+            }
+            teamPlayers[player.team].push(player);
+        });
+        
+        // Calculate average magic for each team
+        const teamMagicAvg = {};
+        for (const teamId in teamPlayers) {
+            const teamPlayersList = teamPlayers[teamId];
+            const totalMagic = teamPlayersList.reduce((sum, player) => sum + player.magic, 0);
+            teamMagicAvg[teamId] = Math.floor(totalMagic / teamPlayersList.length);
+        }
+        
+        // Assign team's average magic to each player's sorcery
+        players.forEach(player => {
+            player.sorcery = teamMagicAvg[player.team];
+        });
+
         players = players.filter(player => player.quirk.title !== "Ghost");
         players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
         players.forEach(player => {
             console.log(player.name, player.quirk.title)
-            player.quirk.challengeStatModification(players, player);
+            player.quirk.challengeStatModification(players, player, player.sorcery);
         });
         players.forEach(player => {
             if(player.offensePriority == "Rest") {
@@ -808,5 +833,7 @@ function deleteMatch(match_id) {
             console.error('Error during deletion process:', err);
         });
 }
+
+runMatch(3, true); // Example usage of runMatch function
 
 export default router;

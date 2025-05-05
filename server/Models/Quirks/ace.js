@@ -10,6 +10,6 @@ export class Ace extends Quirk {
     static START_EFFECT_ORDER = 3;
 
     static startGameEffect(match, player) {
-        player.PLAYER_SHOOTING_BONUS = 2;
+        player.PLAYER_SHOOTING_BONUS = 3;
     }
 }

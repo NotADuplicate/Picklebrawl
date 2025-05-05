@@ -11,6 +11,7 @@ class Team {
     leagueId;
     scoreRange = 30;
     full_dead = false;
+    sorcery;
 
     constructor() {
         this.players = [];

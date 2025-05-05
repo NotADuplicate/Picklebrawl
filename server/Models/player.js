@@ -62,6 +62,7 @@ class Player {
 
     PLAYER_ASSIST_MODIFIER = 0.75;
     PLAYER_SHOOTING_BONUS = 0;
+    shotWorth = 2;
 
     constructor() {
         this.name = this.generateName();

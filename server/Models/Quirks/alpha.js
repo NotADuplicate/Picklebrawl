@@ -2,15 +2,14 @@ import { Quirk } from './quirk.js';
 
 export class Alpha extends Quirk {
     static title = "Alpha";
-    static description = ("+2 to physical stats if their name is first alphabetically on their team");
+    static description = ("+Sorcery to physical stats if their name is first alphabetically on their team");
     static POWER_MODIFIER = -5;
-    static STAT_CHANGE = 2
     static likelihood = 4;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;
 
-    static startGameEffect(match, player) {
+    static startGameEffect(match, player, sorcery) {
         let isAlpha = true;
         // First, figure out which team they're on, so we know who to compare them to
         for(const otherPlayer of match.players) {
@@ -21,14 +20,14 @@ export class Alpha extends Quirk {
 
         // If isAlpha, change the stats
         if(isAlpha) {
-            player.baseBulk += this.STAT_CHANGE;
-            player.baseFinesse += this.STAT_CHANGE;
-            player.baseHeight += this.STAT_CHANGE;
-            player.baseStrength += this.STAT_CHANGE;
+            player.baseBulk += sorcery;
+            player.baseFinesse += sorcery;
+            player.baseHeight += sorcery;
+            player.baseStrength += sorcery;
         }
     }
 
-    static challengeStatModification(players, player) {
+    static challengeStatModification(players, player, sorcery) {
         let isAlpha = true;
         // Compare to home team players
         for(const otherPlayer of players) {
@@ -39,10 +38,10 @@ export class Alpha extends Quirk {
 
         // If isAlpha, change the stats
         if(isAlpha) {
-            player.bulk += this.STAT_CHANGE;
-            player.finesse += this.STAT_CHANGE;
-            player.height += this.STAT_CHANGE;
-            player.strength += this.STAT_CHANGE;
+            player.bulk += sorcery;
+            player.finesse += sorcery;
+            player.height += sorcery;
+            player.strength += sorcery;
         }
         return true;
     }

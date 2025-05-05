@@ -180,10 +180,12 @@ class Match {
                 // Sort remaining players by their quirk's START_EFFECT_ORDER
                 self.players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
 
-                // Activate startGameEffect in the sorted order
+                self.setTeamSorcery();
+
                 for(const player of self.players) {
-                    console.log("Player hp: ", player.id, player.hp)
-                    player.quirk.startGameEffect(self, player);
+                    console.log("Player sorcc: ", player.id, player.team)
+                    const sorc = player.team == self.offenseTeam.teamId ? self.offenseTeam.sorcery : self.defenseTeam.sorcery;
+                    player.quirk.startGameEffect(self, player, sorc);
                     if(player.offensePriority == "Score") {
                         player.range = self.RANGE_DICTIONARY[player.offenseProperty];
                     }
@@ -191,20 +193,48 @@ class Match {
                 //do the second start effect
                 self.players.sort((a, b) => a.quirk.SECOND_START_EFFECT_ORDER - b.quirk.SECOND_START_EFFECT_ORDER);
                 for(const player of self.players) {
-                    player.quirk.secondStartGameEffect(self, player);
+                    player.quirk.secondStartGameEffect(self, player, player.team.sorcery);
                 }
 
                 // Re-add ghost players to the players list
                 self.players.push(...ghostPlayers);      
                 self.savePriorities();
 
-                for(const player of self.players) {
-                    player.quirk.thirdStartGameEffect(self, player);
+                for(const player of self.players) { //this is for after priorities are set effects
+                    player.quirk.thirdStartGameEffect(self, player, player.team.sorcery);
                 }
                 self.runMatch();
                 resolve();
             });
         });
+    }
+
+    setTeamSorcery() {
+        let homeTotalMagic = 0;
+        let awayTotalMagic = 0;
+        const self = this;
+        // Calculate total magic for home team
+        for (const player of self.homeTeam.players) {
+            homeTotalMagic += player.magic || 0;
+        }
+        // Set home team sorcery to average magic
+        if (self.homeTeam.players.length > 0) {
+            self.homeTeam.sorcery = Math.floor(homeTotalMagic / self.homeTeam.players.length);
+        } else {
+            self.homeTeam.sorcery = 0;
+        }
+
+        // Calculate total magic for away team
+        for (const player of self.awayTeam.players) {
+            awayTotalMagic += player.magic || 0;
+        }
+        // Set away team sorcery to average magic
+        if (self.awayTeam.players.length > 0) {
+            self.awayTeam.sorcery = Math.floor(awayTotalMagic / self.awayTeam.players.length);
+        } else {
+            self.awayTeam.sorcery = 0;
+        }
+        console.log("Home team sorcery: " + self.homeTeam.sorcery + " Away team sorcery: " + self.awayTeam.sorcery);
     }
 
     endGame() {
@@ -296,7 +326,7 @@ class Match {
 
         this.possessionTicks++;
         this.gameTicks++;
-        console.log("TICK:", this.gameTicks, "\n")
+        //console.log("TICK:", this.gameTicks, "\n")
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
 
@@ -352,7 +382,7 @@ class Match {
         if(this.gameTicks == Math.floor(this.GAME_LENGTH/2)) {
             console.log("HALF TIME \n")
             for(const player of this.players) {
-                player.quirk.halftimeEffect(this, player);
+                player.quirk.halftimeEffect(this, player, player.team.sorcery);
             }
         }
 
@@ -414,6 +444,7 @@ class Match {
             player.tempStrength = 0;
             player.assisters = 0;
             player.protectBulk = 0;
+            player.defendAmount = 0;
         }
     }
 
@@ -427,6 +458,12 @@ class Match {
             player.strength = Math.max(0.5, player.baseStrength * (player.hp / player.maxHp));
             player.cardio = player.baseCardio;
             player.intelligence = player.baseIntelligence;
+            if(!player.bulk || !player.finesse || !player.height || !player.strength || !player.cardio || !player.intelligence) {
+                console.log("Player has no stats: ", player.name, player.bulk, player.finesse, player.height, player.strength, player.cardio, player.intelligence)
+                console.log("Base stats: ", player.baseBulk, player.baseFinesse, player.baseHeight, player.baseStrength, player.baseCardio, player.baseIntelligence)
+                console.log("HP: ", player.hp, player.maxHp)
+                throw new Error("Player has no stats");
+            }
         }
     }
 
@@ -634,6 +671,7 @@ class Match {
                     if(player.defensePriority === "Defend_Advance") {
                         if(player.quirk.beTrickedEffect(player, topAdvancer, this) && topAdvancer.quirk.trickEffect(topAdvancer, player, this)) { //intelligence check
                             console.log(player.name, " was tricked by ", topAdvancer.name, topAdvancer.intelligence, player.cardio)
+                            player.defendAmount = 0;
                             db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
                                 + `VALUES (?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, topAdvancer.id, player.id, "Advance"],
                                 function(err) {
@@ -645,6 +683,10 @@ class Match {
                         }
                         else {
                             player.defendAmount = Math.random() * (player.bulk + player.tempBulk);
+                            if(!player.defendAmount) {
+                                console.log(player.bulk, player.tempBulk)
+                                throw new Error("Defend amount is null or undefined for player: " + player.name);
+                            }
                             defendAmount += player.defendAmount;
 
                             // Track the player who contributes the most to the defendAmount
@@ -803,7 +845,7 @@ class Match {
         } else if(this.breakAway <= 0){ //check for trying to score
             for (const player of this.offenseTeam.players) {
                 if(player.offensePriority === "Score" && (Math.random() < this.position/this.FIELD_LENGTH || player.offenseProperty === "Close")) { //scorers have ~30% chance of attempting a shot
-                    console.log("Scoring randomness passed for player: ", player.name)
+                    //console.log("Scoring randomness passed for player: ", player.name)
                     let range = 0;
                     let minRange;
                     if(player.offenseProperty === "Close") {
@@ -857,7 +899,9 @@ class Match {
         this.offenseTeam = this.defenseTeam;
         this.defenseTeam = tempTeam;
         for(const player of this.players) {
-            player.quirk.turnoverEffect(player, this);
+            const sorc = player.team != this.offenseTeam.teamId ? this.defenseTeam.sorcery : this.offenseTeam.sorcery;
+            console.log(sorc)
+            player.quirk.turnoverEffect(player, this, sorc);
         }
     }
 
@@ -895,8 +939,6 @@ class Match {
             for (const player of this.defenseTeam.players) {
                 if(player.defensePriority === "Defend_Score") {
                     numBlockers++;
-                    console.log("Shooter intelligence: ", shooter.tempTrickiness);
-                    console.log("Defender cardio: ", player.tempFocus);
                     if(player.quirk.beTrickedEffect(player, shooter, this) && shooter.quirk.trickEffect(shooter, player, this)) { //intelligence check
                         console.log(player.name + " was tricked!");
                         db.run(`INSERT INTO match_trick_history (match_id, tick, tricker_id, tricked_id, trick_type) `
@@ -929,8 +971,10 @@ class Match {
             score = shooter.quirk.scoreEffect(shooter, this, shooting, range, this.SHOOTING_BONUS);
         }
         let suspense = Math.floor(Math.random() * 3);
+        let worth = shooter.shotWorth;
         if(blitz) {
             suspense -= 2;
+            worth = 1;
         }
         if(Math.abs(this.offenseTeam.score-this.defenseTeam) < 3) {
             suspense += 1;
@@ -952,7 +996,7 @@ class Match {
         }
         db.run(`INSERT INTO scoring_history (match_id, tick, shooter_id, successful_score, team_id, range, suspense, blitzer_id, blocker_id, points_worth) `
             + `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks, shooter.id, score, this.offenseTeam.teamId, range, suspense, 
-                this.blitzerId, blocker_id, blitz==false ? 2 : 1],
+                this.blitzerId, blocker_id, worth],
             function(err) {
                 if (err) {
                     console.error('Error inserting score into scoring_history:', err.message);
@@ -960,7 +1004,7 @@ class Match {
             });
         if(score) {
             console.log(this.offenseTeam.teamName + " scored!\n");
-            this.offenseTeam.score += blitz ? 1 : 2;
+            this.offenseTeam.score += worth;
             console.log(this.offenseTeam.teamName + " " + this.offenseTeam.score + " - " + this.defenseTeam.score + " " + this.defenseTeam.teamName)
             if(!blitz) {
                 this.position = this.FIELD_LENGTH / 2;
@@ -1010,6 +1054,7 @@ class Match {
     }
 
     savePlayerDefend(defendAmount) {
+        console.log("Saving defend for tick: ", this.gameTicks, " match_id: ", this.match_id, " defendAmount: ", defendAmount);
         const self = this;
         // Loop through defense team players with defensePriority of "Defend_Advance"
         let totalDefend = 0;
@@ -1021,19 +1066,28 @@ class Match {
 
         if(totalDefend > 0) {
             // Divide the defendAmount proportionally by their defense
+            let i = 0;
             for (const player of this.defenseTeam.players) {
                 if (player.defensePriority === "Defend_Advance") {
+                    const tick = self.gameTicks;
+                    if(!player.defendAmount) {
+                        console.log("Player defend amount is null or undefined: ", player.name, player.defendAmount);
+                        throw new Error("Player defend amount is null or undefined");
+                    }
                     player.defendAmount = (player.defendAmount / totalDefend) * defendAmount;
+                    const playerDefend = player.defendAmount;
+
                     db.run(`INSERT INTO advancement_history (tick, match_id, player_id, advancement, type) ` 
-                        + `VALUES (?, ?, ?, ?, ?)`, [self.gameTicks, self.match_id, player.id, player.defendAmount, "Defend"],
+                        + `VALUES (?, ?, ?, ?, ?)`, [tick, self.match_id, player.id, playerDefend, "Defend"],
                         function(err) {
                             if (err) {
-                                console.log(self.gameTicks, self.match_id, player.id, player.defendAmount)
+                                console.log(tick, i, player.id, playerDefend)
                                 console.error('Error inserting defend into advancement_history:', err.message);
                             }
                         }
                     );
                 }
+                i++;
             }
         }
     }

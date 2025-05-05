@@ -3,39 +3,39 @@ import { Quirk } from './quirk.js';
 export class Offender extends Quirk {
     static POWER_MODIFIER = -7;
     static title = "Offender";
-    static STAT_INCREASE = 2;
-    static description = ("+" + this.STAT_INCREASE + " to all stats while on offense");
+    static description = ("+Sorcery to all non-magic stats while on offense");
     static likelihood = 6;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;
 
-    static thirdStartGameEffect(match, player) {
+    static thirdStartGameEffect(match, player, sorcery) {
+        player.STAT_INCREASE = sorcery;
         if (match.offenseTeam.players.includes(player)) {
-            player.baseFinesse += this.STAT_INCREASE;
-            player.baseBulk += this.STAT_INCREASE;
-            player.baseCardio += this.STAT_INCREASE;
-            player.baseHeight += this.STAT_INCREASE;
-            player.baseStrength += this.STAT_INCREASE;
-            player.baseIntelligence += this.STAT_INCREASE;
+            player.baseFinesse += player.STAT_INCREASE;
+            player.baseBulk += player.STAT_INCREASE;
+            player.baseCardio += player.STAT_INCREASE;
+            player.baseHeight += player.STAT_INCREASE;
+            player.baseStrength += player.STAT_INCREASE;
+            player.baseIntelligence += player.STAT_INCREASE;
         }
     }
 
-    static turnoverEffect(player, match) {
+    static turnoverEffect(player, match, sorcery) {
         if (match.offenseTeam.players.includes(player)) {
-            player.baseFinesse += this.STAT_INCREASE;
-            player.baseBulk += this.STAT_INCREASE;
-            player.baseCardio += this.STAT_INCREASE;
-            player.baseHeight += this.STAT_INCREASE;
-            player.baseStrength += this.STAT_INCREASE;
-            player.baseIntelligence += this.STAT_INCREASE;
+            player.baseFinesse += sorcery
+            player.baseBulk += sorcery
+            player.baseCardio += sorcery
+            player.baseHeight += sorcery
+            player.baseStrength += sorcery
+            player.baseIntelligence += sorcery
         } else {
-            player.baseFinesse -= this.STAT_INCREASE;
-            player.baseBulk -= this.STAT_INCREASE;
-            player.baseCardio -= this.STAT_INCREASE;
-            player.baseHeight -= this.STAT_INCREASE;
-            player.baseStrength -= this.STAT_INCREASE;
-            player.baseIntelligence -= this.STAT_INCREASE;
+            player.baseFinesse -= sorcery;
+            player.baseBulk -= sorcery;
+            player.baseCardio -= sorcery;
+            player.baseHeight -= sorcery;
+            player.baseStrength -= sorcery;
+            player.baseIntelligence -= sorcery;
         }
     }
 }
