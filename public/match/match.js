@@ -145,6 +145,11 @@ async function showGame(matchId) {
         console.log('Match ticks:', data);
         let i = 1;
         let timeOffset = 0;
+        data.scoringHistory.forEach(score => {
+            if(score.tick == 0) {
+                doShooting(score, false);
+            }
+        });
         const gameTimer = document.getElementById('game-timer');
         while(data.matchCreatedAt > new Date().getTime()) {
             watchingLive = true;
@@ -484,6 +489,7 @@ function addNormalTextToTextBox(text) {
 async function doShooting(score, scoringTrick) {
     return new Promise(async (resolve) => {
     
+    if(!score.auto_score) {
     const shooterId = score.shooter_id;
     toggleHighlight(shooterId);
     moveBallIconToPlayer(shooterId);
@@ -528,14 +534,14 @@ async function doShooting(score, scoringTrick) {
     }
     await wait(TIME_PER_SCORE);
     toggleHighlight(shooterId);
+    }
     if(score.successful_score) {
-        let scoreWorth = 2;
+        let scoreWorth = score.points_worth;
         if(score.blitzer_id == null) {
             addBoldTextToTextBox(`GOOAAAAALLLLL`, '#3daa34', true);
         }
         else {
             addBoldTextToTextBox(`${players[score.shooter_id].querySelector('.player-name').textContent} scores!`, '#3daa34');
-            scoreWorth = 1;
         }
         const teamScoreElement = document.getElementById('match-score');
         let scores = teamScoreElement.textContent.split('-').map(Number);

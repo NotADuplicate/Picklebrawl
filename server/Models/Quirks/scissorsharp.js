@@ -10,14 +10,15 @@ export class ScissorSharp extends Quirk {
     static APPEARS_IN_DRAFT = true;
 
     static attackEffect(player, target, match) {
+        const sorc = target.team == match.offenseTeam.teamId ? match.offenseTeam.sorcery : match.defenseTeam.sorcery;
         if(target.quirk.title !== "Paper Thin") {
             const damage = Math.random() * (player.strength + player.tempStrength)*3/4;
-            const defense = Math.random() * (target.team.sorcery + target.protectBulk);
+            const defense = Math.random() * (sorc + target.protectBulk);
             const finalDamage = (damage - defense)+0.25;
             if (finalDamage < 0) {
                 return;
             }
-            target.tempInjury += finalDamage;
+            //target.tempInjury += finalDamage;
 
             const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*2*(Math.random(0,finalDamage)*player.ATTACK_MODIFIER) + 1.5;
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `

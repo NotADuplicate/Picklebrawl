@@ -2,7 +2,7 @@ import { Quirk } from './quirk.js';
 
 export class Offender extends Quirk {
     static POWER_MODIFIER = -7;
-    static title = "Offender";
+    static title = "Offender"; 
     static description = ("+Sorcery to all non-magic stats while on offense");
     static likelihood = 6;
     static APPEARS_IN_GENERATION = true;

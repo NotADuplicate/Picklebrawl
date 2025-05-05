@@ -19,7 +19,7 @@ router.get('/draft/players', (req, res) => {
             return res.status(404).json({message: "Draft not found"})
         }
         const order = draft.turn;
-        db.all(`SELECT bulk, finesse, cardio, height, strength, intelligence, power, players.id, title, description, name
+        db.all(`SELECT bulk, finesse, cardio, height, strength, intelligence, power, magic, players.id, title, description, name
             FROM players JOIN quirks on players.quirk = quirks.id 
             WHERE players.draft_id = ? AND players.team_id IS NULL`, [draftId], (err, players) => {
             if (err) {
@@ -90,7 +90,7 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
                             if(err) {
                                 console.log("Error checking team draft_picks: ", err);
                             }
-                            if(row.id != row.currently_drafting_team_id) {
+                            if(row.id != row.currently_drafting_team_id) { //if a team used a saved draft pick
                                 db.run(`UPDATE teams SET draft_picks=draft_picks-1 WHERE id = ?`, [row.id], (err) => {
                                     if(err) {
                                         console.log("Error decrementing draft picks: ", err);
@@ -105,7 +105,7 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
                                 const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
                                 const nextTeamId = teams[nextTeamIndex].id;
 
-                                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                                db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ?, last_draft_time = CURRENT_TIMESTAMP WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
                                     if (err) {
                                         console.log("Error updating currently drafting team: ", err);
                                         return res.status(400).json({ message: 'Error updating currently drafting team!' });
@@ -323,7 +323,7 @@ function skipTurn(draftId, timer) {
                     const backwards = Math.floor(nextTurn/teams.length) % 2;
                     const nextTeamIndex = !backwards ? nextTurn % teams.length : teams.length - nextTurn % teams.length - 1;
                     const nextTeamId = teams[nextTeamIndex].id;
-                    db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ? WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
+                    db.run(`UPDATE drafts SET currently_drafting_team_id = ?, turn = ?, last_draft_time = CURRENT_TIMESTAMP WHERE id = ?`, [nextTeamId, nextTurn, draftId], (err) => {
                         if (err) {
                             console.log("Error updating turn: ", err);
                             return;

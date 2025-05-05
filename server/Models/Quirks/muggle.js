@@ -30,7 +30,7 @@ export class Muggle extends Quirk {
         }
         opposing_sorcery = otherTeam.sorcery;
         console.log("Muggle missing letters: " + opposing_sorcery);
-        if(!opposing_sorcery) {
+        if(opposing_sorcery == null) {
             throw new Error("Muggle missing letters is undefined or null");
         }
         player.baseBulk -= opposing_sorcery;

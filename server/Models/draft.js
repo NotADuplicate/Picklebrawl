@@ -32,9 +32,9 @@ export class Draft {
             const player = new Player();
             player.pickRandomQuirk(true);
             if(i <= numUsers) { //make sure there is 1 good player per user
-                player.randomize_stats(20);
+                player.randomize_stats(25);
             } else {
-                player.randomize_stats(Math.floor(Math.random() * 8) + 11);
+                player.randomize_stats(Math.floor(Math.random() * 8) + 16);
             }
             this.players.push(player);
         }

@@ -245,6 +245,7 @@ db.serialize(() => {
         blitzer_id INT,
         blocker_id INT,
         points_worth INT NOT NULL,
+        auto_score BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (match_id) REFERENCES match_history(id),
         FOREIGN KEY (tick) REFERENCES match_ticks_history(tick),
         FOREIGN KEY (shooter_id) REFERENCES players(id),
@@ -320,8 +321,8 @@ db.serialize(() => {
                 shooter_id AS player_id,
                 match_id,
                 SUM(successful_score * points_worth) AS points_scored,
-                SUM(CASE WHEN successful_score AND blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_successful,
-                SUM(CASE WHEN blitzer_id IS NULL THEN 1 ELSE 0 END) AS field_goals_attempted,
+                SUM(CASE WHEN successful_score AND blitzer_id IS NULL AND auto_score = FALSE THEN 1 ELSE 0 END) AS field_goals_successful,
+                SUM(CASE WHEN blitzer_id IS NULL AND auto_score = FALSE THEN 1 ELSE 0 END) AS field_goals_attempted,
                 SUM(CASE WHEN successful_score AND blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_successful,
                 SUM(CASE WHEN blitzer_id IS NOT NULL THEN 1 ELSE 0 END) AS blitz_goals_attempted
             FROM scoring_history

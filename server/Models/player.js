@@ -222,9 +222,17 @@ class Player {
             if (finalDamage < 0) {
                 return;
             }
-            target.tempInjury += finalDamage;
+            if(finalDamage == null) {
+                console.log("strength: ", this.strength, " tempStrength: ", this.tempStrength, " damage: ", damage, " defense: ", defense, " finalDamage: ", finalDamage)
+                throw new Error("damage is not defined for player " + this.name);
+            }
+            target.tempInjury += finalDamage; 
+            if(target.tempInjury == null) {
+                console.log("tempInjury is not defined for player " + target.name, " being attacked by ", this.name);
+                throw new Error("tempInjury is not defined for player ");
+            }
 
-            /*const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER);
+            const hpDamage = target.quirk.DAMAGE_TAKEN_MODIFIER*(Math.random(0,finalDamage)*this.ATTACK_MODIFIER);
             db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
                 + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [match.match_id, match.gameTicks,
                 this.id, target.id, hpDamage, false, 100*hpDamage/target.maxHp], function(err) {
@@ -235,7 +243,7 @@ class Player {
             target.hp = Math.max(0,target.hp-hpDamage);
             if(target.hp == 0) {
                 target.knockout(match);
-            }*/
+            }
         }
     }
 
