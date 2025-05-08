@@ -80,4 +80,8 @@ export class AlphabetCompletionist extends Quirk {
         player.cardio -= missingLetters;
         return true;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]*2 : 1);
+    }
 }

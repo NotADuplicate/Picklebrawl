@@ -1,7 +1,7 @@
 import { Quirk } from './quirk.js';
 
 export class CultLeader extends Quirk {
-    static POWER_MODIFIER = -4;
+    static POWER_MODIFIER = -8;
     static title = "Cult Leader";
     static description = ("+2X to all stats where X is the number of teammates that share the most common religion on your team.");
     static likelihood = 1;
@@ -55,5 +55,13 @@ export class CultLeader extends Quirk {
         player.strength += bonus;
         player.intelligence += bonus;
         player.cardio += bonus;
+    }
+
+    static getLikelihood(season, quirkList, leagueCount) {
+        const religionCount = (quirkList["Star Worshipper"] ? quirkList["Star Worshipper"] : 0) +
+            (quirkList["Moon Worshipper"] ? quirkList["Moon Worshipper"] : 0) +
+            (quirkList["Sun Worshipper"] ? quirkList["Sun Worshipper"] : 0);
+        const count = (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+        return 100*religionCount / (count*leagueCount);
     }
 }

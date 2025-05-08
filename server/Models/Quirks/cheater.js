@@ -1,10 +1,10 @@
 import { Quirk } from './quirk.js';
 
 export class Cheater extends Quirk {
-    static POWER_MODIFIER = -5;
+    static POWER_MODIFIER = -6;
     static title = "Cheater";
     static description = ("Your team starts with +Sorcery points at the start of the match.");
-    static likelihood = 15;
+    static likelihood = 2;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
     static SECOND_START_EFFECT_ORDER = 10;
@@ -21,5 +21,9 @@ export class Cheater extends Quirk {
             match.shoot(player, false, true);
         }
         player.shotWorth = 2;
+    }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
     }
 }

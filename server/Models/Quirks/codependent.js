@@ -17,7 +17,8 @@ export class Codependent extends Quirk {
             height: player.height,
             strength: player.strength,
             intelligence: player.intelligence,
-            cardio: player.cardio
+            cardio: player.cardio,
+            magic: player.magic
         };
 
         console.log(stats);
@@ -53,7 +54,8 @@ export class Codependent extends Quirk {
             height: player.baseHeight,
             strength: player.baseStrength,
             intelligence: player.baseIntelligence,
-            cardio: player.baseCardio
+            cardio: player.baseCardio,
+            magic: player.baseMagic
         };
 
         const highestValue = Math.max(Object.values(stats));
@@ -77,7 +79,8 @@ export class Codependent extends Quirk {
             height: player.height,
             strength: player.strength,
             intelligence: player.intelligence,
-            cardio: player.cardio
+            cardio: player.cardio,
+            magic: player.magic
         };
         console.log("Not in a pack")
 
@@ -91,6 +94,16 @@ export class Codependent extends Quirk {
         for (const stat of highestStats) {
             player[stat] = 1;
             console.log("Set " + stat + " to 1");
+        }
+    }
+
+    static getLikelihood(season, quirkList) {
+        const count = (quirkList[this.title] ? quirkList[this.title] : 0);
+        if(count % 2 ==1) {
+            return 5;
+        }
+        else {
+            return Math.random() > 0.7 ? 5 : 0;
         }
     }
 }

@@ -12,4 +12,8 @@ export class Helpful extends Quirk {
     static startGameEffect(match, player) {
         player.PLAYER_ASSIST_MODIFIER = 1.5;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title] : 1);
+    }
 }

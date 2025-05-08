@@ -271,7 +271,7 @@ function updateTimer(targetTime) {
     const timeDiff = targetTime - now;
     
     // If time has expired, reload the page
-    if (timeDiff <= 0) {
+    if (timeDiff <= 0 && turn > 1) {
         clearInterval(timerInterval);
         document.getElementById('timer').textContent = "00:00:00";
         location.reload();

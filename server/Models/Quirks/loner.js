@@ -4,7 +4,7 @@ export class Loner extends Quirk {
     static POWER_MODIFIER = -2;
     static title = "Loner";
     static description = ("+2 to all stats for every player less than 4 you have on your team");
-    static likelihood = 5; //2
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 1;
@@ -39,5 +39,9 @@ export class Loner extends Quirk {
         player.strength += bonus;
         player.intelligence += bonus;
         player.cardio += bonus;
+    }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title] : 1);
     }
 }

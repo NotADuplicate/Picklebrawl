@@ -87,12 +87,10 @@ function getPlayers(matchId) {
             newPlayerElement.querySelector('.player').setAttribute('data-offense-target', player.offensive_target_id);
             newPlayerElement.querySelector('.player').setAttribute('data-defense-target', player.defensive_target_id);
             if (player.team_id == homeTeamId) {
-                newPlayerElement.querySelector('.player-defense-action').style.display = 'none';
                 newPlayerElement.querySelector('.player').classList.add('home-team');
                 homeTeamPlayersElement.appendChild(newPlayerElement);
                 players[player.id] = homeTeamPlayersElement.lastElementChild;
             } else {
-                newPlayerElement.querySelector('.player-offense-action').style.display = 'none';
                 newPlayerElement.querySelector('.player').classList.add('away-team');
                 awayTeamPlayersElement.appendChild(newPlayerElement);
                 players[player.id] = awayTeamPlayersElement.lastElementChild;
@@ -150,6 +148,10 @@ async function showGame(matchId) {
                 doShooting(score, false);
             }
         });
+        possession = data.matchTicks[0].possession_team_id;
+        console.log("Home team ID: ", homeTeamId, "Possession team ID: ", data.matchTicks[0].possession_team_id);
+
+        changeTeamPossession(data.matchTicks[0].possession_team_id);
         const gameTimer = document.getElementById('game-timer');
         while(data.matchCreatedAt > new Date().getTime()) {
             watchingLive = true;
@@ -216,6 +218,8 @@ async function changeTeamPossession(team) {
         defenseTeamPlayers = homeTeamPlayers;
     }
 
+    console.log("Home team possession:", homeTeamId===team);
+    console.log("Offense team: ", offenseTeamPlayers);
     offenseTeamPlayers.forEach(player => {
         player.querySelector('.action-icon').style.display = 'none';
         player.querySelector('.player-defense-action').style.display = 'none';
@@ -252,7 +256,8 @@ async function changeTeamPossession(team) {
 function runMatchTick(data, tick) {
     //console.log("Beginning of get tick")
     return new Promise(async (resolve, reject) => {
-        console.log("New tick: ", data);
+        //console.log("New tick: ", data);
+        //console.log("Possession: ", possession);
 
         const nextTickButton = document.getElementById('next-tick-button');
         const catchUpButton = document.getElementById('catch-up-button');
@@ -783,7 +788,6 @@ function vwToPx(vw) {
 function setActionIcon(player, offense) { //offense is set to either "offense" or "defense"
     const action = player.querySelector('.player-'+offense+'-action').textContent;
 
-    console.log("Action of ", player.querySelector('.player-name').textContent,": ", action);
     if(action === "Knocked out") {
         player.querySelector('.action-icon').style.display = 'block';
         const actionIcon = player.querySelector('.action-icon');

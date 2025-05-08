@@ -21,6 +21,7 @@ export class AlliterationAddict extends Quirk {
         player.baseFinesse += count;
         player.baseHeight += count;
         player.baseStrength += count
+        player.baseCardio += count;
     }
 
     static challengeStatModification(players, player) {
@@ -35,6 +36,11 @@ export class AlliterationAddict extends Quirk {
         player.finesse += count;
         player.height += count;
         player.strength += count;
+        player.cardio += count;
         return true;
+    }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
     }
 }

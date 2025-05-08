@@ -38,4 +38,8 @@ export class PackAnimal extends Quirk {
         player.intelligence += teammatesWithQuirk;
         player.cardio += teammatesWithQuirk;
     }
+
+    static getLikelihood(season, quirkList, leagueCount) {
+        return Math.random() > 0.7 ? 10 : 0;
+    }
 }

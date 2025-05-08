@@ -545,12 +545,22 @@ router.post('/challenges/:id/quirk-effects', (req, res) => {
             player.sorcery = teamMagicAvg[player.team];
         });
 
+        // Save ghost players separately
+        const ghostPlayers = players.filter(player => player.quirk.title === "Ghost");
         players = players.filter(player => player.quirk.title !== "Ghost");
+
         players.sort((a, b) => a.quirk.START_EFFECT_ORDER - b.quirk.START_EFFECT_ORDER);
         players.forEach(player => {
-            console.log(player.name, player.quirk.title)
             player.quirk.challengeStatModification(players, player, player.sorcery);
         });
+        players.sort((a, b) => a.quirk.SECOND_START_EFFECT_ORDER - b.quirk.SECOND_START_EFFECT_ORDER);
+        players.forEach(player => {
+            player.quirk.secondChallengeStatModification(players, player, player.sorcery);
+        });
+
+        // Add ghost players back to the array
+        players = players.concat(ghostPlayers);
+
         players.forEach(player => {
             if(player.offensePriority == "Rest") {
                 player.bulk *= 1.5;
@@ -833,5 +843,5 @@ function deleteMatch(match_id) {
             console.error('Error during deletion process:', err);
         });
 }
-runMatch(1, true);
+runMatch(1, true); // Example usage of runMatch function
 export default router;

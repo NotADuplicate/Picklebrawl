@@ -18,4 +18,8 @@ export class Sniper extends Quirk {
         }
         return shooting+bonus-(range*match.SHOOTING_DISTANCE_LINEAR + match.SHOOTING_DISTANCE_EXPONENTIAL*(range**2))/2>0;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title] : 1);
+    }
 }

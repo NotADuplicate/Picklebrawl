@@ -23,4 +23,8 @@ export class Meltoned extends Quirk {
             player.baseStrength *= 1.5;
         }
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+    }
 }

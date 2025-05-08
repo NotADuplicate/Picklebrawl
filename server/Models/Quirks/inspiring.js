@@ -36,4 +36,10 @@ export class Inspiring extends Quirk {
             }
         }
     }
+
+    static getLikelihood(season, quirkList, leagueCount) {
+        const boringCount = (quirkList["Boring"] ? quirkList["Boring"] : 0);
+        const count = (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+        return 100*boringCount / (leagueCount*count);
+    }
 }

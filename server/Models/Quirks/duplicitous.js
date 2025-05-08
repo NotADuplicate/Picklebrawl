@@ -19,4 +19,8 @@ export class Duplicitous extends Quirk {
         player.intelligence = Math.max(player.intelligence, 2);
         return;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+    }
 }

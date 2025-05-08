@@ -17,13 +17,16 @@ class Team {
         this.players = [];
     }
 
-    setInfo(teamName, owner_id, leagueId, generatePlayers = true) {
-        this.teamName = teamName;
-        this.owner_id = owner_id;
-        this.leagueId = leagueId;
-        console.log("NEW TEAM: " + teamName);
-        if (generatePlayers) 
-            this.generatePlayers();
+    async setInfo(teamName, owner_id, leagueId, generatePlayers = true) {
+        return new Promise(async (resolve, reject) => {
+            this.teamName = teamName;
+            this.owner_id = owner_id;
+            this.leagueId = leagueId;
+            console.log("NEW TEAM: " + teamName);
+            if (generatePlayers) 
+                await this.generatePlayers();
+            resolve();
+        })
     }
 
     save(callback) {
@@ -63,10 +66,10 @@ class Team {
         return this.players;
     }
 
-    generatePlayers() {
+    async generatePlayers() {
         for (let i = 0; i < 6; i++) {
             const player = new Player();
-            player.pickRandomQuirk(false);
+            await player.pickRandomQuirk(false, this.leagueId);
             player.randomize_stats(Math.floor(Math.random() * 3) + 17);
             this.addPlayer(player);
         }
@@ -83,7 +86,7 @@ class Team {
                 this.teamName = row.name;
                 this.owner = row.username;
                 this.leagueId = row.league_id;
-                this.teamId = row.id;
+                this.teamId = id;
                 console.log("Loaded team: " + this.teamName);
                 resolve();
             });

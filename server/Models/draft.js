@@ -26,11 +26,11 @@ export class Draft {
         });
     }
 
-    generatePlayers(numUsers) {
-        const numPlayers = numUsers * 3
+    async generatePlayers(numUsers) {
+        const numPlayers = numUsers * 10
         for (let i = 0; i < numPlayers; i++) {
             const player = new Player();
-            player.pickRandomQuirk(true);
+            await player.pickRandomQuirk(true, this.leagueId);
             if(i <= numUsers) { //make sure there is 1 good player per user
                 player.randomize_stats(25);
             } else {

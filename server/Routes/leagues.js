@@ -11,10 +11,10 @@ const router = express.Router();
 
 console.log('Loading leagues routes');
 
-const insertTeam = (teamName, leagueId, owner_id, callback) => {
+const insertTeam = async (teamName, leagueId, owner_id, callback) => {
     console.log('Inserting team:', teamName, leagueId, owner_id);
     const team = new Team();
-    team.setInfo(teamName, owner_id, leagueId);
+    await team.setInfo(teamName, owner_id, leagueId);
     team.save(callback);
 };
 

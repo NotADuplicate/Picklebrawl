@@ -19,6 +19,10 @@ export class Quirk {
         return;
     }
 
+    static getLikelihood(season, quirkList) {
+        return this.likelihood;
+    }
+
     static startGameEffect(match, player) {
         return false;
     }

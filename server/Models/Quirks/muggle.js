@@ -57,4 +57,8 @@ export class Muggle extends Quirk {
         player.cardio -= opposing_sorcery;
         return true;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+    }
 }

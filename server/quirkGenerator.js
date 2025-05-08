@@ -107,34 +107,71 @@ export class QuirkGenerator {
         return null;
     }
 
-    static pickRandomQuirk(draft = false) {
-        const quirkMap = QuirkGenerator.idToQuirkMap;
-        const keys = Object.keys(quirkMap);
-        // Filter keys based on the draft flag.
-        const filteredKeys = keys.filter(key => {
-            const quirk = quirkMap[key];
-            return (!draft && quirk.APPEARS_IN_GENERATION) || (draft && quirk.APPEARS_IN_DRAFT);
-        });
-    
-        // Calculate the total likelihood.
-        const totalLikelihood = filteredKeys.reduce((sum, key) => sum + quirkMap[key].likelihood, 0);
-        
-        let randomValue = Math.random() * totalLikelihood;
-        let cumulativeLikelihood = 0;
-        let selectedKey = null;
-        
-        // Shuffle the filtered keys to randomize order
-        filteredKeys.sort(() => Math.random() - 0.5);
-        
-        // Loop through and pick based on likelihood weighting.
-        for (const key of filteredKeys) {
-            cumulativeLikelihood += quirkMap[key].likelihood;
-            if (randomValue < cumulativeLikelihood) {
-                selectedKey = key;
-                break;
+    static pickRandomQuirk(draft = false, league) {
+        return new Promise((resolve, reject) => {
+            const leagueQuirks = {};
+            // If a league is specified, get quirk distribution in that league
+            if (league) {
+                const query = `
+                    SELECT q.title, COUNT(*) as count, 
+                    (SELECT COUNT(*) FROM players WHERE team_id IN (SELECT id FROM teams WHERE league_id = ?)) as total
+                    FROM players p
+                    JOIN teams t ON p.team_id = t.id
+                    JOIN quirks q ON p.quirk = q.id
+                    WHERE t.league_id = ?
+                    GROUP BY q.title;
+                `;
+                
+                db.all(query, [league, league], (err, rows) => {
+                    if (err) {
+                        console.error("Error getting league quirk distribution:", err);
+                        reject(err);
+                        return;
+                    }
+                    
+                    rows.forEach(row => {
+                        leagueQuirks[row.title] = row.count;
+                    });
+                    console.log("Quirk rows:", rows);
+
+                    const leagueCount = rows.length > 0 ? Math.max(rows[0].total,1) : 1;
+
+                    const quirkMap = QuirkGenerator.idToQuirkMap;
+                    const keys = Object.keys(quirkMap);
+                    // Filter keys based on the draft flag.
+                    const filteredKeys = keys.filter(key => {
+                        const quirk = quirkMap[key];
+                        return (!draft && quirk.APPEARS_IN_GENERATION) || (draft && quirk.APPEARS_IN_DRAFT);
+                    });
+                
+                    // Calculate the total likelihood.
+                    let totalLikelihood;
+                    if(draft) {
+                        totalLikelihood = filteredKeys.reduce((sum, key) => sum + quirkMap[key].getLikelihood(1,leagueQuirks, leagueCount), 0);
+                    } else {
+                        totalLikelihood = filteredKeys.reduce((sum, key) => sum + quirkMap[key].likelihood, 0);
+                    }
+                    
+                    let randomValue = Math.random() * totalLikelihood;
+                    let cumulativeLikelihood = 0;
+                    let selectedKey = null;
+                    
+                    // Shuffle the filtered keys to randomize order
+                    filteredKeys.sort(() => Math.random() - 0.5);
+                    
+                    // Loop through and pick based on likelihood weighting.
+                    for (const key of filteredKeys) {
+                        cumulativeLikelihood += draft ? quirkMap[key].getLikelihood(1, leagueQuirks, leagueCount) : quirkMap[key].likelihood;
+                        if (randomValue < cumulativeLikelihood) {
+                            selectedKey = key;
+                            break;
+                        }
+                    }
+                    
+                    resolve(selectedKey);
+                    return;
+                });
             }
-        }
-        
-        return selectedKey;
+        });
     }
 }

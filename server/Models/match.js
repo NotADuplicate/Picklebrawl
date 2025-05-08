@@ -305,6 +305,22 @@ class Match {
         }
     }
 
+    doCardio() {
+        for(const player of this.players) { 
+            if(Math.random() < (8-player.cardio)/100) {
+                const staminaDamage = player.hp*0.12;
+                db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
+                    + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks,
+                    player.id, player.id, staminaDamage, false, staminaDamage], function(err) {
+                        if (err) {
+                            console.error('Error inserting attack into attack_history:', err.message);
+                        }
+                });
+                player.hp -= staminaDamage;
+            }
+        }
+    }
+
     tick() { //every game tick
         if(this.over) {
             return;
@@ -330,20 +346,7 @@ class Match {
         this.weather.tickEffect(this.offenseTeam, this.defenseTeam);
         this.playerWithPossession = this.offenseTeam.players[Math.floor(Math.random() * this.offenseTeam.players.length)];
 
-        //Do cardio
-        for(const player of this.players) { 
-            if(Math.random() < (8-player.cardio)/100) {
-                const staminaDamage = player.hp*0.12;
-                db.run(`INSERT INTO attack_history (match_id, tick, attacking_player_id, attacked_player_id, `
-                    + `damage_done, permanent_injury, percent_health_done) VALUES (?, ?, ?, ?, ?, ?, ?)`, [this.match_id, this.gameTicks,
-                    player.id, player.id, staminaDamage, false, staminaDamage], function(err) {
-                        if (err) {
-                            console.error('Error inserting attack into attack_history:', err.message);
-                        }
-                });
-                player.hp -= staminaDamage;
-            }
-        }
+        this.doCardio();
 
         this.resetTempStats();
         this.setRandomPriorities(); //randomly change priorities
@@ -368,6 +371,10 @@ class Match {
                 console.log("TURNOVER BC UNHEALTHY")
                 this.turnover();
             }
+        }
+
+        if(!this.offenseTeam.players.includes(this.playerWithPossession)) {
+            throw new Error("Player with possession is not on offense team: " + this.playerWithPossession.name);
         }
 
         db.run(`INSERT INTO match_ticks_history (tick, match_id, possession_team_id, ball_position, player_possession_id) `
@@ -459,7 +466,7 @@ class Match {
             player.strength = Math.max(0.5, player.baseStrength * (player.hp / player.maxHp));
             player.cardio = player.baseCardio;
             player.intelligence = player.baseIntelligence;
-            if(!player.bulk || !player.finesse || !player.height || !player.strength || !player.cardio || !player.intelligence) {
+            if(player.bulk == null || player.finesse == null || player.height == null || player.strength == null || player.cardio == null || player.intelligence == null) {
                 console.log("Player has no stats: ", player.name, player.bulk, player.finesse, player.height, player.strength, player.cardio, player.intelligence)
                 console.log("Base stats: ", player.baseBulk, player.baseFinesse, player.baseHeight, player.baseStrength, player.baseCardio, player.baseIntelligence)
                 console.log("HP: ", player.hp, player.maxHp)

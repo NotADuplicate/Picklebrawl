@@ -58,4 +58,8 @@ export class Alpha extends Quirk {
         }
         return;
     }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+    }
 }

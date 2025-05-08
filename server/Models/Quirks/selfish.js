@@ -5,7 +5,7 @@ export class Selfish extends Quirk {
     static title = "Selfish";
     static description = ("All teammates get -1 to all stats");
     static STAT_DECREASE = 1;
-    static likelihood = 2;
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 2;
@@ -34,5 +34,9 @@ export class Selfish extends Quirk {
                 otherPlayer.intelligence -= this.STAT_DECREASE;
             }
         });
+    }
+
+    static getLikelihood(season, quirkList) {
+        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
     }
 }

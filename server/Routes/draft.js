@@ -38,7 +38,7 @@ router.post('/draft/player', authenticator.authenticateToken, (req, res) => {
     console.log("", user, " is drafting player: ", playerId)
     //Check that team is either supposed to be drafting or has draft picks
     db.get(`SELECT teams.id FROM teams, drafts
-    WHERE teams.owner_id = ? AND drafts.id = ? AND (drafts.currently_drafting_team_id = teams.id OR teams.draft_picks>0)`, [user, draftId], (err, team) => {
+    WHERE teams.owner_id = ? AND drafts.id = ? AND teams.league_id == drafts.league_id AND (drafts.currently_drafting_team_id = teams.id OR teams.draft_picks>0)`, [user, draftId], (err, team) => {
         console.log(team);
         if (err) {
             console.log("Error finding team: ", err);

@@ -26,7 +26,7 @@ router.get('/active-teams', (req, res) => {
     db.all(`SELECT teams.id, teams.draft_picks, leagues.name AS league_name, teams.name, league_id, username AS owner FROM teams
         LEFT JOIN users on users.id = teams.owner_id
         LEFT JOIN leagues on leagues.id = teams.league_id
-        WHERE league_id = ? AND in_season = TRUE`, [leagueId], (err, teams) => {
+        WHERE league_id = ? AND in_season = TRUE ORDER BY teams.id`, [leagueId], (err, teams) => {
         if (err) {
             console.log("Error fetching teams:", err);
             return res.status(500).json({ message: 'Error fetching teams!' });

@@ -24,4 +24,8 @@ export class FairFighter extends Quirk {
             }
         }
     }
+
+    static getLikelihood(season, quirkList) {
+        return (quirkList[this.title] ? 1/(quirkList[this.title]+1) : this.likelihood);
+    }
 }

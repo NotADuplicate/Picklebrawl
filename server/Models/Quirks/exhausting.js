@@ -1,15 +1,15 @@
 import { Quirk } from './quirk.js';
 
-export class Bruiser extends Quirk {
-    static likelihood = 4;
+export class Exhausting extends Quirk {
     static POWER_MODIFIER = -3;
-    static title = "Bruiser";
-    static description = ("Attacks deal twice as much hp damage");
+    static title = "Exhausting";
+    static description = ("When in a match, ALL other players take double damage from exhaustion." );
+    static likelihood = 3;
     static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 
-    static startGameEffect(match, player) {
-        player.ATTACK_MODIFIER = 2;
+    static tickEffect(player, match) {
+        match.doCardio();
     }
 
     static getLikelihood(season, quirkList) {
