@@ -6,6 +6,7 @@ import { Season } from '../Models/season.js';
 import { authenticator } from '../Models/authenticator.js';
 import moment from 'moment-timezone';
 import { Player } from '../Models/player.js';
+import { QuirkGenerator } from '../quirkGenerator.js';
 
 const router = express.Router();
 
@@ -295,17 +296,9 @@ router.get(`/leagues/tournament/:leagueId`, async (req, res) => {
     })
 })
 
-setTimeout(() => {
-    console.log("Current timezone:", moment.tz.guess());
-    console.log("Now :", moment().format("YYYY-MM-DD HH:mm:ss"));
-    console.log("Now:", new Date().toISOString());
-    const season = new Season(1);
-    season.scheduleOnStartup();
-    //season.createTournament(() => {season.scheduleTournamentMatches(1,1)});
+setTimeout(async () => {
+    //const p = await QuirkGenerator.generateQuirkLikelihoods(false, 1);
+    //console.log("Quirk likelihoods:", p);
 }, 1000);
-
-console.log("2025-04-02T21:15:00.000Z")
-console.log(Date.parse("2025-04-02T21:15:00.000Z"))
-console.log(new Date("2025-04-02T21:15:00.000Z"))
 
 export default router;

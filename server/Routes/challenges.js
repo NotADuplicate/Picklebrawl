@@ -843,5 +843,4 @@ function deleteMatch(match_id) {
             console.error('Error during deletion process:', err);
         });
 }
-runMatch(1, true); // Example usage of runMatch function
 export default router;

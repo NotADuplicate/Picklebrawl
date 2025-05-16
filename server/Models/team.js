@@ -1,5 +1,6 @@
 import {Player} from './player.js';
 import {db} from '../database.js';
+import {QuirkGenerator} from '../quirkGenerator.js';
 
 class Team {
     players;
@@ -67,12 +68,16 @@ class Team {
     }
 
     async generatePlayers() {
-        for (let i = 0; i < 6; i++) {
+        const quirkCounts = {};
+        const leagueCount = 5;
+        for (let i = 0; i < 20; i++) {
             const player = new Player();
-            await player.pickRandomQuirk(false, this.leagueId);
+            console.log("Generating player: " + i);
+            player.pickRandomQuirk(false, quirkCounts, leagueCount, 0);
             player.randomize_stats(Math.floor(Math.random() * 3) + 17);
             this.addPlayer(player);
         }
+        console.log("Quirk counts:" ,quirkCounts)
     }
 
     async load(id) {

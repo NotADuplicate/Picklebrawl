@@ -1,6 +1,7 @@
 import { Player } from './player.js';
 import { Codependent } from './Quirks/codependent.js';
 import { db } from '../database.js';
+import { QuirkGenerator } from '../quirkGenerator.js';
 export class Draft {
     players = [];
     draftId;
@@ -27,10 +28,11 @@ export class Draft {
     }
 
     async generatePlayers(numUsers) {
-        const numPlayers = numUsers * 10
+        const numPlayers = numUsers * 3;
+        const [quirkCounts, leagueCount] = await QuirkGenerator.generateQuirkCounts(true, this.leagueId);
         for (let i = 0; i < numPlayers; i++) {
             const player = new Player();
-            await player.pickRandomQuirk(true, this.leagueId);
+            player.pickRandomQuirk(true, quirkCounts, leagueCount, 1);
             if(i <= numUsers) { //make sure there is 1 good player per user
                 player.randomize_stats(25);
             } else {

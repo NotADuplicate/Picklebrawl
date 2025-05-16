@@ -62,6 +62,6 @@ export class CultLeader extends Quirk {
             (quirkList["Moon Worshipper"] ? quirkList["Moon Worshipper"] : 0) +
             (quirkList["Sun Worshipper"] ? quirkList["Sun Worshipper"] : 0);
         const count = (quirkList[this.title] ? quirkList[this.title]+1 : 1);
-        return 100*religionCount / (count*leagueCount);
+        return 70*religionCount / (count*leagueCount);
     }
 }

@@ -4,8 +4,8 @@ export class Codependent extends Quirk {
     static POWER_MODIFIER = 5;
     static title = "Codependent";
     static description = ("Sets your highest stat(s) to 1 unless someone else has this quirk");
-    static likelihood = 3;
-    static APPEARS_IN_GENERATION = false;
+    static likelihood = 1;
+    static APPEARS_IN_GENERATION = true;
     static APPEARS_IN_DRAFT = true;
 
     //Since this quirk decreases your highest stat, the generation should prevent having multiple stats tied for highest
@@ -100,10 +100,10 @@ export class Codependent extends Quirk {
     static getLikelihood(season, quirkList) {
         const count = (quirkList[this.title] ? quirkList[this.title] : 0);
         if(count % 2 ==1) {
-            return 5;
+            return this.likelihood * 8;
         }
         else {
-            return Math.random() > 0.7 ? 5 : 0;
+            return this.likelihood;
         }
     }
 }

@@ -85,6 +85,11 @@ export class Empath extends Quirk {
     }
 
     static getLikelihood(season, quirkList) {
-        return this.likelihood / (quirkList[this.title] ? quirkList[this.title]+1 : 1);
+        if(quirkList["Empath"] == null) {
+            return 4;
+        }
+        else {
+            return 0.5;
+        }
     }
 }

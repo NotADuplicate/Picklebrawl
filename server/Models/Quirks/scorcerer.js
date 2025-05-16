@@ -5,7 +5,7 @@ export class Scorcerer extends Quirk {
     static title = "Scorcerer";
     static description = ("When scoring a field goal, it is worth sorcery points instead of 2 points.");
     static likelihood = 3;
-    static APPEARS_IN_GENERATION = true;
+    static APPEARS_IN_GENERATION = false;
     static APPEARS_IN_DRAFT = true;
     static START_EFFECT_ORDER = 3;
 

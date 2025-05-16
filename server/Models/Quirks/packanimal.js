@@ -40,6 +40,6 @@ export class PackAnimal extends Quirk {
     }
 
     static getLikelihood(season, quirkList, leagueCount) {
-        return Math.random() > 0.7 ? 10 : 0;
+        return quirkList[this.title] ? this.likelihood + (quirkList[this.title] + 1) : this.likelihood;
     }
 }

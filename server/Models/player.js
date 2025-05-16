@@ -129,8 +129,8 @@ class Player {
         });
     }
 
-    async pickRandomQuirk(draft = false, league) {
-        this.quirkId = await QuirkGenerator.pickRandomQuirk(draft, league);
+    pickRandomQuirk(draft = false, quirkCounts, leagueCount, season) {
+        this.quirkId = QuirkGenerator.pickRandomQuirk(draft, quirkCounts, leagueCount, season);
         this.quirk = QuirkGenerator.idToQuirkMap[this.quirkId]
         console.log(this.name, " Pikced random quirk: ", this.quirkId, this.quirk.title)
         this.quirk.nameGenerationChanges(this);
